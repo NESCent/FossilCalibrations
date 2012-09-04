@@ -1,0 +1,2 @@
+# don't keep temp database files
+ignore *.sql
