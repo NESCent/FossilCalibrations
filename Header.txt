@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<?php if(!$PageTitle) { echo '<title>Fossil Calibration Database (The Dating Site)</title>'; } else { echo '<title>'.$PageTitle.'</title>'; } ?>
+
+<style type="text/css">
+body,td,th {	font-family: "Comic Sans MS", cursive;	font-size: 12px;	color: #000;}
+body {	background-color: #EEE;}
+a:link {	color: #135b98;}
+a:visited {	color: #135b20;}
+a:hover {	color: #135b20;}
+a:active {	color: #135b80;}
+h1 {	font-size: 12px;	color: #d19e69;}
+h2 {	font-size: 16px;	color: #000000;}
+.blue_text {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 12px;
+	color: #A2C4C9;
+}
+.orange_text {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 12px;
+	color: #D19E69;
+}
+.small_text {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 10px;
+}
+.small_blue {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 10px;
+	color: #A2C4C9;
+}
+.small_orange {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 10px;
+	color: #D19E69;
+}
+</style>
+</head>
+<body><table width="750" border="0" align="center">  
+ <tr>    <td bgcolor="#a2c4c9">
+ <p><strong>Palaeontologia Electronica: Fossil Calibration Database<br></strong>
+ <a href="index.php">Find Calibrations</a> | <a href="createclade1.php">Enter Calibrations</a> | <a href="http://palaeo-electronica.org/guide2011.pdf">Submit to PE</a> | <a href="http://en.wikipedia.org/wiki/Help!_(album)">Help</a> </p></td>  </tr>
+<tr>
+<td>
+<table width="100%" border="0">      
+<tr>
+<td>
+<!-- begin content -->
