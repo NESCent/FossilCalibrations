@@ -36,35 +36,32 @@ require('Header.txt');
 
 <p><h1>View calibration:  <?=$calibration_info['NodeName']?> (ID: <?=$calibration_info['CalibrationID']?>)</h1></p>
 
-<hr  size="1"/>
-
-<p><i>calibration from:</i><br />
+<p class="featured-information"><i>calibration from:</i><br />
 <?=$calibration_info['FullReference']?>
 <?php if($calibration_info['DOI']!="NULL") { echo '<br><font class="small_text">[<a href="http://dx.doi.org/'.$calibration_info['DOI'].'" target="_blank">View electronic resource]</font></a>'; } ?></p>
-
-<hr  size="1"/>
-
 
 <p><h2><?=$calibration_info['NodeName']?></h2></p>
 
 <table width="100%">
 
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">node name</i><br><b><?=$calibration_info['NodeName']?></b> 
-<font class="small_blue"><?=$calibration_info['NodeName']?> in <a href="http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=<?=$calibration_info['NodeName']?>" target="_blank">NCBI</a> <a href="http://en.wikipedia.org/wiki/<?=$calibration_info['NodeName']?>" target="_blank">Wikipedia</a> <a href="http://animaldiversity.ummz.umich.edu/site/accounts/information/<?=$calibration_info['NodeName']?>.html" target="_blank">Animal Diversity Web</a></font></td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node name</i><br><b><?=$calibration_info['NodeName']?></b> 
+<font class="small_blue"><?=$calibration_info['NodeName']?> in <a href="http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=<?=$calibration_info['NodeName']?>" target="_blank">NCBI</a> <a href="http://en.wikipedia.org/wiki/<?=$calibration_info['NodeName']?>" target="_blank">Wikipedia</a> <a href="http://animaldiversity.ummz.umich.edu/site/accounts/information/<?=$calibration_info['NodeName']?>.html" target="_blank">Animal Diversity Web</a></font></td><td width="10%">&nbsp;</td></tr>
 
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">publication</i><br><b><?=$calibration_info['ShortName']?></b>
-<font class="small_blue">all nodes from <?=$calibration_info['ShortName']?></font></td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">publication</i><br><b><?=$calibration_info['ShortName']?></b>
+<font class="small_blue">all nodes from <?=$calibration_info['ShortName']?></font></td><td width="10%">&nbsp;</td></tr>
 
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">node min age </i><br><b><?=$FossMinAge['Min']?> mya</b> <font style="font-size:10px">(min age of oldest fossil)</font></td></tr>
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">node max age </i><br><b><?=$calibration_info['MaxAge']?> mya</b><font style="font-size:10px"> (<?=$calibration_info['MaxAgeExplanation']?>)</font></td></tr>
-<tr><td width="10%"></td><td align="left" valign="top"><p></p></td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node min age </i><br><b><?=$FossMinAge['Min']?> mya</b> <font style="font-size:10px">(min age of oldest fossil)</font></td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node max age </i><br><b><?=$calibration_info['MaxAge']?> mya</b><font style="font-size:10px"> (<?=$calibration_info['MaxAgeExplanation']?>)</font></td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
 
 
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">fossils used to date this node</i></td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">fossils used to date this node</i></td><td width="10%">&nbsp;</td></tr>
 <?php
+$rowNumber = 0;
 while ($row = mysql_fetch_array($fossil_results)) {
+	$rowNumber++;
 	?>
-<tr><td width="10%"></td><td><blockquote style="font-size:10px">
+<tr><td width="10%">&nbsp;</td><td><blockquote class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
 							 <b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b><br />
 						 	 <?php if($row['PBDBTaxonNum']>0) {?><a href="http://pbdb.org/cgi-bin/bridge.pl?a=checkTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>&is_real_user=1" target="_new"><i><b><?=$row['Species']?></i></a>, <?=$row['TaxonAuthor']?></b><?php } else { ?><i><b><?=$row['Species']?>, <?=$row['TaxonAuthor']?></b></i><?php } ?><br />
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b><?=$row['LocalityName']?>, <?=$row['Country']?></b> <i>Stratum:</i> <b><?=$row['Stratum']?></b><br />
@@ -73,29 +70,31 @@ while ($row = mysql_fetch_array($fossil_results)) {
                              <?php if($row['PBDBCollectionNum']>0) { ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://pbdb.org/cgi-bin/bridge.pl?action=basicCollectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
 									<?php } ?>
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font></blockquote></td></tr>
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font></blockquote></td><td width="10%">&nbsp;</td></tr>
 
 
 	<?php
 	}
 ?>
 	
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">extant tip pairs that stem from this node</i></td></tr>
+<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">extant tip pairs that stem from this node</i></td><td width="10%"></td></tr>
 <tr><td width="10%"></td><td><blockquote>
 <table width="60%" align="left">
 <tr align="left"><td><b class="small_text">Taxon A</b></td><td><b class="small_text">Taxon B</b></td><td></td></tr>
 <?php
+$rowNumber = 0;
 while ($row = mysql_fetch_array($tippair_results)) {
+	$rowNumber++;
 	?>
-	<tr align="left"><td><i class="small_text"><?=$row['TaxonA']?></i></td><td><i class="small_text"><?=$row['TaxonB']?></i></td><td class="small_blue">[<a href="Find_CalibrationsByTips.php?TaxonA=<?=$row['TaxonA']?>&TaxonB=<?=$row['TaxonB']?>">all nodes with this pair</a>]</td></tr>
+	<tr align="left" class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>"><td style="><i class="small_text"><?=$row['TaxonA']?></i></td><td><i class="small_text"><?=$row['TaxonB']?></i></td><td class="small_blue">[<a href="Find_CalibrationsByTips.php?TaxonA=<?=$row['TaxonA']?>&TaxonB=<?=$row['TaxonB']?>">all nodes with this pair</a>]</td></tr>
 
 
 	<?php
 	}
 ?>
-  </blockquote></table></td></tr>
+  </blockquote></table></td><td width="10%"></td></tr>
   
-<tr><td width="10%"></td><td align="left" valign="top"><p></p></td></tr>
+<tr><td width="10%"></td><td align="left" valign="top"><p></p></td><td width="10%"></td></tr>
 </table>
 
 	

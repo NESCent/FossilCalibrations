@@ -10,7 +10,7 @@ $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEIN
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 ?>
-<h1>Search by tip taxa</h1>
+<h2 class="contentheading" style="margin-top: 20px;">Search by tip taxa</h2>
 
 <form action="Find_CalibrationsByTips.php" method="GET" name="Find_CalibrationsByTips">
 <table width="100%" border="0" align="left">
@@ -28,8 +28,10 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
   </tr>
 </table>
 </form>	
-<hr size="1">
-<h1>Browse</h1>
+<div style="height: 12px; clear: both;">&nbsp;</div>
+
+<h2 class="contentheading" style="clear: both;">Browse</h2>
+<div id="browse-tools">
 <form action="Find_CalibrationsByFossils.php" method="get" name="FindByAge">
 <p>by Time interval (age in Ma)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input name="FossilMinAge" type="text" size="3">:Min  <input name="FossilMaxAge" type="text" size="3">:Max <input type="submit" value="browse by interval"/> </p>
 </form>
@@ -78,14 +80,7 @@ $highertaxon_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
                     </select> <input type="submit" value="browse by clade"/>
 </p>
 </form>
-
-
-<table width="100%" border="0">
-
-</table>
-
-	
-
+</div><!-- end of #browse-tools -->
 <?php 
 //open and print page footer template
 require('Footer.txt');

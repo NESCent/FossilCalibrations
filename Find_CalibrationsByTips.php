@@ -39,12 +39,12 @@ echo '<p>Click on "Show calibration" to view full calibration information.  Clic
 <table width="100%" border="0">
 
   <tr>
-    <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>Info</strong></td>
-    <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>CalibrationID</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>Node Name</strong></td>
-    <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>Min Age</strong></td>
-    <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>Max Age</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>Publication</strong></td>
+    <td width="10%" align="center" valign="middle" class="small_orange"><strong>Info</strong></td>
+    <td width="5%" align="center" valign="middle" class="small_orange"><strong>CalibrationID</strong></td>
+    <td width="15%" align="center" valign="middle" class="small_orange"><strong>Node Name</strong></td>
+    <td width="5%" align="center" valign="middle" class="small_orange"><strong>Min Age</strong></td>
+    <td width="5%" align="center" valign="middle" class="small_orange"><strong>Max Age</strong></td>
+    <td width="15%" align="center" valign="middle" class="small_orange"><strong>Publication</strong></td>
   </tr>
 
 <?php

@@ -1,7 +1,11 @@
 <!-- end content -->
-</td></tr></table>
-<tr>    
-<td bgcolor="#a2c4c9">2011, Sponsored by: Coquina Press, NESCent</td>  </tr>
-</table>
+</div><!--END OF #inner-main-->
+</div><!--END OF #main-->
+<div id="footer">
+    <div id="inner-footer">
+	&copy;2011, Sponsored by: Coquina Press, NESCent
+	<img src="http://palaeo-electronica.org/content/templates/jbhub/images/bg/pattern-middle.png" />
+    </div>
+</div>
 </body>
 </html>
