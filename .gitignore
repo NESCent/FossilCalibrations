@@ -1,2 +1,5 @@
 # don't keep temp database files
 ignore *.sql
+# don't commit sensitive config information
+ignore Site.conf
+
