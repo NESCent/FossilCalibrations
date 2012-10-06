@@ -1,0 +1,169 @@
+/* Emulate the general look of paleao-electronica.org */
+body,td,th {
+	font-family: "Georgia", serif;	
+	font-size: 14px;
+	color: #333;
+}
+body {	
+	background-color: #444;
+	text-align: left;
+	margin: 0;
+	padding: 0;
+}
+a:link, a:active {
+	color: #4c92b1;
+}
+a:hover {	
+	color: #4c92b1;
+	background-color: #def;
+}
+a:visited {
+	color: #a26cb1;
+}
+h1 {
+	font-size: 12px;
+	color: #d19e69;
+}
+h2.contentheading {
+	font-size: 1.4em;
+	font-weight: normal;
+	color: #333;
+	line-height: 1.6em;
+	margin-top: 16px;
+	margin-bottom: 10px;
+	border-top: 3px solid #eee;
+	border-bottom: 3px solid #eee;
+	overflow: hidden; /* to avoid margin collapsing */
+}
+p.featured-information {
+	padding: 1em 0;
+	border-top: 3px solid #ddd;
+	border-bottom: 3px solid #ddd;
+	overflow: hidden; /* to avoid margin collapsing */
+}
+.blue_text {
+	font-size: 13px;
+	color: #A2C4C9;
+}
+.orange_text {
+	font-size: 12px;
+	color: #D19E69;
+}
+.small_text {
+	font-size: 12px;
+}
+.small_blue {
+	font-size: 12px;
+	color: #999;
+}
+.small_orange {
+	font-size: 12px;
+	color: #D19E69;
+
+	display: block;
+	margin-top: 4px;
+	margin-bottom: -12px;
+	border-top: 1px solid #ddc;
+	padding: 3px 6px;
+	margin-left: -6px;
+	border-bottom: 1px solid #ddc;
+}
+td.small_orange {
+	display: table-cell;
+}
+.alt-header {
+	display: block;
+	background-color: #ebebeb;
+	padding: 4px 6px;
+	margin-left: -6px;
+}
+#header {
+	background-color: #27292B;
+	color: #fff;
+	overflow: hidden;
+	/* border: 1px dashed blue; */
+	border-bottom: 4px solid #ebebeb;
+}
+#header img {
+	position: relative;
+	top: -3px;
+}
+#header h3.pe-title {
+	font-size: 15px;
+	font-style: italic;
+	margin-bottom: 0;
+}
+#header h3.pe-title a {
+	color: #bbb;
+	text-decoration: none !important;
+	background-color: transparent !important;
+}
+#header h2.fc-title {
+	font-size: 20px;
+	margin-top: 2px;
+	margin-bottom: 0px;
+}
+#header h2.fc-title a {
+	color: #fff;
+	text-decoration: none !important;
+	background-color: transparent !important;
+}
+#inner-header, #inner-main, #inner-footer {
+	width: 940px;
+	margin: 0 auto;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+#main {
+	background-color: #fff;
+	border-top: 1px solid #d8d9db;
+	padding-bottom: 20px;
+}
+#inner-main {
+	/* border: 1px dashed pink; */
+}
+#footer {
+	background-color: #EBEBEB;
+	border-top: 1px solid #cacaca;
+	color: #363636;
+	text-align: right;
+	/* border: 1px dashed orange; */
+	padding: 8px 0 20px;
+}
+ul#top-menu {
+	float: right;
+	list-style: none;
+	margin-top: -6px;
+}
+ul#top-menu li {
+	display: inline-block;
+	margin-left: 20px;
+}
+ul#top-menu a, ul#top-menu a:visited {
+	font-family: Helvetica, Arial, sans-serif;
+	color: #979797;
+	text-decoration: none;
+}
+ul#top-menu a:hover {
+	color: #4c92b1;
+	background-color: transparent;
+}
+blockquote {
+	padding: 6px 6px;
+}
+table blockquote {
+	margin-bottom: 0;
+}
+tr.even td, tr.odd td {
+	padding: 2px 5px;
+}
+blockquote.even, tr.even td {
+	background-color: #eee;
+}
+blockquote.odd, tr.odd td {
+}
+#browse-tools {
+	margin-left: 60px;
+	padding-bottom: 20px;
+	overflow: hidden; /* prevents margin collapse */
+}
