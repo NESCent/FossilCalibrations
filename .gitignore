@@ -1,5 +1,3 @@
-# ignore temp database files
-*.sql
 # ignore sensitive config information
 Site.conf
 # ignore other junk (swap files, etc)
