@@ -22,7 +22,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
   </tr>
   <tr>
     <td align="right">taxon B</td>
-    <td><input type="text" name="TaxonB" id="TaxonB"></td>
+    <td><input type="text" name="TaxonB" id="TaxonB"> (optional)</td>
     <td><input type="submit" name="Submit1" id="Submit1" value="Search"></td>
     <td>&nbsp;</td>
   </tr>
