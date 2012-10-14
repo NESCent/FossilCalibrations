@@ -15,40 +15,89 @@ $key=array_keys($_GET);
 $value=array_values($_GET);
 
 //retrieve calibrations for fossil ID
+if (!isset($key[0])) {
+	$key[0] = 'SHOW ALL';	// default, if no query-string args were provided
+}
 switch($key[0]) {
-case 'Species':
+   case 'Species':
 	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE Species LIKE "%'.$value[0].'%" ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
 
-case 'FossilMinAge':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE FossilMinAge>'.$_GET['FossilMinAge'].' AND FossilMaxAge<'.$_GET['FossilMaxAge'].' ORDER BY NodeName';
+    case 'FossilMinAge':
+	// treat missing min-age argument as "unbounded" minimum
+	$trimmedMin = trim( $_GET['FossilMinAge'] );
+	$minProvided = !empty($trimmedMin);
+	$carefulMinAge = $minProvided ? $trimmedMin : " 0 ";
+	//
+	// treat missing max-age argument as "unbounded" maximum
+	$trimmedMax = trim( $_GET['FossilMaxAge'] );
+	$maxProvided = !empty($trimmedMax);
+	$carefulMaxAge = $maxProvided ? $trimmedMax : " 1000000 ";
+	//
+	$query='Select DISTINCT C.*, J.FossilMinAge, J.FossilMaxAge FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE FossilMinAge>'.$carefulMinAge.' AND FossilMaxAge<'.$carefulMaxAge.' ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+	//
+	// show adaptive prompt, based on which age boundaries were provided
+	echo '<h1>'. mysql_num_rows($calibration_list) .' calibration'. (mysql_num_rows($calibration_list) == 1 ? '' : 's') .' with';
+	if ($minProvided) {
+		echo ' minimum age "'. $carefulMinAge .' Ma"';
+	}
+	if ($minProvided and $maxProvided) {
+		echo ' and ';
+	}
+	if ($maxProvided) {
+		echo ' maximum age "'. $carefulMaxAge .' Ma"';
+	}
+	if (!$minProvided and !$maxProvided) {
+		echo 'in all time periods';
+	}
+	echo '</h1>';
 	break;
 	
-case 'HigherTaxon':
+    case 'HigherTaxon':
 	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+	//
+	// show adaptive prompt
+	echo '<h1>'. mysql_num_rows($calibration_list) .' calibration'. (mysql_num_rows($calibration_list) == 1 ? '' : 's') .' found under clade "'. $value[0] .'"</h1>';
 	break;
-case 'System':
+
+    case 'System':
 	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
-case 'Period':
+
+    case 'Period':
 	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
-case 'Epoch':
+
+    case 'Epoch':
 	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
-case 'Age':
+
+    case 'Age':
 	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+	//
+	// show adaptive prompt
+	echo '<h1>'. mysql_num_rows($calibration_list) .' calibration'. (mysql_num_rows($calibration_list) == 1 ? '' : 's') .' found in "'. $value[0] .'" age</h1>';
 	break;
 
 
-
-default:
-$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID ORDER BY NodeName';
+    case 'SHOW ALL':
+    default:
+	// unknown (or no) query-string arguments provided; show all calibrations by default
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID ORDER BY NodeName';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+	//
+	// show adaptive prompt
+	echo '<h1>'. mysql_num_rows($calibration_list) .' calibration'. (mysql_num_rows($calibration_list) == 1 ? '' : 's') .' found</h1>';
 }
 
-$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 echo '<p>Click on "Show calibration" to view full calibration information.  Click on node name or publication name to find related calibrations.</p>';
-
 
 ?>
 
@@ -70,9 +119,13 @@ while ($row = mysql_fetch_array($calibration_list)) {
   <tr align="center" valign="top">
     <td><a href="Show_Calibration.php?CalibrationID=<?=$row['CalibrationID']?>">Show calibration</a></td>
     <td><?=$row['CalibrationID']?></td>
-    <td><?=$row['NodeName']?></td>
-    <td><?=$row['MinAge']?></td>
-    <td><?=$row['MaxAge']?></td>
+    <td><a href="#" onclick="alert('Related calibrations COMING SOON...'); return false;"><?=$row['NodeName']?></a></td>
+    <td><?=$row['MinAge']?>
+	<? if (isset($_GET["test"])) { ?><i class="diagnostic">&nbsp; (<?=$row['FossilMinAge']?>)</i><? } ?>
+    </td>
+    <td><?=$row['MaxAge']?>  
+	<? if (isset($_GET["test"])) { ?><i class="diagnostic">&nbsp; (<?=$row['FossilMaxAge']?>)</i><? } ?>
+    </td>
     <td><?=$row['ShortName']?></td>
   </tr>
 
@@ -80,7 +133,7 @@ while ($row = mysql_fetch_array($calibration_list)) {
   
 </table>
 
-	
+<? if (isset($_GET["test"])) { echo("<br/><br/><i class='diagnostic'>$query</i>"); } ?>
 
 <?php 
 //open and print page footer template

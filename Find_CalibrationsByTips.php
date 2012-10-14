@@ -54,7 +54,7 @@ while ($row = mysql_fetch_array($calibration_list)) {
   <tr align="center" valign="top">
     <td><a href="Show_Calibration.php?CalibrationID=<?=$row['CalibrationID']?>">Show calibration</a></td>
     <td><?=$row['CalibrationID']?></td>
-    <td><?=$row['NodeName']?></td>
+    <td><a href="#" onclick="alert('Related calibrations COMING SOON...'); return false;"><?=$row['NodeName']?></a></td>
     <td><?=$row['MinAge']?></td>
     <td><?=$row['MaxAge']?></td>
     <td><?=$row['ShortName']?></td>
