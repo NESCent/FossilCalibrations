@@ -21,7 +21,7 @@ a:visited {
 	color: #a26cb1;
 }
 h1 {
-	font-size: 12px;
+	font-size: 16px; /* WAS 12px; */
 	color: #d19e69;
 }
 h2.contentheading {
@@ -166,4 +166,8 @@ blockquote.odd, tr.odd td {
 	margin-left: 60px;
 	padding-bottom: 20px;
 	overflow: hidden; /* prevents margin collapse */
+}
+
+.diagnostic {
+	color: #d88;
 }
