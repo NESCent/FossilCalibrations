@@ -17,7 +17,7 @@ $highertaxa_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mys
 
 if($_POST['PubID']=="New") {
 	
-	if($_POST['ShortForm']=="") { echo "<h1>Incomplete publication information</h1><p><a href=\"createclade1.php\">Return to previous page.</a>"; }
+	if($_POST['ShortForm']=="") { echo "<h1 class=\"validation-error\">Incomplete publication information</h1><p><a href=\"createclade1.php\">Return to previous page.</a></p>"; }
 
 //Check to make sure publication isn't already in database
 $query='SELECT * FROM publications WHERE FullReference =\''.$_POST['FullCite'].'\'';
@@ -114,10 +114,9 @@ $pub_info=mysql_fetch_assoc($publication_list);
                   <td><textarea name="MaxAgeJust" id="MaxAgeJust" cols="50" rows="5"></textarea></td>
                 </tr>
                 <tr>
-                  <td align="right" valign="top"><strong>number of Node <?=$_POST['NodeCount']?> tip taxa pairs to enter</strong></td>
+                  <td align="right" valign="top"><strong>number of Node <?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?> tip taxa pairs to enter</strong></td>
                   <td><input type="text" name="NumTipPairs" id="NumTipPairs" size=3></td>
                 </tr>
-
               <tr>
               <td>&nbsp;</td>
               <td><label>
@@ -125,7 +124,10 @@ $pub_info=mysql_fetch_assoc($publication_list);
                 <b>continue to tip entry</b></label></td>
             </tr>
           </table>
-        </form></td>
+</td>
+</tr>
+</table>
+        </form>
 
 
 

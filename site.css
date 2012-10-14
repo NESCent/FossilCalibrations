@@ -24,6 +24,9 @@ h1 {
 	font-size: 16px; /* WAS 12px; */
 	color: #d19e69;
 }
+h1.validation-error {
+	color: #cc3333;
+}
 h2.contentheading {
 	font-size: 1.4em;
 	font-weight: normal;

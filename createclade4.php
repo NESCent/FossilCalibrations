@@ -16,7 +16,7 @@ $CalibrationID=$_POST['CalibrationID'];
 $NumTipPairs=$_POST['NumTipPairs'];
 $NumFossils=$_POST['NumFossils'];
 $NumNodes=$_POST['NumNodes'];
-$NodeCount=$_POST['NodeCount'];
+$NodeCount=isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?';
 $publicationID=$_POST['PubID'];
 
 //Retrieve publication info
@@ -48,7 +48,7 @@ if($_POST['EntryType']=="species") {
 
 ?> 
 
-<h1>creating Node <?=$_POST['NodeCount']?> for <?=$pub_info['ShortName']?>: <?=$NodeName?> (ID: <?=$CalibrationID?>)<br /> 
+<h1>creating Node <?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?> for <?=$pub_info['ShortName']?>: <?=$NodeName?> (ID: <?=$CalibrationID?>)<br /> 
 step 3: verifying taxa for entry by species</h1>
 <p>
 Confirm ambiguous taxa or enter taxa if they are not already in the database.
@@ -61,7 +61,7 @@ Confirm ambiguous taxa or enter taxa if they are not already in the database.
 <input type="hidden" name="CalibrationID" value="<?=$_POST['CalibrationID']?>">
 <input type="hidden" name="NodeName" value="<?=$_POST['NodeName']?>">
 <input type="hidden" name="NumNodes" value="<?=$_POST['NumNodes']?>">
-<input type="hidden" name="NodeCount" value="<?=$_POST['NodeCount']?>">
+<input type="hidden" name="NodeCount" value="<?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?>">
 <input type="hidden" name="NumTipPairs" value="<?=$_POST['NumTipPairs']?>">
 <input type="hidden" name="EntryType" value="<?=$_POST['EntryType']?>">
 <input type="hidden" name="AllTips" value="<?php
@@ -122,7 +122,7 @@ foreach($all_tips as $key => $value) { echo $value."/"; }
 ?>
 
 
-<h1>creating Node <?=$_POST['NodeCount']?> for <?=$pub_info['ShortName']?>: <?=$NodeName?> (ID: <?=$CalibrationID?>)<br /> 
+<h1>creating Node <?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?> for <?=$pub_info['ShortName']?>: <?=$NodeName?> (ID: <?=$CalibrationID?>)<br /> 
 step 3: verifying taxa for entry by genus</h1>
 <p>
 Confirm ambiguous taxa or enter taxa if they are not already in the database.
@@ -135,7 +135,7 @@ Confirm ambiguous taxa or enter taxa if they are not already in the database.
 <input type="hidden" name="CalibrationID" value="<?=$_POST['CalibrationID']?>">
 <input type="hidden" name="NodeName" value="<?=$_POST['NodeName']?>">
 <input type="hidden" name="NumNodes" value="<?=$_POST['NumNodes']?>">
-<input type="hidden" name="NodeCount" value="<?=$_POST['NodeCount']?>">
+<input type="hidden" name="NodeCount" value="<?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?>">
 <input type="hidden" name="NumTipPairs" value="<?=$_POST['NumTipPairs']?>">
 <input type="hidden" name="EntryType" value="<?=$_POST['EntryType']?>">
 <input type="hidden" name="AllTips" value="<?php

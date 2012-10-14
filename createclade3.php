@@ -80,7 +80,7 @@ $NumTipPairs=$_POST['NumTipPairs'];
 ?>
 
 
-<h1>creating Node <?=$_POST['NodeCount']?> for <?=$pub_info['ShortName']?>: <?=$NodeName?> (ID: <?=$CalibrationID?>)<br /> 
+<h1>creating Node <?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?> for <?=$pub_info['ShortName']?>: <?=$NodeName?> (ID: <?=$CalibrationID?>)<br /> 
 add tip taxa pairs</h1>
 <p>
 Enter pairs of extant taxa whose last common ancestor was the node being calibrated. You may enter tip taxa as pairs of species or as blocks of genera.  If you choose blocks of genera, the individual pairs of species from those genera will be automatically entered in the database.  
@@ -92,7 +92,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
 <input type="hidden" name="CalibrationID" value="<?=$CalibrationID?>">
 <input type="hidden" name="NodeName" value="<?=$_POST['NodeName']?>">
 <input type="hidden" name="NumNodes" value="<?=$_POST['NumNodes']?>">
-<input type="hidden" name="NodeCount" value="<?=$_POST['NodeCount']?>">
+<input type="hidden" name="NodeCount" value="<?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?>">
 <input type="hidden" name="NumTipPairs" value="<?=$_POST['NumTipPairs']?>">
 
     <tr>
