@@ -10,7 +10,7 @@ $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEIN
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 ?>
-<h2 class="contentheading" style="margin-top: 20px;">Search by tip taxa</h2>
+<h2 class="contentheading" style="margin-top: 20px;">Find calibrations</h2>
 
 <form action="Find_CalibrationsByTips.php" method="GET" name="Find_CalibrationsByTips">
 <table width="100%" border="0" align="left">
@@ -23,10 +23,72 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
   <tr>
     <td align="right">taxon B</td>
     <td><input type="text" name="TaxonB" id="TaxonB"> (optional)</td>
+    <td>
+	<input type="submit" name="Submit1" id="Submit1" value="Find calibrations"
+	       Xonclick="return testForTipTaxon( TODO );">
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+<!--
+  <tr>
+    <td width="15%" align="right">taxon A </td>
+    <td width="22%"><input type="text" name="TaxonA" id="TaxonA"></td>
+    <td width="50%">&nbsp;</td>
+    <td width="13%">&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="right">AND taxon B</td>
+    <td><input type="text" name="TaxonB" id="TaxonB"> (optional)</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="right">BUT NOT taxon C</td>
+    <td><input type="text" name="TaxonB" id="TaxonB"> (optional)</td>
     <td><input type="submit" name="Submit1" id="Submit1" value="Search"
 	       Xonclick="return testForTipTaxon( TODO );"></td>
     <td>&nbsp;</td>
   </tr>
+
+-->
+</table>
+</form>	
+
+<h2 class="contentheading" style="margin-top: 20px; clear: left;">Search by taxon|node|clade|group</h2>
+
+<form action="Find_CalibrationsByTips.php" method="GET" name="Find_CalibrationsByTips">
+<table width="100%" border="0" align="left">
+  <tr>
+    <td align="right">taxon</td>
+    <td align="left"><input type="text" name="TaxonB" id="TaxonB"></td>
+    <td>
+	<input type="submit" name="Submit1" id="Submit1" value="Show all within clade"
+	       Xonclick="return testForTipTaxon( TODO );">
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+<!--
+  <tr>
+    <td width="15%" align="right">taxon A </td>
+    <td width="22%"><input type="text" name="TaxonA" id="TaxonA"></td>
+    <td width="50%">&nbsp;</td>
+    <td width="13%">&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="right">AND taxon B</td>
+    <td><input type="text" name="TaxonB" id="TaxonB"> (optional)</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="right">BUT NOT taxon C</td>
+    <td><input type="text" name="TaxonB" id="TaxonB"> (optional)</td>
+    <td><input type="submit" name="Submit1" id="Submit1" value="Search"
+	       Xonclick="return testForTipTaxon( TODO );"></td>
+    <td>&nbsp;</td>
+  </tr>
+
+-->
 </table>
 </form>	
 <div style="height: 12px; clear: both;">&nbsp;</div>
