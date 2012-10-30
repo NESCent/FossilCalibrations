@@ -13,6 +13,12 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 <div class="left-column" style="">
 	<!-- faceted search tools -->
 	<div id="faceted-search">
+
+		<div style="text-align: center; margin: 3px 0 10px;">
+			<input type="submit" style="float: right;" value="Go" />
+			<input type="text" style="width: 80%;" value="Search by species, clade, age, etc." />
+		</div>
+
 		<h3 style="margin-top: 2px;">Recommended views</h3>
 		<div style="text-align: center;">
 			<select>
@@ -189,13 +195,13 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 	<table class="qualifiers" border="0">
 		<tr>
 			<td width="24">
-			\/
+			&nbsp;
 			</td>
 			<td width="*">
-			99% match
+			&nbsp;
 			</td>
 			<td width="100">
-			9&ndash;12 Ma
+			&nbsp;
 			</td>
 			<td width="120">
 			Added Jan 3, 2013
@@ -223,16 +229,16 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 	<table class="qualifiers" border="0">
 		<tr>
 			<td width="24">
-			\/
+			&nbsp;
 			</td>
 			<td width="*">
-			99% match
+			&nbsp;
 			</td>
 			<td width="100">
-			9&ndash;12 Ma
+			&nbsp;
 			</td>
 			<td width="120">
-			Added Jan 3, 2013
+			Added Dec 28, 2012
 			</td>
 		</tr>
 	</table>
@@ -257,16 +263,16 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 	<table class="qualifiers" border="0">
 		<tr>
 			<td width="24">
-			\/
+			&nbsp;
 			</td>
 			<td width="*">
-			99% match
+			&nbsp;
 			</td>
 			<td width="100">
-			9&ndash;12 Ma
+			&nbsp;
 			</td>
 			<td width="120">
-			Added Jan 3, 2013
+			Added Dec 23, 2012
 			</td>
 		</tr>
 	</table>
@@ -300,7 +306,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			9&ndash;12 Ma
 			</td>
 			<td width="120">
-			Added Jan 3, 2013
+			Added Dec 9, 2012
 			</td>
 		</tr>
 	</table>
@@ -319,6 +325,9 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 		&nbsp;
 		<a class="more" href="#">more</a>
 	</div>
+</div>
+<div style="text-align: right; border-top: 1px solid #ddd; font-size: 0.9em; padding-top: 2px;">
+	<a href="#">Show more results like this</a>
 </div>
 
 </div><!-- END OF center-column -->
