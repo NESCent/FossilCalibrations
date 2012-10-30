@@ -73,18 +73,21 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 </table>
 			</dd>
 
-			<dt>By <a class="term" href="#">geological period</a></dt>
-			<dd>
-<table width="100%" border="0" align="left">
-  <tr>
-    <td style="width: 145px; text-align: right;">Minimum (youngest)&nbsp;</td>
-    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 80%;"></td>
-  </tr>
-  <tr>
-    <td style="text-align: right;">Maximum (oldest)&nbsp;</td>
-    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 80%;"> </td>
-  </tr>
-</table>
+			<dt>By <a class="term" href="#">geological time</a></dt>
+			<dd style="margin-left:8px;">
+<div style="text-align: center; margin: 4px 0 2px; padding-right: 12px;">
+<select name="Age" id="Age">
+	<option value="">Choose any period</option>
+	<option value="Modern">Modern, Quaternary, GSA 1999</option>
+	<option value="Calabrian">Calabrian, Quaternary, GSA 1999</option>
+	<option value="Zanclean">Zanclean, Neogene, GSA 1999</option>
+	<option value="Tortonian">Tortonian, Neogene, GSA 1999</option>
+	<option value="Serravallian">Serravallian, Neogene, GSA 1999</option>
+	<option value="Bartonian">Bartonian, Paleogene, GSA 1999</option>
+	<option value="Bartonian">Bartonian, Paleogene, GSA 1999</option>
+	<option value="Danian">Danian, Paleogene, GSA 1999</option>		     
+</select>
+</div>
 			</dd>
 			<dt style="height: 0px;">&nbsp;</dt>
 <!--
@@ -141,7 +144,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			</div>
 		</div>
 
-		<h3 class="contentheading" style="margin-top: 0;">Best Practices</h3>
+		<h3 class="contentheading" style="margin-top: 0;">Calibration Best Practices</h3>
 		<ol class="best-practices">
 			<li><a href="#">Cite the <em>original</em> calibration source.</a></li>
 			<li><a href="#">Brush and floss daily.</a></li>
