@@ -145,7 +145,7 @@ $highertaxon_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
                     </select>&nbsp;&nbsp;&nbsp;&nbsp; <input type="submit" value="browse by clade"/>
 </p>
 </form>
-</div><!-- end of #browse-tools -->
+</div><!-- END OF #browse-tools -->
 <?php 
 //open and print page footer template
 require('Footer.txt');
