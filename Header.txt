@@ -15,6 +15,9 @@
 	<h2 class="fc-title"><a href="index.php">Fossil Calibration Database</a></h2>
 	<ul id="top-menu">
 	    <li>
+		<a href="#">About Us</a> 
+	    </li>
+	    <li>
 		<a href="index.php">Find Calibrations</a>
 	    </li>
 	    <li>
