@@ -9,6 +9,11 @@
 <body>
 <div id="header">
     <div id="inner-header">
+        <div id="simple-search" style="">
+	    <!--<input type="submit" class="search-button" style="" value="Search" />-->
+	    <input type="image" class="search-button" style="" value="Search" src="images/search-button.png" />
+	    <input type="text" class="search-field" style="" value="Search by author, clade, publication, species, etc." />
+        </div>
 	<img width="49" height="48" border="0" align="left"
 	     src="http://palaeo-electronica.org/content/images/logo/logo_small.png">
 	<h3 class="pe-title"><a href="http://palaeo-electronica.org/">Palaeontologia Electronica</a></h3>
