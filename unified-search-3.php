@@ -3,7 +3,7 @@
 require('Site.conf');
 
 // open and print header template
-require('Header.txt');
+require('header.php');
 
 // connect to mySQL server and select the Fossil Calibration database
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');

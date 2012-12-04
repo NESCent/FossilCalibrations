@@ -3,7 +3,7 @@
 <?php if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; ?>
 <title><?= $PageTitle ?></title>
 
-<link href="site.css" rel="stylesheet" type="text/css">
+<link href="css/site.css" rel="stylesheet" type="text/css">
 
 </head>
 <body>

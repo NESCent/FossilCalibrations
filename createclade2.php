@@ -3,7 +3,7 @@
 require('Site.conf');
 
 // open and print header template
-require('Header.txt');
+require('header.php');
 ?>
 
 <?php

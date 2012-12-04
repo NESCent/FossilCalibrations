@@ -31,7 +31,7 @@ $tippair_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 
 // open and print header template
-require('Header.txt');
+require('header.php');
 ?>
 
 <p><h1>View calibration:  <?=$calibration_info['NodeName']?> (ID: <?=$calibration_info['CalibrationID']?>)</h1></p>

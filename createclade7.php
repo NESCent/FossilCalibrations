@@ -3,7 +3,7 @@
 require('Site.conf');
 
 // open and print header template
-require('Header.txt');
+require('header.php');
 
 // set useful variables (assert defaults if not provided?)
 $NodeName= isset($_POST['NodeName']) ? $_POST['NodeName'] : '?';
