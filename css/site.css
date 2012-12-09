@@ -152,13 +152,13 @@ dl.filter-list dt.optional-filter {
 	height: 32px;
 	line-height: 26px;
 	padding-left: 30px;
-	background: transparent url(./images/add-filter.png) left center no-repeat;
+	background: transparent url(../images/add-filter.png) left center no-repeat;
 }
 dl.filter-list dt.optional-filter.active-filter {
-	background-image: url(./images/remove-filter.png);
+	background-image: url(../images/remove-filter.png);
 }
 dl.filter-list dt.optional-filter.disabled-filter {
-	background-image: url(./images/disabled-filter.png);
+	background-image: url(../images/disabled-filter.png);
 }
 dl.filter-list dd.disabled-explanation {
 	display: block;
