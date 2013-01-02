@@ -107,7 +107,25 @@ CREATE TABLE pinned_nodes (
   target_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
   pinned_tree VARCHAR(20) NOT NULL,	-- eg, 'NCBI' or 'FCD-135' (or just 'FCD'?)
   pinned_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
-  calibration_id INT(11) NOT NULL 	-- the calibration that pins this node
+  calibration_id INT(11) NOT NULL, 	-- the calibration that pins this node
+  comments VARCHAR(255) DEFAULT NULL
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+/*
+ * The pinned_nodes table in turn generates a bare-bones table tracking "node
+ * identity". This maps single generic nodes in all_nodes multitree to one OR
+ * MORE nodes and the source for each.)
+    node_identity
+ */
+
+DROP TABLE IF EXISTS node_identity;
+CREATE TABLE node_identity (
+  all_nodes_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  source_tree VARCHAR(20) NOT NULL,	-- eg, 'NCBI' or 'FCD-135' (or just 'FCD'?)
+  source_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  comments VARCHAR(255) DEFAULT NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -128,6 +146,9 @@ CREATE TABLE all_nodes (
 
   PRIMARY KEY (node_id), KEY parent_node_id (parent_node_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- create a staging table with same structure
+DROP TABLE IF EXISTS tmp_all_nodes;
+CREATE TABLE tmp_all_nodes AS SELECT * FROM all_nodes;
 
 
 /* 
@@ -140,6 +161,71 @@ CREATE TABLE all_nodes (
  * down-time if we're replacing the real tables (since we can simply
  * DROP+RENAME in the final step if we're serious).
  */
+
+
+/*
+ * refreshMultitree( testOrFinal )
+ * 	where testOrFinal = 'TEST' | 'FINAL'
+ */
+
+DROP PROCEDURE IF EXISTS refreshMultitree;
+
+DELIMITER #
+
+CREATE PROCEDURE refreshMultitree (IN testOrFinal VARCHAR(20))
+BEGIN
+
+-- DECLARE any local vars here
+
+--
+-- clear staging table, then rebuild
+--
+TRUNCATE TABLE tmp_all_nodes;
+
+-- add nodes from NCBI taxonomy
+INSERT INTO tmp_all_nodes (node_id, parent_node_id, node_source, source_node_id)
+SELECT
+ CONCAT('NCBI-', taxonid), 	-- OR two-part PK?
+ CONCAT('NCBI-', parenttaxonid), -- allow "foreign" parent_source?
+ 'NCBI',
+ taxonid
+FROM
+ NCBI_nodes;
+
+-- TODO: add nodes from PBDB, other reference trees?
+
+-- TODO: add nodes from FCD calibrations and account for pinning
+INSERT INTO tmp_all_nodes (node_id, parent_node_id, node_source, source_node_id)
+SELECT
+ CONCAT('FCD-', node_id), 	-- OR two-part PK?
+ CONCAT('FCD-', parent_node_id), -- allow "foreign" parent_source?
+ 'FCD',
+ node_id
+FROM
+ FCD_nodes;
+
+
+-- if we're serious, replace/rename the real tables
+IF testOrFinal = 'FINAL' THEN
+  TRUNCATE TABLE all_nodes;
+  INSERT INTO all_nodes SELECT * FROM tmp_all_nodes;
+END IF;
+
+END #
+
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*
@@ -161,21 +247,12 @@ BEGIN
 --
 TRUNCATE TABLE tmp_AC_names_nodes;
 
--- INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species)
--- VALUES
---  names.name, -- uniquename?
---  CONCAT(names.class,", NCBI taxon"),
---  1,  -- all NCBI names(?) are taxa
---  IF((SELECT COUNT(*) FROM NCBI_nodes WHERE parenttaxonid = names.taxonid) == 0, 0, 1)
--- FROM
---  NCBI_names AS names
--- LEFT OUTER JOIN NCBI_nodes AS nodes ON nodes.taxonid = names.taxonid;
 INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species)
 SELECT
  names.name, -- uniquename?
  CONCAT(names.class,", NCBI taxon"),
  1,  -- all NCBI names(?) are taxa
- 0 -- IF((SELECT COUNT(*) FROM NCBI_nodes WHERE parenttaxonid = names.taxonid) == 0, 0, 1)
+ IF(nodes.rank = 'species', 1, 0)     -- OR -- IF((SELECT COUNT(*) FROM NCBI_nodes WHERE parenttaxonid = names.taxonid) = 0, 1, 0)
 FROM
  NCBI_names AS names
 LEFT OUTER JOIN NCBI_nodes AS nodes ON nodes.taxonid = names.taxonid;
@@ -185,7 +262,7 @@ SELECT
  names.name, -- uniquename?
  CONCAT(names.class,", FCD node"),
  1,  -- all NCBI names(?) are taxa
- 0 -- IF((SELECT COUNT(*) FROM FCD_nodes WHERE parent_node_id = names.node_id) == 0, 0, 1)
+ IF((SELECT COUNT(*) FROM FCD_nodes WHERE parent_node_id = names.node_id) = 0, 1, 0)
 FROM
  FCD_names AS names
 LEFT OUTER JOIN FCD_nodes AS nodes ON nodes.node_id = names.node_id
