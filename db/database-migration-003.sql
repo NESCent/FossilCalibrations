@@ -146,11 +146,12 @@ CREATE TABLE node_identity (
   comments VARCHAR(255) DEFAULT NULL,
   is_public_node TINYINT(1) NOT NULL,   -- TRUE if source node is public
 
-  PRIMARY KEY (multitree_node_id)
+  PRIMARY KEY (multitree_node_id),
+  UNIQUE KEY source_index (source_tree, source_node_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_node_identity;
-CREATE TABLE tmp_node_identity AS SELECT * FROM node_identity;
+CREATE TABLE tmp_node_identity LIKE node_identity;
 
 
 /*
@@ -175,7 +176,7 @@ CREATE TABLE multitree (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_multitree;
-CREATE TABLE tmp_multitree AS SELECT * FROM multitree;
+CREATE TABLE tmp_multitree LIKE multitree;
 
 
 /* 
@@ -285,7 +286,7 @@ OPEN pinned_node_cursor;
     FETCH pinned_node_cursor INTO the_target_tree, the_target_node_id, the_pinned_tree, the_pinned_node_id;
 
     IF no_more_rows THEN 
-      CLOSE pinned_node_cursor;
+      -- CLOSE pinned_node_cursor;
       LEAVE the_loop;
     END IF;
 
@@ -344,27 +345,47 @@ BEGIN
 --
 TRUNCATE TABLE tmp_multitree;
 
--- add nodes from NCBI taxonomy
-INSERT INTO tmp_multitree (node_id, parent_node_id, node_source, source_node_id)
-SELECT
- CONCAT('NCBI-', taxonid), 	-- OR two-part PK?
- CONCAT('NCBI-', parenttaxonid), -- allow "foreign" parent_source?
- 'NCBI',
- taxonid
-FROM
- NCBI_nodes;
+-- TODO: add paths from entries in the node-identity table
+/*
+For each node identity,
+  add an entry for each DISTINCT child-parent path (reckoned w/ multitree IDs), including
+    node_id (child ID as multitree ID)
+    parent_id (as multitree ID)
+    is_public_path = TRUE if at least one of these paths is public
+			(or if at least one identical parent and child node are public?)
 
--- TODO: add nodes from PBDB, other reference trees?
-
--- TODO: add nodes from FCD calibrations and account for pinning
-INSERT INTO tmp_multitree (node_id, parent_node_id, node_source, source_node_id)
+SELECT DISTINCT xxx FROM yyy	
+*/
+-- let's try this as a two-step... first, build a flat/dumb multitree
+-- by copying in each source path explicitly
+INSERT INTO tmp_multitree (node_id, parent_node_id, is_public_path)
 SELECT
- CONCAT('FCD-', node_id), 	-- OR two-part PK?
- CONCAT('FCD-', parent_node_id), -- allow "foreign" parent_source?
- 'FCD',
- node_id
+ multitree_node_id, 
+ (SELECT parent.multitree_node_id FROM tmp_node_identity AS parent WHERE source_tree = child.source_tree AND source_node_id =
+  -- pivot to proper source table and field names
+  (CASE child.source_tree
+    WHEN 'NCBI' THEN
+      (SELECT parenttaxonid FROM NCBI_nodes WHERE taxonid = child.source_node_id)
+    -- TODO: add other source tables here...
+    ELSE
+      (SELECT parent_node_id FROM FCD_nodes WHERE node_id = child.source_node_id)
+   END)
+ ),
+  -- get public flag from source tree (via any node)
+ (CASE child.source_tree
+    WHEN 'NCBI' THEN
+      1 -- all NCBI nodes are public
+    -- TODO: add other source tables here...
+    ELSE
+      (SELECT is_public_node FROM FCD_nodes WHERE node_id = child.source_node_id)
+  END)
 FROM
- FCD_nodes;
+ tmp_node_identity as child
+-- LIMIT 1000
+;
+-- ...now flatten this by consolidating all identical paths and setting the
+--  public flag to true if any of the source paths is public
+-- TODO
 
 
 -- if we're serious, replace/rename the real tables
