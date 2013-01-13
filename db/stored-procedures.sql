@@ -236,12 +236,12 @@ DROP TEMPORARY TABLE IF EXISTS hier;
 DROP TEMPORARY TABLE IF EXISTS tmp;
 
 CREATE TEMPORARY TABLE hier (
- parenttaxonid MEDIUMINT(8) UNSIGNED, 
  taxonid MEDIUMINT(8) UNSIGNED, 
+ parenttaxonid MEDIUMINT(8) UNSIGNED, 
  depth SMALLINT(6) UNSIGNED DEFAULT 0
 ) ENGINE = memory;
 
-INSERT INTO hier SELECT parenttaxonid, taxonid, v_depth FROM NCBI_nodes WHERE taxonid = p_taxonid;
+INSERT INTO hier SELECT taxonid, parenttaxonid, v_depth FROM NCBI_nodes WHERE taxonid = p_taxonid;
 
 /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
 
@@ -253,7 +253,7 @@ WHILE NOT v_done DO
     IF EXISTS( SELECT 1 FROM NCBI_nodes p INNER JOIN hier ON p.parenttaxonid = hier.taxonid AND hier.depth = v_depth) THEN
 
         INSERT INTO hier 
-            SELECT p.parenttaxonid, p.taxonid, v_depth + 1 FROM NCBI_nodes p 
+            SELECT p.taxonid, p.parenttaxonid, v_depth + 1 FROM NCBI_nodes p 
             INNER JOIN tmp ON p.parenttaxonid = tmp.taxonid AND tmp.depth = v_depth;
 
         SET v_depth = v_depth + 1;          
