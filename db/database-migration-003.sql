@@ -135,12 +135,15 @@ CREATE TABLE pinned_nodes (
  * The pinned_nodes table in turn generates a bare-bones table tracking "node
  * identity". This maps single generic nodes in the multitree to one OR MORE 
  * source nodes.
+ *
+ * NOTE that we're using signed integers for the multitree_node_id. All pinned
+ * nodes will have negative IDs in the final multitree.
     node_identity
  */
 
 DROP TABLE IF EXISTS node_identity;
 CREATE TABLE node_identity (
-  multitree_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  multitree_node_id MEDIUMINT(8) NOT NULL, -- note that this is SIGNED
   source_tree VARCHAR(20) NOT NULL,	-- eg, 'NCBI' or 'FCD-135' (or just 'FCD'?)
   source_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
   comments VARCHAR(255) DEFAULT NULL,
@@ -159,13 +162,17 @@ CREATE TABLE tmp_node_identity LIKE node_identity;
  * in the system. Each record here is a single parent-child path belonging to
  * one OR MORE source trees. If any of these trees are public, is_public_path
  * should be true (1).
+ * 
+ * For efficiency, un-pinned NCBI nodes in the multitree will use their native
+ * (NCBI) node IDs. All others (pinned NCBI nodes and all user-contributed
+ * nodes) will use negative IDs from node_identity.
     multitree
  */
 
 DROP TABLE IF EXISTS multitree;
 CREATE TABLE multitree (
-  node_id MEDIUMINT(8) UNSIGNED NOT NULL,
-  parent_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  node_id MEDIUMINT(8) NOT NULL,  -- signed to support negative IDs
+  parent_node_id MEDIUMINT(8) NOT NULL,
   -- define the source of this node, and its original ID
 -- node_source VARCHAR(20) NOT NULL,	-- eg, 'NCBI' or 'FCD'
 -- source_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
@@ -212,7 +219,7 @@ DECLARE the_target_node_id MEDIUMINT(8) UNSIGNED;
 DECLARE the_pinned_tree VARCHAR(20);
 DECLARE the_pinned_node_id MEDIUMINT(8) UNSIGNED;
 -- DECLARE the_is_public_flag TINYINT(1) DEFAULT 0;
-DECLARE the_matching_multitree_node_id MEDIUMINT(8) UNSIGNED;
+DECLARE the_matching_multitree_node_id MEDIUMINT(8);
 
 -- a flag terminates the loop when no more records are found
 DECLARE no_more_rows INT DEFAULT FALSE;
@@ -243,42 +250,45 @@ v store return value from UUID() as what type?
 -- use incrementing multitree node IDs, starting with 1
 SET @nextID = 0;
 
---
--- add all nodes from NCBI taxonomy, with incrementing values for multitree_node_id
---   see http://stackoverflow.com/a/8678920
-INSERT INTO tmp_node_identity (multitree_node_id, source_tree, source_node_id, comments, is_public_node)
-SELECT
- @nextID := @nextID + 1,
- 'NCBI',
- taxonid,
- 'just another NCBI node',
- 1     -- NCBI nodes are always public
-FROM
- NCBI_nodes;
+-- --
+-- -- add all nodes from NCBI taxonomy, with incrementing values for multitree_node_id
+-- --   see http://stackoverflow.com/a/8678920
+-- INSERT INTO tmp_node_identity (multitree_node_id, source_tree, source_node_id, comments, is_public_node)
+-- SELECT
+ -- taxonid, -- @nextID := @nextID - 1,
+ -- 'NCBI',
+ -- taxonid,
+ -- 'un-pinned NCBI node',
+ -- 1     -- NCBI nodes are always public
+-- FROM
+ -- NCBI_nodes;
 
 -- TODO: add nodes from PBDB, other reference trees?
 
 --
--- add nodes from FCD trees, all with new IDs
+-- add nodes from FCD trees, all with new (negative) IDs
 --
 INSERT INTO tmp_node_identity (multitree_node_id, source_tree, source_node_id, comments, is_public_node)
 SELECT
- @nextID := @nextID + 1,
+ @nextID := @nextID - 1,
  'FCD',
  node_id,
- 'just another FCD node',
+ 'un-pinned FCD node',
  (SELECT MAX(is_public_tree) FROM FCD_trees   -- check for public|private tree? or reach waaay back to publication?
 	WHERE tree_id = FCD_nodes.tree_id)
 FROM
  FCD_nodes;
 
 --
--- At this point, all nodes are present in node_identity. Walk the
--- pinned_nodes table, consolidating IDs among all pinned nodes. This will
--- result in duplicate values and "gaps" in column multitree_node_id.
+-- At this point, all user-contributed (FCD) nodes are present in node_identity. Walk the
+-- pinned_nodes table, adding pinned NCBI nodes and consolidating IDs among
+-- all entries. This will typically result in duplicates and "gaps" in column
+-- multitree_node_id, which is expected.
 -- 
 -- TODO: boil this down to a single, complex SQL statement?
---
+-- TODO: add entries for any pinned NCBI nodes
+-- TODO: consolidate any multitree_node_ids (all negative)
+-- TODO: LATER, when building multitree, replace any NCBI nodes there with pinned entry(ies)
 
 OPEN pinned_node_cursor;
 
@@ -290,16 +300,29 @@ OPEN pinned_node_cursor;
       LEAVE the_loop;
     END IF;
 
-    -- diagnostic display
-    SELECT the_target_tree, the_target_node_id, the_pinned_tree, the_pinned_node_id;
-
     -- get the target node's multitree ID
     SET the_matching_multitree_node_id = (SELECT MIN(multitree_node_id)
       FROM tmp_node_identity 
       WHERE source_tree = the_target_tree AND source_node_id = the_target_node_id);
 
-    -- diagnostic display
-    SELECT the_matching_multitree_node_id;
+    -- if the multitree ID wasn't found (presumably an NCBI node), add new entry now
+    IF 
+      the_matching_multitree_node_id <=> NULL
+    THEN 
+      INSERT INTO tmp_node_identity
+      VALUES (
+        @nextID := @nextID - 1,
+        the_target_tree,
+        the_target_node_id,
+        CONCAT('pinned node from ', the_target_tree),
+        1  -- TODO: revisit and confirm this assumption?
+      );
+    -- ELSE
+      -- BEGIN
+      -- END;
+    END IF;
+    -- use the new ID for all identical nodes
+    SET the_matching_multitree_node_id = @nextID;
 
     -- consolidate multitree_id for all pinned nodes
     -- (be careful to modify ALL matching nodes, even if 3+ are pinned)
@@ -345,7 +368,25 @@ BEGIN
 --
 TRUNCATE TABLE tmp_multitree;
 
--- TODO: add paths from entries in the node-identity table
+-- add all nodes and paths from the NCBI tree (as public)
+INSERT INTO tmp_multitree (node_id, parent_node_id, is_public_path)
+SELECT 
+  taxonid,
+  parenttaxonid,
+  1  -- all NCBI paths are public
+FROM NCBI_nodes;
+
+-- update NCBI node IDs (child and parent) for any pinned nodes
+UPDATE tmp_multitree SET 
+  node_id = COALESCE((SELECT multitree_node_id 
+             FROM tmp_node_identity 
+             WHERE source_tree = 'NCBI' AND source_node_id = node_id), node_id), 
+  parent_node_id = COALESCE((SELECT multitree_node_id 
+             FROM tmp_node_identity 
+             WHERE source_tree = 'NCBI' AND source_node_id = parent_node_id), parent_node_id)
+WHERE 
+  node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI');
+
 /*
 For each node identity,
   add an entry for each DISTINCT child-parent path (reckoned w/ multitree IDs), including
@@ -353,40 +394,26 @@ For each node identity,
     parent_id (as multitree ID)
     is_public_path = TRUE if at least one of these paths is public
 			(or if at least one identical parent and child node are public?)
-
-SELECT DISTINCT xxx FROM yyy	
 */
--- let's try this as a two-step... first, build a flat/dumb multitree
--- by copying in each source path explicitly
+-- add all remaining paths (from FCD trees) using entries in the node_identity table
+-- (every FCD node should be listed there; chase down source node and its parent)
 INSERT INTO tmp_multitree (node_id, parent_node_id, is_public_path)
 SELECT
  multitree_node_id, 
  (SELECT parent.multitree_node_id FROM tmp_node_identity AS parent WHERE source_tree = child.source_tree AND source_node_id =
-  -- pivot to proper source table and field names
-  (CASE child.source_tree
-    WHEN 'NCBI' THEN
-      (SELECT parenttaxonid FROM NCBI_nodes WHERE taxonid = child.source_node_id)
-    -- TODO: add other source tables here...
-    ELSE
       (SELECT parent_node_id FROM FCD_nodes WHERE node_id = child.source_node_id)
-   END)
+    -- TODO: use CASE with other source tables here...?
  ),
   -- get public flag from source tree (via any node)
- (CASE child.source_tree
-    WHEN 'NCBI' THEN
-      1 -- all NCBI nodes are public
-    -- TODO: add other source tables here...
-    ELSE
-      (SELECT is_public_node FROM FCD_nodes WHERE node_id = child.source_node_id)
-  END)
+ (SELECT is_public_node FROM FCD_nodes WHERE node_id = child.source_node_id)
 FROM
  tmp_node_identity as child
--- LIMIT 1000
-;
--- ...now flatten this by consolidating all identical paths and setting the
---  public flag to true if any of the source paths is public
--- TODO
+WHERE source_tree != 'NCBI';
 
+/* TODO: Do we need to "flatten" this by consolidating all identical paths (and setting the
+    public flag to true if any of the source paths is public)? It's probably
+    just a well as-is, with potential duplicate paths.
+ */
 
 -- if we're serious, replace/rename the real tables
 IF testOrFinal = 'FINAL' THEN
@@ -397,16 +424,6 @@ END IF;
 END #
 
 DELIMITER ;
-
-
-
-
-
-
-
-
-
-
 
 
 
