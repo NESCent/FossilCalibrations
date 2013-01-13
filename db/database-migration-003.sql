@@ -137,7 +137,9 @@ CREATE TABLE pinned_nodes (
  * source nodes.
  *
  * NOTE that we're using signed integers for the multitree_node_id. All pinned
- * nodes will have negative IDs in the final multitree.
+ * nodes will have negative IDs in the final multitree. This is just an easy
+ * way to avoid node-ID collisions across different sources. Let's add an
+ * explicit flag is_pinned_node to make it easy to replace this scheme later. 
     node_identity
  */
 
@@ -148,6 +150,7 @@ CREATE TABLE node_identity (
   source_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
   comments VARCHAR(255) DEFAULT NULL,
   is_public_node TINYINT(1) NOT NULL,   -- TRUE if source node is public
+  is_pinned_node TINYINT(1) NOT NULL,   -- FALSE for unpinned, NCBI-only nodes
 
   PRIMARY KEY (multitree_node_id),
   UNIQUE KEY source_index (source_tree, source_node_id)
@@ -268,14 +271,15 @@ SET @nextID = 0;
 --
 -- add nodes from FCD trees, all with new (negative) IDs
 --
-INSERT INTO tmp_node_identity (multitree_node_id, source_tree, source_node_id, comments, is_public_node)
+INSERT INTO tmp_node_identity (multitree_node_id, source_tree, source_node_id, comments, is_public_node, is_pinned_node)
 SELECT
  @nextID := @nextID - 1,
  'FCD',
  node_id,
  'un-pinned FCD node',
  (SELECT MAX(is_public_tree) FROM FCD_trees   -- check for public|private tree? or reach waaay back to publication?
-	WHERE tree_id = FCD_nodes.tree_id)
+	WHERE tree_id = FCD_nodes.tree_id),
+ 0 	-- flip to TRUE for each pinned node when discovered below
 FROM
  FCD_nodes;
 
@@ -315,7 +319,8 @@ OPEN pinned_node_cursor;
         the_target_tree,
         the_target_node_id,
         CONCAT('pinned node from ', the_target_tree),
-        1  -- TODO: revisit and confirm this assumption?
+        1,  -- TODO: revisit and confirm this assumption?
+	1   -- this is obviously a pinned node
       );
     -- ELSE
       -- BEGIN
@@ -328,9 +333,9 @@ OPEN pinned_node_cursor;
     -- (be careful to modify ALL matching nodes, even if 3+ are pinned)
     UPDATE tmp_node_identity
       SET multitree_node_id = the_matching_multitree_node_id, 
-          -- only push public to TRUE, never to FALSE
           -- is_public_node = IF(the_is_public_flag = 1, 1, is_public_node),
-          comment = CONCAT("PINNED! ", comment)
+          comment = CONCAT("PINNED! ", comment),
+	  is_pinned_node = 1  -- flip this flag if still FALSE
       WHERE source_tree = the_pinned_tree AND source_node_id = the_pinned_node_id;
 
   END LOOP;
