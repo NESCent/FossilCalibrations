@@ -77,38 +77,42 @@ CREATE TABLE tmp_AC_names_searchable AS SELECT * FROM AC_names_searchable;
 -- Would we ever want to assign a taxonomic 'rank' to these nodes?
 DROP TABLE IF EXISTS FCD_nodes;
 CREATE TABLE FCD_nodes (
-  node_id MEDIUMINT(8) UNSIGNED NOT NULL,
-  parent_node_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  node_id MEDIUMINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,
+  parent_node_id MEDIUMINT(8) UNSIGNED,
   -- rank VARCHAR(50) DEFAULT NULL,
   comments VARCHAR(255) DEFAULT NULL,
   tree_id MEDIUMINT(8) UNSIGNED NOT NULL,  -- FK to FCD_trees
   -- is_public_node TINYINT(1) NOT NULL,
 
-  PRIMARY KEY (node_id), KEY parent_node_id (parent_node_id)
+  PRIMARY KEY (node_id), 
+  KEY parent_node_id (parent_node_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Can/should someone "own" a name, even if others use it?
 -- Should calibration/cladogram refer to specific names as well as nodes?
 DROP TABLE IF EXISTS FCD_names;
 CREATE TABLE FCD_names (
-  node_id MEDIUMINT(11) UNSIGNED NOT NULL, 
+  node_id MEDIUMINT(11) UNSIGNED NOT NULL,   -- maps to one FCD_node
   name VARCHAR(200) NOT NULL, 
   uniquename VARCHAR(100) DEFAULT NULL,
   class VARCHAR(50) NOT NULL DEFAULT '',
 
-  KEY node_id (node_id), KEY type (class), KEY name (name)
+  PRIMARY KEY node_id (node_id), 
+  KEY type (class), 
+  KEY name (name)
 ) ENGINE=INNODB CHARSET=UTF8;
 
 -- Also a lightweight table for FCD trees
 DROP TABLE IF EXISTS FCD_trees;
 CREATE TABLE FCD_trees (
-  tree_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  tree_id MEDIUMINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,
   root_node_id MEDIUMINT(8) UNSIGNED DEFAULT NULL,
   calibration_id MEDIUMINT(8) UNSIGNED NOT NULL,
   comments VARCHAR(255) DEFAULT NULL,
   is_public_tree TINYINT(1) NOT NULL,
 
-  PRIMARY KEY (tree_id), KEY calibration_id (calibration_id)
+  PRIMARY KEY (tree_id), 
+  KEY calibration_id (calibration_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -334,7 +338,7 @@ OPEN pinned_node_cursor;
     UPDATE tmp_node_identity
       SET multitree_node_id = the_matching_multitree_node_id, 
           -- is_public_node = IF(the_is_public_flag = 1, 1, is_public_node),
-          comment = CONCAT("PINNED! ", comment),
+          comments = CONCAT("PINNED! ", comments),
 	  is_pinned_node = 1  -- flip this flag if still FALSE
       WHERE source_tree = the_pinned_tree AND source_node_id = the_pinned_node_id;
 
@@ -390,7 +394,9 @@ UPDATE tmp_multitree SET
              FROM tmp_node_identity 
              WHERE source_tree = 'NCBI' AND source_node_id = parent_node_id), parent_node_id)
 WHERE 
-  node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI');
+  node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI')
+ OR 
+  parent_node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI');
 
 /*
 For each node identity,

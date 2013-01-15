@@ -1,6 +1,8 @@
 /*
- * Here's a family of stored procedures that probe the NCBI taxonomy in useful ways. These calls
- * can be chained together to handle many common use cases.
+ * Here's a family of stored procedures that probe the full multitree (the
+ * super-set of all reference and user-defined trees). These calls can be
+ * chained together to handle common use cases. Adapted from the NCBI-only
+ * procedures defined previously.
  * 
  * NOTE that in all cases, we're using temporary tables to store our results.
  * This is the recommended alternative to CTEs in MySQL, and should support
@@ -9,16 +11,30 @@
  */
 
 
-
 /*
- * NCBI_getFullNodeInfo( sourceTableName, destinationTableName )
+ * getFullNodeInfo( sourceTableName, destinationTableName )
+ *
+ * This takes a minimal table (eg, the result set from a multitree query):
+ *   node_id
+ *   parent_node_id
+ *   is_public_path
+ * and adds supplemental information about source nodes, node names, etc:
+ *   multitree_node_id  -- NOTE that this will be duplicated for pinned nodes!
+ *   source_tree
+ *   source_node_id
+ *   parent_node_id
+ *   depth -- optional, if provided (specific to query target)
+ *   name  -- TODO: different names based on source
+ *   uniquename
+ *   class -- refers to name type (eg, 'scientific name')
+ *   node_status | is_public_node | is_public_path
  */
 
-DROP PROCEDURE IF EXISTS NCBI_getFullNodeInfo;
+DROP PROCEDURE IF EXISTS getFullNodeInfo;
 
 DELIMITER #
 
-CREATE PROCEDURE NCBI_getFullNodeInfo (IN sourceTableName VARCHAR(80), IN destinationTableName VARCHAR(80))
+CREATE PROCEDURE getFullNodeInfo (IN sourceTableName VARCHAR(80), IN destinationTableName VARCHAR(80))
 BEGIN
 
 -- DECLARE any local vars here
@@ -34,17 +50,19 @@ EXECUTE cmd;
 DEALLOCATE PREPARE cmd;
 
 -- put resulting values into 'tmp' so we can rename+preserve them
+/* TODO TODO TODO TODO TODO */
 CREATE TEMPORARY TABLE tmp AS 
 SELECT 
- src.taxonid,
- src.parenttaxonid,
- src.depth,
+ src.node_id AS multitree_node_id,
+ src.parent_node_id AS parent_multitree_node_id,
+ src.depth AS query_depth,
  names.name,
  names.uniquename,
  names.class
 FROM 
  src
 LEFT OUTER JOIN NCBI_names AS names ON src.taxonid = names.taxonid && names.class = 'scientific name';
+-- TODO: mix in FCD_names based on source_tree?
 -- ORDER BY
 --  src.depth, src.taxonid;
 
@@ -70,14 +88,14 @@ DELIMITER ;
 
 
 /*
- * NCBI_getAllAncestors( p_taxonid, destinationTableName )
+ * getAllAncestors( p_taxonid, destinationTableName )
  */
 
-DROP PROCEDURE IF EXISTS NCBI_getAllAncestors;
+DROP PROCEDURE IF EXISTS getAllAncestors;
 
 DELIMITER #
 
-CREATE PROCEDURE NCBI_getAllAncestors (IN p_taxonid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
+CREATE PROCEDURE getAllAncestors (IN p_taxonid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
 BEGIN
 
 -- Declarations must be at the very top of BEGIN/END block!
@@ -153,14 +171,14 @@ DELIMITER ;
 
 
 /*
- * NCBI_getMostRecentCommonAncestor( p_taxonBid, p_taxonAid, destinationTableName )
+ * getMostRecentCommonAncestor( p_taxonBid, p_taxonAid, destinationTableName )
  */
 
-DROP PROCEDURE IF EXISTS NCBI_getMostRecentCommonAncestor;
+DROP PROCEDURE IF EXISTS getMostRecentCommonAncestor;
 
 DELIMITER #
 
-CREATE PROCEDURE NCBI_getMostRecentCommonAncestor (IN p_taxonAid MEDIUMINT(8) UNSIGNED, IN p_taxonBid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
+CREATE PROCEDURE getMostRecentCommonAncestor (IN p_taxonAid MEDIUMINT(8) UNSIGNED, IN p_taxonBid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
 BEGIN
 
 -- Declarations must be at the very top of BEGIN/END block!
@@ -175,10 +193,10 @@ DROP TEMPORARY TABLE IF EXISTS v_pathA;
 DROP TEMPORARY TABLE IF EXISTS v_pathB;
 
 -- gather both paths for analysis
-CALL NCBI_getAllAncestors( p_taxonAid, "v_pathA" );
+CALL getAllAncestors( p_taxonAid, "v_pathA" );
 			SELECT * FROM v_pathA;
 
-CALL NCBI_getAllAncestors( p_taxonBid, "v_pathB" );
+CALL getAllAncestors( p_taxonBid, "v_pathB" );
 			SELECT * FROM v_pathB;
 
 -- walk the paths "backwards" in depth (from 0) to get the most recent common ancestor
@@ -216,16 +234,52 @@ END #
 DELIMITER ;
 
 
-
 /*
- * NCBI_getCladeFromNode( p_taxonid, destinationTableName )
+ * getMultitreeNodeID( p_node_id, p_source_tree )
+ *
+ * Translates any node ID (reckoned from its source tree) to its corresponding
+ * node ID in the current multitree.
  */
 
-DROP PROCEDURE IF EXISTS NCBI_getCladeFromNode;
+DROP FUNCTION IF EXISTS getMultitreeNodeID;
 
 DELIMITER #
 
-CREATE PROCEDURE NCBI_getCladeFromNode (IN p_taxonid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
+CREATE FUNCTION getMultitreeNodeID (p_source_tree VARCHAR(20), p_source_node_id MEDIUMINT(8) UNSIGNED)
+RETURNS MEDIUMINT(8)
+NOT DETERMINISTIC
+BEGIN
+  -- Declarations must be at the very top of BEGIN/END block!
+  DECLARE response MEDIUMINT(8);
+
+  SELECT multitree_node_id 
+    FROM node_identity 
+    WHERE source_tree = p_source_tree AND source_node_id = p_source_node_id
+    INTO response;
+
+  -- fall back to NCBI node ID for unpinned nodes
+  RETURN IFNULL( response, p_source_node_id );
+END #
+
+DELIMITER ;
+
+
+/*
+ * getCladeFromNode( p_multitree_node_id, destinationTableName, treeFilter )
+ *
+ * NOTE that this requires a multitree ID for the target node!
+ *
+ * TODO: treeFilter is optional, expecting values like
+ *  'ALL_TREES'
+ *  'ALL_PUBLIC'
+ *  '{tree-id}[,{another_tree_id} ...]'
+ */
+
+DROP PROCEDURE IF EXISTS getCladeFromNode;
+
+DELIMITER #
+
+CREATE PROCEDURE getCladeFromNode (IN p_multitree_node_id MEDIUMINT(8), IN destinationTableName VARCHAR(80), IN treeFilter VARCHAR(200))
 BEGIN
 
 -- Declarations must be at the very top of BEGIN/END block!
@@ -236,25 +290,31 @@ DROP TEMPORARY TABLE IF EXISTS hier;
 DROP TEMPORARY TABLE IF EXISTS tmp;
 
 CREATE TEMPORARY TABLE hier (
- taxonid MEDIUMINT(8) UNSIGNED, 
- parenttaxonid MEDIUMINT(8) UNSIGNED, 
+ node_id MEDIUMINT(8), 
+ parent_node_id MEDIUMINT(8), 
  depth SMALLINT(6) UNSIGNED DEFAULT 0
 ) ENGINE = memory;
 
-INSERT INTO hier SELECT taxonid, parenttaxonid, v_depth FROM NCBI_nodes WHERE taxonid = p_taxonid;
+INSERT INTO hier SELECT node_id, parent_node_id, v_depth FROM multitree WHERE node_id = p_multitree_node_id;
 
 /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
 
 CREATE TEMPORARY TABLE tmp ENGINE=memory SELECT * FROM hier;
 
-
 WHILE NOT v_done DO
 
-    IF EXISTS( SELECT 1 FROM NCBI_nodes p INNER JOIN hier ON p.parenttaxonid = hier.taxonid AND hier.depth = v_depth) THEN
+
+SELECT '======== v_depth ========';
+SELECT v_depth;
+SELECT '======== hier ========';
+SELECT * FROM hier;
+
+
+    IF EXISTS( SELECT 1 FROM multitree p INNER JOIN hier ON p.parent_node_id = hier.node_id AND hier.depth = v_depth) THEN
 
         INSERT INTO hier 
-            SELECT p.taxonid, p.parenttaxonid, v_depth + 1 FROM NCBI_nodes p 
-            INNER JOIN tmp ON p.parenttaxonid = tmp.taxonid AND tmp.depth = v_depth;
+            SELECT p.node_id, p.parent_node_id, v_depth + 1 FROM multitree p 
+            INNER JOIN tmp ON p.parent_node_id = tmp.node_id AND tmp.depth = v_depth;
 
         SET v_depth = v_depth + 1;          
 
@@ -265,19 +325,30 @@ WHILE NOT v_done DO
         SET v_done = 1;
     END IF;
 
+    -- TODO: remove this!
+    -- IF v_depth = 9 THEN SET v_done := 1; END IF;
+
 END WHILE;
+ 
+-- 
+-- SELECT v_depth;
+-- SELECT '======== tmp ========';
+-- SELECT * FROM tmp;
+-- SELECT '======== hier ========';
+-- SELECT * FROM hier;
+-- 
 
 -- put resulting values into 'tmp' so we can rename+preserve them
 INSERT INTO tmp SELECT 
- p.taxonid,
- b.taxonid AS parenttaxonid,
+ p.node_id,
+ b.node_id AS parent_node_id,
  hier.depth
 FROM 
  hier
-INNER JOIN NCBI_nodes p ON hier.taxonid = p.taxonid
-LEFT OUTER JOIN NCBI_nodes b ON hier.parenttaxonid = b.taxonid
+INNER JOIN multitree p ON hier.node_id = p.node_id
+LEFT OUTER JOIN multitree b ON hier.parent_node_id = b.node_id
 ORDER BY
- hier.depth, hier.taxonid;
+ hier.depth, hier.node_id;
 
 -- PREPARE statement to create/replace named temp table, copy contents into it?
 -- SET @sqlRenameTable = CONCAT('DROP TABLE IF EXISTS ', destinationTableName, '; ALTER TABLE tmp RENAME ', destinationTableName, ';');
@@ -315,39 +386,53 @@ SET @nodeB_id = 349050;	-- Ficus casapiensis
 
 
 -- SELECT will show variables, but requires a simple 'header' label or it looks dumb
-SELECT CONCAT("=========================== CLADE TEST for node ID: ", @nodeA_id ," ===========================") AS "";
+SELECT CONCAT("=========================== MULTITREE ID for pinned NCBI node: ", @nodeA_id ," ===========================") AS "";
 
-CALL NCBI_getCladeFromNode( @nodeA_id, "cladeA_ids" );
+SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeA_id  );
+SELECT @multitreeID;
+
+SELECT CONCAT("=========================== MULTITREE ID for UN-pinned NCBI node: ", @nodeB_id ," ===========================") AS "";
+
+SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeB_id  );
+SELECT @multitreeID;
+
+SELECT CONCAT("=========================== CLADE TEST for NCBI node: ", @nodeA_id ," ===========================") AS "";
+
+SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeA_id  );
+
+-- TODO: add tree_filter argument? eg, 'ALL_TREES', 'ALL_PUBLIC', or '{tree-id}[,{another_tree_id} ...]'
+CALL getCladeFromNode( @multitreeID, "cladeA_ids", 'ALL_TREES' );
 SELECT * FROM cladeA_ids;
 
+/*
 
 system echo "=========================== FULL INFO for clade members ==========================="
 
-CALL NCBI_getFullNodeInfo( "cladeA_ids", "cladeA_info" );
+CALL getFullNodeInfo( "cladeA_ids", "cladeA_info" );
 SELECT * FROM cladeA_info;
 
 
 SELECT CONCAT("=========================== ALL ANCESTORS for node ID: ", @nodeA_id ," ===========================") AS "";
 
-CALL NCBI_getAllAncestors( @nodeA_id, "ancestorsA_ids" );
+CALL getAllAncestors( @nodeA_id, "ancestorsA_ids" );
 SELECT * FROM ancestorsA_ids;
 
 system echo "=========================== FULL INFO for all ancestors ==========================="
 
-CALL NCBI_getFullNodeInfo( "ancestorsA_ids", "ancestorsA_info" );
+CALL getFullNodeInfo( "ancestorsA_ids", "ancestorsA_info" );
 SELECT * FROM ancestorsA_info;
 
 
 system echo "=========================== COMMON ANCESTOR ==========================="
 
-CALL NCBI_getMostRecentCommonAncestor( @nodeA_id, @nodeB_id, "mostRecentCommonAncestor_ids" );
+CALL getMostRecentCommonAncestor( @nodeA_id, @nodeB_id, "mostRecentCommonAncestor_ids" );
 SELECT * FROM mostRecentCommonAncestor_ids;
 
 system echo "=========================== FULL INFO for common ancestor ==========================="
 
-CALL NCBI_getFullNodeInfo( "mostRecentCommonAncestor_ids", "mostRecentCommonAncestor_info" );
+CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "mostRecentCommonAncestor_info" );
 SELECT * FROM mostRecentCommonAncestor_info;
-
+*/
 system echo "=========================== DONE ==========================="
 
 
