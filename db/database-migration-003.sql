@@ -395,19 +395,25 @@ FROM NCBI_nodes;
 --   WHERE source_tree = 'NCBI';
 
 -- update NCBI node IDs (child and parent) for any pinned nodes
-UPDATE tmp_multitree SET 
-  node_id = COALESCE((SELECT multitree_node_id 
-             FROM tmp_node_identity 
+UPDATE tmp_multitree AS tm 
+ INNER JOIN tmp_node_identity AS tni 
+   ON tni.source_tree = 'NCBI'
+   AND (tm.node_id = tni.source_node_id OR tm.parent_node_id = tni.source_node_id)
+SET 
+  tm.node_id = COALESCE((SELECT multitree_node_id 
+             FROM tmp_node_identity
              WHERE source_tree = 'NCBI' AND source_node_id = node_id), node_id), 
-  parent_node_id = COALESCE((SELECT multitree_node_id 
+  tm.parent_node_id = COALESCE((SELECT multitree_node_id 
              FROM tmp_node_identity 
-             WHERE source_tree = 'NCBI' AND source_node_id = parent_node_id), parent_node_id)
+             WHERE source_tree = 'NCBI' AND source_node_id = parent_node_id), parent_node_id);
+/*
  WHERE
   node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI')
-  -- FIND_IN_SET(node_id, pinned_NCBI_multitree_node_ids) > 0
+  -- FIND_IN_SET(node_id ,pinned_NCBI_multitree_node_ids) > 0
  OR 
   parent_node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI');
   -- FIND_IN_SET(parent_node_id, pinned_NCBI_multitree_node_ids) > 0;
+*/
 
 /*
 For each node identity,
