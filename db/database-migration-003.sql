@@ -371,6 +371,10 @@ CREATE PROCEDURE refreshMultitree (IN testOrFinal VARCHAR(20))
 BEGIN
 
 -- DECLARE any local vars here
+-- TODO: come back to string comparison, vs. slow subqueries below
+--   see http://stackoverflow.com/questions/3730088/mysql-variables-group-concat-and-using-it-later
+--       http://stackoverflow.com/questions/5445048/is-there-a-length-limit-to-group-concat-or-another-reason-why-it-would-not-work
+-- DECLARE pinned_NCBI_multitree_node_ids TEXT DEFAULT '';
 
 --
 -- clear staging table, then rebuild
@@ -385,6 +389,11 @@ SELECT
   1  -- all NCBI paths are public
 FROM NCBI_nodes;
 
+-- -- avoid subqueries by building a comma-delimited string of all pinned NCBI ids
+-- SELECT pinned_NCBI_multitree_node_ids := GROUP_CONCAT( DISTINCT source_node_id ) 
+--   FROM tmp_node_identity 
+--   WHERE source_tree = 'NCBI';
+
 -- update NCBI node IDs (child and parent) for any pinned nodes
 UPDATE tmp_multitree SET 
   node_id = COALESCE((SELECT multitree_node_id 
@@ -393,10 +402,12 @@ UPDATE tmp_multitree SET
   parent_node_id = COALESCE((SELECT multitree_node_id 
              FROM tmp_node_identity 
              WHERE source_tree = 'NCBI' AND source_node_id = parent_node_id), parent_node_id)
-WHERE 
+ WHERE
   node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI')
+  -- FIND_IN_SET(node_id, pinned_NCBI_multitree_node_ids) > 0
  OR 
   parent_node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI');
+  -- FIND_IN_SET(parent_node_id, pinned_NCBI_multitree_node_ids) > 0;
 
 /*
 For each node identity,
