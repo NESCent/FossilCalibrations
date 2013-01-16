@@ -156,8 +156,8 @@ CREATE TABLE node_identity (
   is_public_node TINYINT(1) NOT NULL,   -- TRUE if source node is public
   is_pinned_node TINYINT(1) NOT NULL,   -- FALSE for unpinned, NCBI-only nodes
 
-  PRIMARY KEY (multitree_node_id),
-  UNIQUE KEY source_index (source_tree, source_node_id)
+  PRIMARY KEY (source_tree, source_node_id),
+  KEY (multitree_node_id) -- NOT unique, will repeat for identical nodes!
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_node_identity;
@@ -186,7 +186,7 @@ CREATE TABLE multitree (
   -- NO, this 1:* relation is resolved using node_identity
   is_public_path TINYINT(1) NOT NULL,
 
-  PRIMARY KEY (node_id), KEY parent_node_id (parent_node_id)
+  KEY (node_id), KEY parent_node_id (parent_node_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_multitree;
@@ -278,7 +278,7 @@ SET @nextID = 0;
 INSERT INTO tmp_node_identity (multitree_node_id, source_tree, source_node_id, comments, is_public_node, is_pinned_node)
 SELECT
  @nextID := @nextID - 1,
- 'FCD',
+ CONCAT('FCD-', tree_id),
  node_id,
  'un-pinned FCD node',
  (SELECT MAX(is_public_tree) FROM FCD_trees   -- check for public|private tree? or reach waaay back to publication?
@@ -379,6 +379,11 @@ BEGIN
 --
 -- clear staging table, then rebuild
 --
+
+-- try to turn off expensive index updates during many INSERTs
+ALTER TABLE multitree DISABLE KEYS;
+SET autocommit = 0;
+
 TRUNCATE TABLE tmp_multitree;
 
 -- add all nodes and paths from the NCBI tree (as public)
@@ -442,12 +447,21 @@ WHERE source_tree != 'NCBI';
     public flag to true if any of the source paths is public)? It's probably
     just a well as-is, with potential duplicate paths.
  */
+COMMIT;
 
 -- if we're serious, replace/rename the real tables
 IF testOrFinal = 'FINAL' THEN
+  ALTER TABLE multitree DISABLE KEYS;
+
   TRUNCATE TABLE multitree;
   INSERT INTO multitree SELECT * FROM tmp_multitree;
+  COMMIT;
+
+  ALTER TABLE multitree ENABLE KEYS;
 END IF;
+
+-- try to turn off expensive index updates during many INSERTs
+SET autocommit = 1;
 
 END #
 

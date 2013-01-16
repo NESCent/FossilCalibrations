@@ -183,6 +183,7 @@ system echo "=========================== BEFORE rebuilding multitree table =====
 CALL refreshMultitree('FINAL');
 system echo "=========================== AFTER rebuilding quick-search tables ==========================="
 
+/*
 -- test tip-taxa queries against the new multitree
 
 -- SELECT CONCAT("=========================== CLADE TEST for Primates: ", @deepChildID ," ===========================") AS "";
@@ -214,6 +215,7 @@ system echo "=========================== FULL INFO for common ancestor =========
 
 CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "mostRecentCommonAncestor_info" );
 SELECT * FROM mostRecentCommonAncestor_info;
+*/
 
 system echo "=========================== DONE ==========================="
 

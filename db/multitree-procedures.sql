@@ -22,7 +22,7 @@
  *   multitree_node_id  -- NOTE that this will be duplicated for pinned nodes!
  *   source_tree
  *   source_node_id
- *   parent_node_id
+ *   parent_node_id -- from source tree
  *   depth -- optional, if provided (specific to query target)
  *   name  -- TODO: different names based on source
  *   uniquename
@@ -50,21 +50,31 @@ EXECUTE cmd;
 DEALLOCATE PREPARE cmd;
 
 -- put resulting values into 'tmp' so we can rename+preserve them
-/* TODO TODO TODO TODO TODO */
 CREATE TEMPORARY TABLE tmp AS 
 SELECT 
- src.node_id AS multitree_node_id,
- src.parent_node_id AS parent_multitree_node_id,
- src.depth AS query_depth,
- names.name,
- names.uniquename,
- names.class
+-- *
+  src.node_id AS multitree_node_id
+ ,src.parent_node_id AS parent_multitree_node_id
+ ,src.depth AS query_depth
+ -- ,src.is_public_path -- TODO: or node?
+ ,COALESCE(identity.source_tree, 'NCBI') AS source_tree
+ ,COALESCE(identity.source_node_id, src.node_id) AS source_node_id
+ ,COALESCE(identity.is_pinned_node, 0) AS is_pinned_node
+ ,COALESCE(FCDnames.name, NCBInames.name) AS name
+ ,COALESCE(FCDnames.uniquename, NCBInames.uniquename) AS uniquename
+ ,COALESCE(FCDnames.class, NCBInames.class) AS class
 FROM 
  src
-LEFT OUTER JOIN NCBI_names AS names ON src.taxonid = names.taxonid && names.class = 'scientific name';
--- TODO: mix in FCD_names based on source_tree?
--- ORDER BY
---  src.depth, src.taxonid;
+LEFT OUTER JOIN node_identity AS identity ON (src.node_id = identity.multitree_node_id)
+-- LEFT OUTER JOIN NCBI_nodes AS NCBInodes
+--    ON (NCBInodes.taxonid = identity.multitree_node_id AND identity.source_tree = 'NCBI')
+-- LEFT OUTER JOIN FCD_nodes AS FCDnodes
+--    ON (FCDnodes.node_id = identity.multitree_node_id AND identity.source_tree != 'NCBI')
+LEFT OUTER JOIN NCBI_names AS NCBInames ON (COALESCE(identity.source_tree, 'NCBI') = 'NCBI' AND COALESCE(identity.source_node_id, src.node_id) = NCBInames.taxonid AND NCBInames.class = 'scientific name')
+LEFT OUTER JOIN FCD_names AS FCDnames ON (COALESCE(identity.source_tree, 'NCBI') != 'NCBI' AND COALESCE(identity.source_node_id, src.node_id) = FCDnames.node_id AND NCBInames.class = 'scientific name')
+-- GROUP BY node_id
+ORDER BY query_depth
+;
 
 -- PREPARE statement to create/replace named temp table, copy contents into it?
 -- SET @sqlRenameTable = CONCAT('DROP TABLE IF EXISTS ', destinationTableName, '; ALTER TABLE tmp RENAME ', destinationTableName, ';');
@@ -88,32 +98,32 @@ DELIMITER ;
 
 
 /*
- * getAllAncestors( p_taxonid, destinationTableName )
+ * getAllAncestors( p_multitree_node_id, destinationTableName, treeFilter )
  */
 
 DROP PROCEDURE IF EXISTS getAllAncestors;
 
 DELIMITER #
 
-CREATE PROCEDURE getAllAncestors (IN p_taxonid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
+CREATE PROCEDURE getAllAncestors (IN p_multitree_node_id MEDIUMINT(8), IN destinationTableName VARCHAR(80), IN treeFilter VARCHAR(200))
 BEGIN
 
 -- Declarations must be at the very top of BEGIN/END block!
 DECLARE v_done TINYINT UNSIGNED DEFAULT 0;
 DECLARE v_depth SMALLINT DEFAULT 0;
-DECLARE v_testNodeID MEDIUMINT(8) default p_taxonid;
+DECLARE v_testNodeID MEDIUMINT(8) DEFAULT p_multitree_node_id;
 
 DROP TEMPORARY TABLE IF EXISTS hier;
 DROP TEMPORARY TABLE IF EXISTS tmp;
 
 -- let's try counting depth "backwards" from 0
 CREATE TEMPORARY TABLE hier (
- taxonid MEDIUMINT(8) UNSIGNED, 
- parenttaxonid MEDIUMINT(8) UNSIGNED, 
+ node_id MEDIUMINT(8), 
+ parent_node_id MEDIUMINT(8), 
  depth SMALLINT(6) DEFAULT 0
 ) ENGINE = memory;
 
-INSERT INTO hier SELECT taxonid, parenttaxonid, v_depth FROM NCBI_nodes WHERE taxonid = p_taxonid;
+INSERT INTO hier SELECT node_id, parent_node_id, v_depth FROM multitree WHERE node_id = p_multitree_node_id;
 
 /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
 
@@ -132,8 +142,8 @@ WHILE NOT v_done DO
       -- INNER JOIN tmp ON p.taxonid = tmp.parenttaxonid AND tmp.depth = v_depth;
 
     INSERT INTO hier 
-	SELECT p.taxonid, p.parenttaxonid, (v_depth - 1) FROM NCBI_nodes p 
-	INNER JOIN tmp ON p.taxonid = tmp.parenttaxonid AND tmp.depth = v_depth;
+	SELECT p.node_id, p.parent_node_id, (v_depth - 1) FROM multitree p 
+	INNER JOIN tmp ON p.node_id = tmp.parent_node_id AND tmp.depth = v_depth;
 
     -- SELECT * FROM hier; -- WHERE depth = v_depth;
 
@@ -141,7 +151,7 @@ WHILE NOT v_done DO
 
     -- SELECT taxonid as "multiple IDs?" FROM hier WHERE depth = v_depth;
 
-    SET v_testNodeID = (SELECT taxonid FROM hier WHERE depth = v_depth LIMIT 1);  
+    SET v_testNodeID = (SELECT node_id FROM hier WHERE depth = v_depth LIMIT 1);  
 	-- TODO; find a more graceful allowance for multiple hits here
 
     IF v_testNodeID = 1 then   -- IS NULL THEN
@@ -171,20 +181,20 @@ DELIMITER ;
 
 
 /*
- * getMostRecentCommonAncestor( p_taxonBid, p_taxonAid, destinationTableName )
+ * getMostRecentCommonAncestor( p_multitree_nodeA_id, p_multitree_nodeB_id, destinationTableName, treeFilter )
  */
 
 DROP PROCEDURE IF EXISTS getMostRecentCommonAncestor;
 
 DELIMITER #
 
-CREATE PROCEDURE getMostRecentCommonAncestor (IN p_taxonAid MEDIUMINT(8) UNSIGNED, IN p_taxonBid MEDIUMINT(8) UNSIGNED, IN destinationTableName VARCHAR(80))
+CREATE PROCEDURE getMostRecentCommonAncestor (IN p_multitree_nodeA_id MEDIUMINT(8), IN p_multitree_nodeB_id MEDIUMINT(8), IN destinationTableName VARCHAR(80), IN treeFilter VARCHAR(200))
 BEGIN
 
 -- Declarations must be at the very top of BEGIN/END block!
 DECLARE v_done TINYINT UNSIGNED DEFAULT 0;
 DECLARE v_depth SMALLINT DEFAULT 0;
-DECLARE v_testNodeID MEDIUMINT(8) default p_taxonAid;
+DECLARE v_testNodeID MEDIUMINT(8) DEFAULT p_multitree_nodeA_id;
 
 -- clear "local" temp tables for the ancestor paths of each node
 DROP TEMPORARY TABLE IF EXISTS tmp;
@@ -193,10 +203,10 @@ DROP TEMPORARY TABLE IF EXISTS v_pathA;
 DROP TEMPORARY TABLE IF EXISTS v_pathB;
 
 -- gather both paths for analysis
-CALL getAllAncestors( p_taxonAid, "v_pathA" );
+CALL getAllAncestors( p_multitree_nodeA_id, "v_pathA", treeFilter );
 			SELECT * FROM v_pathA;
 
-CALL getAllAncestors( p_taxonBid, "v_pathB" );
+CALL getAllAncestors( p_multitree_nodeB_id, "v_pathB", treeFilter );
 			SELECT * FROM v_pathB;
 
 -- walk the paths "backwards" in depth (from 0) to get the most recent common ancestor
@@ -205,7 +215,7 @@ CALL getAllAncestors( p_taxonBid, "v_pathB" );
 --  element in common and depth is always relative
 CREATE TEMPORARY TABLE tmp AS
     SELECT * FROM v_pathA  as a
-	WHERE a.taxonid IN (SELECT taxonid FROM v_pathB);
+	WHERE a.node_id IN (SELECT node_id FROM v_pathB);
 
 CREATE TEMPORARY TABLE tmp2 ENGINE=memory SELECT * FROM tmp;
 /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
@@ -270,8 +280,8 @@ DELIMITER ;
  * NOTE that this requires a multitree ID for the target node!
  *
  * TODO: treeFilter is optional, expecting values like
- *  'ALL_TREES'
- *  'ALL_PUBLIC'
+ *  'ALL TREES'
+ *  'ALL PUBLIC'
  *  '{tree-id}[,{another_tree_id} ...]'
  */
 
@@ -396,6 +406,7 @@ SELECT CONCAT("=========================== MULTITREE ID for UN-pinned NCBI node:
 SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeB_id  );
 SELECT @multitreeID;
 
+
 SELECT CONCAT("=========================== CLADE TEST for NCBI node: ", @nodeA_id ," ===========================") AS "";
 
 SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeA_id  );
@@ -404,17 +415,18 @@ SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeA_id  );
 CALL getCladeFromNode( @multitreeID, "cladeA_ids", 'ALL_TREES' );
 SELECT * FROM cladeA_ids;
 
-/*
-
 system echo "=========================== FULL INFO for clade members ==========================="
 
 CALL getFullNodeInfo( "cladeA_ids", "cladeA_info" );
 SELECT * FROM cladeA_info;
 
 
+
 SELECT CONCAT("=========================== ALL ANCESTORS for node ID: ", @nodeA_id ," ===========================") AS "";
 
-CALL getAllAncestors( @nodeA_id, "ancestorsA_ids" );
+SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeA_id  );
+
+CALL getAllAncestors( @multitreeID, "ancestorsA_ids", 'ALL TREES' );
 SELECT * FROM ancestorsA_ids;
 
 system echo "=========================== FULL INFO for all ancestors ==========================="
@@ -423,16 +435,21 @@ CALL getFullNodeInfo( "ancestorsA_ids", "ancestorsA_info" );
 SELECT * FROM ancestorsA_info;
 
 
+
 system echo "=========================== COMMON ANCESTOR ==========================="
 
-CALL getMostRecentCommonAncestor( @nodeA_id, @nodeB_id, "mostRecentCommonAncestor_ids" );
+SET @multitreeID_A = getMultitreeNodeID( 'NCBI', @nodeA_id  );
+SET @multitreeID_B = getMultitreeNodeID( 'NCBI', @nodeB_id  );
+
+CALL getMostRecentCommonAncestor( @multitreeID_A, @multitreeID_B, "mostRecentCommonAncestor_ids", 'ALL TREES' );
 SELECT * FROM mostRecentCommonAncestor_ids;
 
 system echo "=========================== FULL INFO for common ancestor ==========================="
 
 CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "mostRecentCommonAncestor_info" );
 SELECT * FROM mostRecentCommonAncestor_info;
-*/
+
+
 system echo "=========================== DONE ==========================="
 
 
