@@ -28,6 +28,8 @@
  *   uniquename
  *   class -- refers to name type (eg, 'scientific name')
  *   node_status | is_public_node | is_public_path
+ *   calibration_id    -- or NULL; only appears on root-node of FCD tree
+ *   publication_desc  -- or NULL; incl. for all FCD nodes? short or full version?
  */
 
 DROP PROCEDURE IF EXISTS getFullNodeInfo;
@@ -51,7 +53,7 @@ DEALLOCATE PREPARE cmd;
 
 -- put resulting values into 'tmp' so we can rename+preserve them
 CREATE TEMPORARY TABLE tmp AS 
-SELECT 
+SELECT DISTINCT
 -- *
   src.node_id AS multitree_node_id
  ,src.parent_node_id AS parent_multitree_node_id
@@ -60,9 +62,14 @@ SELECT
  ,COALESCE(identity.source_tree, 'NCBI') AS source_tree
  ,COALESCE(identity.source_node_id, src.node_id) AS source_node_id
  ,COALESCE(identity.is_pinned_node, 0) AS is_pinned_node
- ,COALESCE(FCDnames.name, NCBInames.name) AS name
+ -- ,COALESCE(FCDnames.name, NCBInames.name) AS name
  ,COALESCE(FCDnames.uniquename, NCBInames.uniquename) AS uniquename
  ,COALESCE(FCDnames.class, NCBInames.class) AS class
+ ,FCDnodes.tree_id AS tree_id
+ ,FCDtrees.calibration_id AS calibration_id  -- FCD_nodes.tree_id   FCD_trees.calibration_id   calibrations.NodePub   publications.PublicationID,ShortName
+ ,IF(FCDtrees.root_node_id = FCDnodes.node_id, 1, 0) AS is_calibration_target
+ ,pubs.ShortName AS publication_desc
+ -- ,pubs.FullReference AS publication_full
 FROM 
  src
 LEFT OUTER JOIN node_identity AS identity ON (src.node_id = identity.multitree_node_id)
@@ -73,6 +80,10 @@ LEFT OUTER JOIN node_identity AS identity ON (src.node_id = identity.multitree_n
 LEFT OUTER JOIN NCBI_names AS NCBInames ON (COALESCE(identity.source_tree, 'NCBI') = 'NCBI' AND COALESCE(identity.source_node_id, src.node_id) = NCBInames.taxonid AND NCBInames.class = 'scientific name')
 LEFT OUTER JOIN FCD_names AS FCDnames ON (COALESCE(identity.source_tree, 'NCBI') != 'NCBI' AND COALESCE(identity.source_node_id, src.node_id) = FCDnames.node_id AND NCBInames.class = 'scientific name')
 -- GROUP BY node_id
+LEFT OUTER JOIN FCD_nodes AS FCDnodes ON identity.source_tree LIKE 'FCD-%' AND FCDnodes.node_id = identity.source_node_id
+LEFT OUTER JOIN FCD_trees AS FCDtrees ON FCDtrees.tree_id = FCDnodes.tree_id
+LEFT OUTER JOIN calibrations AS cals ON cals.CalibrationID = FCDtrees.calibration_id
+LEFT OUTER JOIN publications AS pubs ON pubs.PublicationID = cals.NodePub
 ORDER BY query_depth
 ;
 
