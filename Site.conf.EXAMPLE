@@ -1,0 +1,33 @@
+<?php
+date_default_timezone_set('America/Indianapolis');
+
+// Configuration variables for the site
+
+$SITEINFO['servername']='127.0.0.1';
+
+// mySQL username
+$SITEINFO['UserName']='REPLACE_ME';
+
+// mySQL password
+$SITEINFO['password']='REPLACE_ME_TOO';
+
+// E-mail address for me
+$SITEINFO['AdministratorContact']='REPLACE_ME@EXAMPLE.COM';
+
+// Path to root directory
+$SITEINFO['docroot']='/var/www/REPLACE_ME/';
+
+// GoogleMaps API key
+$SITEINFO['GoogleMapKey']='AAAAAAA-BBBBBBB-CCCCCCCCCCC-REPLACE_ME';
+
+
+// Admin pages bounce to HTTPS
+$SITEINFO['secure_hostname_and_port'] = 'EXAMPLE.COM:443';
+
+// shared admin username (required for data entry and site management)
+$SITEINFO['AdminUserName']='REPLACE_ME';
+
+// shared admin password
+$SITEINFO['AdminUserPassword']='REPLACE_ME_TOO';
+
+?>

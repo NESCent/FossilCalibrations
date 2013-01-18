@@ -1,0 +1,16 @@
+# Define domain and HTTPS port for the current site setup
+# (default port for HTTPS is 443)
+RewriteRule .* - [E=FCD_DOMAIN:fossils.mysite.com]
+RewriteRule .* - [E=FCD_SECURE_PORT:443]
+
+# Force all requests into this folder to HTTPS
+RewriteEngine On 
+RewriteCond %{SERVER_PORT} 80 
+RewriteCond %{REQUEST_URI} protected 
+RewriteRule ^(.*)$ https://%{ENV:FCD_DOMAIN}:%{ENV:FCD_SECURE_PORT}/protected/$1 [R,L]
+
+# Force login before granting access to this folder
+AuthType Basic
+AuthUserFile "/full/path/to/.htpasswd"
+AuthName "Enter valid username and password!"
+require valid-user
