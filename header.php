@@ -3,7 +3,7 @@
 <?php if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; ?>
 <title><?= $PageTitle ?></title>
 
-<link href="css/site.css" rel="stylesheet" type="text/css">
+<link href="/css/site.css" rel="stylesheet" type="text/css">
 
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div id="inner-header">
         <div id="simple-search" style="">
 	    <!--<input type="submit" class="search-button" style="" value="Search" />-->
-	    <input type="image" class="search-button" style="" value="Search" src="images/search-button.png" />
+	    <input type="image" class="search-button" style="" value="Search" src="/images/search-button.png" />
 	    <input type="text" class="search-field" style="" value="Search by author, clade, publication, species, etc." />
         </div>
 	<img width="49" height="48" border="0" align="left"

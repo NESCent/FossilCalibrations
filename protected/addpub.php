@@ -1,11 +1,13 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
+
+// secure this page
+///require('../secure-page.php');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 ?>
-
 
 <form action="enterpub.php" method="post" name="EnterPub" id="EnterPub">
 <table width="100%" border="0">
@@ -39,5 +41,5 @@ require('header.php');
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('../Footer.txt');
 ?>
