@@ -341,7 +341,8 @@ td.small_orange {
 }
 #header img {
 	position: relative;
-	top: -3px;
+	top: -8px;
+	left: -6px;
 }
 #header h3.pe-title {
 	font-size: 15px;
