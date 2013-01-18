@@ -204,7 +204,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <!--<h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>-->
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">
-<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="#">Show more recend additions</a>
+<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="#">Show more recent additions</a>
 Recently added calibrations
 </h3>
 <!--
