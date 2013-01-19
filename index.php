@@ -14,9 +14,9 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 		<div class="announcement">
 			<strong>A few notes about this version (mid-January 2013)</strong>
 			<p>
-			The <strong>FCD logo</strong> in the site header rotates between three
+			Kristin's <strong>FCD logo</strong> in the site header rotates between three
 			variations with each new page (or on refresh/reload).  Ultimately we should
-			choose just one. 
+			choose just one, based on contrast, legibility, and general appeal. 
 				&nbsp; &bullet; &bullet; &bullet; &bullet; &nbsp; 
 			The site's "<strong>favicon</strong>" (at the top of your browser
 			window) is based on the black-and-white version of this logo.
