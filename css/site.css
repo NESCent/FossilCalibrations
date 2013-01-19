@@ -252,6 +252,25 @@ dl.filter-list dd.active-filter {
 	/* border: 1px dotted pink; */
 }
 
+.featured-calibrations .search-result {
+	float: left; 
+	width: 205px; 
+	margin: 0 26px 0 0;
+}
+.featured-calibrations .search-result .placeholder {
+	background-color: #eee; 
+	text-align: center;
+	padding: 100px 50px;
+	color: #777;
+}
+.featured-calibrations .search-result:first-child {
+	margin-left: 4px;
+}
+.featured-calibrations .search-result:last-child {
+	margin-right: 0px;
+	border-bottom: none;
+}
+
 .search-result {
 	padding-bottom: 12px;
 	overflow: hidden;

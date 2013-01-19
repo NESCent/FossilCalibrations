@@ -228,75 +228,71 @@ Recently added calibrations
 </div>
 -->
 
-<div class="search-result" style="float: left; width: 205px; margin: 0 26px 0 4px;">
-	<table class="qualifiers" border="0" Xstyle="width: 120px; float: right;">
-		<tr>
-			<td width="120">
-			Added Jan 3, 2013
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Salviniales</span>
-		<span class="citation">&ndash; from Hermsen, E. &amp; Gandolfo, A. 2011.</span>
-	</a>
-	<div class="details">
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
-	</div>
-</div>
+<div class="featured-calibrations">
+<?php 
+// list the three most recent publications (firstc calibration from each)
+// TODO: Allow admins to explicitly mark calibrations as feature-worthy?
+$featuredPos = 0;
 
-<div class="search-result" style="float: left; width: 205px; margin: 0 26px 0 0;">
-	<table class="qualifiers" border="0" Xstyle="width: 120px; float: right;">
-		<tr>
-			<td width="120">
-			Added Dec 28, 2012
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Archosauria</span>
-		<span class="citation">&ndash; from Imis, R. 2012.</span>
-	</a>
-	<div class="optional-thumbnail" style="height: 60px;"><img src="images/archosauria.jpeg" style="height: 60px;"/></div>
-	<div class="details">
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
-	</div>
-</div>
+// connect to mySQL server and select the Fossil Calibration database
+$connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
+mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
-<div class="search-result" style="float: left; width: 205px; margin: 0;">
-	<table class="qualifiers" border="0" Xstyle="width: 120px; float: right;">
-		<tr>
-			<td width="120">
-			Added Dec 23, 2012
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Carnivora</span>
-		<span class="citation">&ndash; from Polly, P.D. 2010.</span>
-	</a>
-	<div class="details">
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
+$query='SELECT DISTINCT C . *, img.image
+	FROM (
+		SELECT CF.CalibrationID, V . *
+		FROM View_Fossils V
+		JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
+	) AS J
+	JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
+	LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+	ORDER BY DateCreated DESC
+	LIMIT 3';
+$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+
+// mysql_num_rows($calibration_list) 
+while ($row = mysql_fetch_array($calibration_list)) { ?>
+	<div class="search-result" style="">
+		<table class="qualifiers" border="0" Xstyle="width: 120px; float: right;">
+			<tr>
+				<td width="120">
+				<!--Added Dec 28, 2012-->
+				Added <?= date("M d, Y", strtotime($row['DateCreated'])) ?>
+				</td>
+			</tr>
+		</table>
+		<a class="calibration-link">
+			<span class="name"><?= $row['NodeName'] ?></span>
+			<span class="citation">&ndash; from <?= $row['ShortName'] ?></span>
+		</a>
+		<? // if there's an image mapped to this publication, show it
+		   if ($row['image']) { ?>
+		<div class="optional-thumbnail" style="height: 60px;"><img src="/publication_image.php?id=<?= $row['PublicationID'] ?>" style="height: 60px;"/></div>
+		<? } ?>
+		<div class="details">
+			Here are some fascinating details about the calibration in this result.
+			Here are some fascinating details about the calibration in this result.
+			Here are some fascinating details about the calibration in this result.
+			Here are some fascinating details about the calibration in this result.
+			Here are some fascinating details about the calibration in this result...
+			&nbsp;
+			<a class="more" href="#">more</a>
+		</div>
 	</div>
-</div>
+	<?
+	$featuredPos++;
+}
+
+// fill any remaining slots with a placeholder
+for (;$featuredPos < 3; $featuredPos++) { ?>
+	<div class="search-result">
+		<div class="placeholder">
+		&nbsp;
+		</div>
+	</div>
+<? } ?>
+
+</div><!-- END of .featured-calibrations -->
 
 
 </div><!-- END OF center-column -->
