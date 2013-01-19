@@ -10,7 +10,7 @@ $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEIN
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 ?>
-<?php if (false) { ?>
+<?php if (true) { ?>
 		<div class="announcement">
 			<strong>Scheduled downtime on Monday, Feb. 15</strong>
 			<p>
@@ -173,7 +173,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 		<p>
 			The Fossil Calibration Database is a curated
 			collection of well-justified calibrations, including many published in the
-			journal <a href="#">Palaeontologia Electronica</a>. We also promote best practices for
+			journal <a href="http://palaeo-electronica.org/" target="_blank">Palaeontologia Electronica</a>. We also promote best practices for
 			<a href="#">justifying fossil calibrations</a> and <a href="#">citing calibrations</a> 
 			properly.
 		</p>
@@ -293,5 +293,5 @@ Recently added calibrations
 <!--<div style="background-color: #fcc; color: #fff; clear: both;">test</div>-->
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

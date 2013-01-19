@@ -74,5 +74,5 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

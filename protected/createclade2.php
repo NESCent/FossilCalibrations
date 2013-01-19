@@ -134,5 +134,5 @@ $pub_info=mysql_fetch_assoc($publication_list);
 <?php 
 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

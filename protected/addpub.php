@@ -41,5 +41,5 @@ require('../header.php');
 
 <?php 
 //open and print page footer template
-require('../Footer.txt');
+require('../footer.php');
 ?>

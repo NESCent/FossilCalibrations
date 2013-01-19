@@ -66,5 +66,5 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

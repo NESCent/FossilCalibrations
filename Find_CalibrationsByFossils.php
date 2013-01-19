@@ -137,5 +137,5 @@ while ($row = mysql_fetch_array($calibration_list)) {
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

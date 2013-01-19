@@ -148,5 +148,5 @@ $highertaxon_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 </div><!-- END OF #browse-tools -->
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

@@ -207,5 +207,5 @@ foreach($all_tips as $key => $value) { echo $value."/"; }
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

@@ -131,5 +131,5 @@ for ($i = 1; $i <= $NumTipPairs; $i++) {
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

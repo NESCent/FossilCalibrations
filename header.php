@@ -35,13 +35,10 @@
 		<a href="index.php">Find Calibrations</a>
 	    </li>
 	    <li>
-		<a href="createclade1.php">Enter Calibrations</a>
-	    </li>
-	    <li>
 		<a href="http://palaeo-electronica.org/guide2011.pdf">Submit to PE</a>
 	    </li>
 	    <li>
-		<a href="http://en.wikipedia.org/wiki/Help!_(album)" target="_blank">Help</a> 
+		<a href="#">Help</a> 
 	    </li>
 	</ul>
     </div>

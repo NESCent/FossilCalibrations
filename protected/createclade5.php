@@ -362,5 +362,5 @@ step 5: enter fossil information</h1>
 
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>

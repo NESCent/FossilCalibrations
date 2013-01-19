@@ -348,5 +348,5 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 <!--<div style="background-color: #fcc; color: #fff; clear: both;">test</div>-->
 <?php 
 //open and print page footer template
-require('Footer.txt');
+require('footer.php');
 ?>
