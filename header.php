@@ -23,10 +23,10 @@
 		$nthLogo = ($nthLogo + 1) % 3;  // modulo 3 (rotates 0,1,2,0....)
 		$_SESSION['nthLogo'] = $nthLogo;
 	?>
-	<img width="74" height="74" border="0" align="left"
-	     src="/images/header-logo-<?= $logoOptions[ $nthLogo ] ?>.png">
+	<a href="/"><img width="74" height="74" border="0" align="left"
+	     src="/images/header-logo-<?= $logoOptions[ $nthLogo ] ?>.png"></a>
 	<h3 class="pe-title"><a href="http://palaeo-electronica.org/">Palaeontologia Electronica</a></h3>
-	<h2 class="fc-title"><a href="index.php">Fossil Calibration Database</a></h2>
+	<h2 class="fc-title"><a href="/">Fossil Calibration Database</a></h2>
 	<ul id="top-menu">
 	    <li>
 		<a href="#">About Us</a> 

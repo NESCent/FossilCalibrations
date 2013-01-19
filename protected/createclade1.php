@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 
 // connect to mySQL server and select the Fossil Calibration database
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
@@ -74,5 +74,5 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

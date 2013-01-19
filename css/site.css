@@ -26,7 +26,7 @@ a.term {
 }
 
 h1 {
-	font-size: 16px; /* WAS 12px; */
+	font-size: 25px; /* WAS 12px; */
 	color: #d19e69;
 }
 h1.validation-error {
@@ -186,6 +186,27 @@ dl.filter-list dd.active-filter {
 	font-size: 0.9em;
 }
 
+.link-menu {
+	background-color: #ebebeb;
+	color: #333;
+	margin-top: 8px; 
+	padding: 8px 4px 8px 12px;
+	font-size: 1.2em;
+}
+.link-menu a {
+	display: block;
+	padding: 4px 2px 8px;
+	text-decoration: none;
+}
+.link-menu a.selected {
+	cursor: default;
+}
+.link-menu a.selected:hover {
+	text-decoration: none;
+	background-color: transparent;
+	color: #333;
+}
+
 #site-news {
 }
 #site-news .news-item {
@@ -212,6 +233,7 @@ dl.filter-list dd.active-filter {
 	border: 1px solid #DDB;
 	padding: 6px;
 	margin: 0px 0 -16px 0;
+	line-height: 1.4em;
 }
 .right-column .announcement {
 	margin: 0 0 10px 0;

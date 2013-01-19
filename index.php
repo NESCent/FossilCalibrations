@@ -12,12 +12,17 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 ?>
 <?php if (true) { ?>
 		<div class="announcement">
-			<strong>Scheduled downtime on Monday, Feb. 15</strong>
+			<strong>A few notes about this version (mid-January 2013)</strong>
 			<p>
-				Please note that the Fossil Calibration
-				Database will be temporarily unavailable during the morning of Monday,
-				February 15. This is a scheduled maintenance window, during which we'll also
-				upgrade the site's search tools. We think you're going to like the changes!
+			The <strong>FCD logo</strong> in the site header rotates between three
+			variations with each new page (or on refresh/reload).  Ultimately we should
+			choose just one. 
+				&nbsp; &bullet; &bullet; &bullet; &bullet; &nbsp; 
+			The site's "<strong>favicon</strong>" (at the top of your browser
+			window) is based on the black-and-white version of this logo.
+				&nbsp; &bullet; &bullet; &bullet; &bullet; &nbsp; 
+			<strong>Administrative features</strong> are
+			password-protected, with a single (shared) account. 
 			</p>
 		</div>
 <?php } ?>
@@ -178,6 +183,8 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			properly.
 		</p>
 
+<?php
+/*
 		<h3 class="contentheading" style="margin-top: 40px;">Collection Statistics</h3>
 		<div style="padding-left: 6px;">
 			312 submitted calibrations
@@ -186,6 +193,9 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			<br/>
 			96 submitting researchers 
 		</div>
+*/
+?>
+
 	</div>
 
 </div>
@@ -198,7 +208,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			<input type="text" style="width: 80%;" value="Search by author, clade, publication, species,etc." />
 		</div>
 		<p>
-			<a href="#">Browse calibrations</a> &nbsp;|&nbsp; <a href="#">Advanced search</a> &nbsp;|&nbsp; <a href="#">Example searches</a>
+			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a href="#">Advanced search</a> &nbsp;|&nbsp; <a href="#">Example searches</a>
 		</p>
  </div>
 
