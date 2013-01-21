@@ -27,6 +27,10 @@ $FossMinAge=mysql_fetch_assoc($fossil_minage_results);
 $query = 'SELECT * FROM Link_CalibrationPair L, View_TipPairs t WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.TipPairsID=t.PairID ORDER BY TaxonA, TaxonB';
 $tippair_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
+// Fetch any image associated with this calibration (its publication)
+$query = 'SELECT * FROM publication_images WHERE PublicationID='.$calibration_info['PublicationID'];
+$image_info_results = mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$image_info = mysql_fetch_assoc($image_info_results);
 
 $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 
@@ -34,9 +38,20 @@ $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 require('header.php');
 ?>
 
-<p><h1>View calibration:  <?=$calibration_info['NodeName']?> (ID: <?=$calibration_info['CalibrationID']?>)</h1></p>
+<p><h1>View calibration:  <?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1></p>
 
-<p class="featured-information"><i>calibration from:</i><br />
+<p class="featured-information" style="overflow: hidden;">
+
+<? // if there's an image mapped to this publication, show it
+   if ($image_info['image']) { ?>
+<span class="optional-thumbnail" style="height: 120px; float: right;">
+	<img src="/publication_image.php?id=<?= $calibration_info['PublicationID'] ?>" style="height: 120px;"
+	alt="<?= $image_info['image_caption'] ?>" title="<?= $image_info['image_caption'] ?>"
+	/>
+</span>
+<? } ?>
+
+<i>calibration from:</i><br />
 <?=$calibration_info['FullReference']?>
 <?php if($calibration_info['DOI']!="NULL") { echo '<br><font class="small_text">[<a href="http://dx.doi.org/'.$calibration_info['DOI'].'" target="_blank">View electronic resource]</font></a>'; } ?></p>
 
