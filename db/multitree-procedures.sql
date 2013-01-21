@@ -63,7 +63,7 @@ SELECT DISTINCT
  ,COALESCE(identity.source_node_id, src.node_id) AS source_node_id
  ,COALESCE(identity.is_pinned_node, 0) AS is_pinned_node
  -- ,COALESCE(FCDnames.name, NCBInames.name) AS name
- ,COALESCE(NULLIF(FCDnames.uniquename, ''), NULLIF(FCDnames.name, ''), NULLIF(NCBInames.uniquename, ''), NCBInames.name) AS uniquename
+ ,COALESCE(NULLIF(FCDnames.uniquename, ''), NULLIF(FCDnames.name, ''), NULLIF(NCBInames.uniquename, ''), NULLIF(NCBInames.name, ''), CONCAT(source_tree, ':', source_node_id)) AS uniquename
  ,COALESCE(NULLIF(FCDnames.class, ''), NCBInames.class) AS class
  ,FCDnodes.tree_id AS tree_id
  ,FCDtrees.calibration_id AS calibration_id  -- FCD_nodes.tree_id   FCD_trees.calibration_id   calibrations.NodePub   publications.PublicationID,ShortName
@@ -123,6 +123,8 @@ BEGIN
 DECLARE v_done TINYINT UNSIGNED DEFAULT 0;
 DECLARE v_depth SMALLINT DEFAULT 0;
 DECLARE v_testNodeID MEDIUMINT(8) DEFAULT p_multitree_node_id;
+DECLARE nodesFound INT DEFAULT 0;
+DECLARE nodesFoundLastTime INT DEFAULT 0;
 
 DROP TEMPORARY TABLE IF EXISTS hier;
 DROP TEMPORARY TABLE IF EXISTS tmp;
@@ -154,21 +156,33 @@ WHILE NOT v_done DO
 
     INSERT INTO hier 
 	SELECT p.node_id, p.parent_node_id, (v_depth - 1) FROM multitree p 
-	INNER JOIN tmp ON p.node_id = tmp.parent_node_id AND tmp.depth = v_depth;
+	INNER JOIN tmp ON p.node_id = tmp.parent_node_id AND tmp.depth = v_depth AND tmp.node_id != p.node_id;
+	-- final check is for "self-parenting" nodes like NCBI root
 
     -- SELECT * FROM hier; -- WHERE depth = v_depth;
 
-    SET v_depth:= v_depth - 1;          
-
     -- SELECT taxonid as "multiple IDs?" FROM hier WHERE depth = v_depth;
 
-    SET v_testNodeID = (SELECT node_id FROM hier WHERE depth = v_depth LIMIT 1);  
-	-- TODO; find a more graceful allowance for multiple hits here
+    -- when we stop finding new parent nodes, we're done
+    SET nodesFound := (SELECT COUNT(*) FROM hier);
 
-    IF v_testNodeID = 1 then   -- IS NULL THEN
+    -- SELECT nodesFound;
+    -- SELECT nodesFoundLastTime;
+
+    IF (nodesFound = nodesFoundLastTime) THEN
         SET v_done = 1;
+    ELSE
+        SET nodesFoundLastTime = nodesFound;
+        SET v_depth:= v_depth - 1;          
     END IF;
-    -- SET v_done = 1;
+
+    -- SET v_testNodeID = (SELECT node_id FROM hier WHERE depth = v_depth LIMIT 1);  
+	-- TODO; find a more graceful allowance for multiple hits here
+    -- IF v_testNodeID = 1 then   -- IS NULL THEN
+
+    -- IF EXISTS(SELECT node_id FROM hier WHERE depth = v_depth AND node_id = 1) THEN
+    --   SET v_done = 1;
+    -- END IF;
 
 END WHILE;
 
@@ -324,12 +338,10 @@ CREATE TEMPORARY TABLE tmp ENGINE=memory SELECT * FROM hier;
 
 WHILE NOT v_done DO
 
-
-SELECT '======== v_depth ========';
-SELECT v_depth;
-SELECT '======== hier ========';
-SELECT * FROM hier;
-
+-- SELECT '======== v_depth ========';
+-- SELECT v_depth;
+-- SELECT '======== hier ========';
+-- SELECT * FROM hier;
 
     IF EXISTS( SELECT 1 FROM multitree p INNER JOIN hier ON p.parent_node_id = hier.node_id AND hier.depth = v_depth) THEN
 
@@ -360,7 +372,7 @@ END WHILE;
 -- 
 
 -- put resulting values into 'tmp' so we can rename+preserve them
-INSERT INTO tmp SELECT 
+INSERT INTO tmp SELECT DISTINCT
  p.node_id,
  b.node_id AS parent_node_id,
  hier.depth
