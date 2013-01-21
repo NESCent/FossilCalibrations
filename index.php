@@ -10,122 +10,11 @@ $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEIN
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 ?>
-<?php if (true) { ?>
-		<div class="announcement">
-			<strong>A few notes about this version (mid-January 2013)</strong>
-			<p>
-			Kristin's <strong>FCD logo</strong> in the site header rotates between three
-			variations with each new page (or on refresh/reload).  Ultimately we should
-			choose just one, based on contrast, legibility, and general appeal. 
-				&nbsp; &bullet; &bullet; &bullet; &bullet; &nbsp; 
-			The site's "<strong>favicon</strong>" (at the top of your browser
-			window) is based on the black-and-white version of this logo.
-				&nbsp; &bullet; &bullet; &bullet; &bullet; &nbsp; 
-			<strong>Administrative features</strong> are
-			password-protected, with a single (shared) account. 
-			</p>
-		</div>
-<?php } ?>
-
 <div style="position: absolute; top: 0; right: 0; width: 50%; height: 40px; background-color: #27292B;">&nbsp;</div>
 
-<div class="left-column" style="display: none;">
-	<!-- faceted search tools -->
-	<div id="faceted-search">
-
-		<h3 style="margin-top: 2px;">Recommended views</h3>
-		<div style="text-align: center;">
-			<select>
-				<option>Recently added calibrations</option>
-				<option>Calibrations in clade Mammalia</option>
-				<option>Calibrations in clade Aves</option>
-				<option>Advanced (using filters below)</option>
-			</select>
-		</div>
-
-		<h3>Advanced search filters</h3>
-		<dl class="filter-list">
-			<dt class="optional-filter active-filter">By <a class="term" href="#">extant (living) species</a></dt>
-			<dd class="active-filter">
-<table width="100%" border="0" align="left">
-  <tr>
-    <td style="width: 60px; text-align: right;">Species&nbsp;A&nbsp;</td>
-    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 92%;"></td>
-  </tr>
-  <tr>
-    <td style="text-align: right;">Species&nbsp;B&nbsp;</td>
-    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 92%;"> </td>
-  </tr>
-  <tr>
-    <td style="text-align: right; position: relative; top: -4px; font-size: 0.8em;">(optional)</td>
-    <td>&nbsp;</td>
-  </tr>
-</table>
-			</dd>
-
-			<dt class="optional-filter">By any <a class="term" href="#">clade</a></dt>
-			<dd>
-<table width="100%" border="0" align="left">
-  <tr>
-    <td style="width: 60px; text-align: right;">Clade&nbsp;</td>
-    <td><input type="text" name="Clade" id="Clade" style="width: 92%;"></td>
-<!--
-    <td>
-	<input type="submit" name="Submit1" id="Submit1" value="Show all within clade"
-	       Xonclick="return testForTipTaxon( TODO );">
-    </td>
--->
-  </tr>
-</table>
-			</dd>
-
-			<dt class="optional-filter active-filter">By age (in <a class="term" href="#">Ma</a>)</dt>
-			<dd class="active-filter">
-<table width="100%" border="0" align="left">
-  <tr>
-    <td style="width: 145px; text-align: right;">Minimum (youngest)&nbsp;</td>
-    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 80%;"></td>
-  </tr>
-  <tr>
-    <td style="text-align: right;">Maximum (oldest)&nbsp;</td>
-    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 80%;"> </td>
-  </tr>
-</table>
-			</dd>
-
-			<dt class="optional-filter disabled-filter">By <a class="term" href="#">geological time</a>
-			</dt>
-			<dd class="disabled-explanation">
-				This is incompatible with the <strong>age</strong> filter above. 
-				Remove that filter to use this one.
-			</dd>
-			<dd style="margin-left:8px;">
-<div style="text-align: center; margin: 4px 0 2px; padding-right: 12px;">
-<select name="Age" id="Age">
-	<option value="">Choose any period</option>
-	<option value="Modern">Modern, Quaternary, GSA 1999</option>
-	<option value="Calabrian">Calabrian, Quaternary, GSA 1999</option>
-	<option value="Zanclean">Zanclean, Neogene, GSA 1999</option>
-	<option value="Tortonian">Tortonian, Neogene, GSA 1999</option>
-	<option value="Serravallian">Serravallian, Neogene, GSA 1999</option>
-	<option value="Bartonian">Bartonian, Paleogene, GSA 1999</option>
-	<option value="Bartonian">Bartonian, Paleogene, GSA 1999</option>
-	<option value="Danian">Danian, Paleogene, GSA 1999</option>		     
-</select>
-</div>
-			</dd>
-			<dt style="height: 0px;">&nbsp;</dt>
-<!--
-			<dd><input type="submit" value="Update"/></dd>
--->
-		</dl>
-		<div style="text-align: center; margin: 4px;"><input type="submit" value="Update Results"/></div>
-	</div>
-	
-	<!-- TODO: About Us, Contact Us (links in header?) -->
-</div>
-
 <div class="right-column">
+<?php require('site-announcement.php'); ?>
+
 <!-- news
 	<div id="site-news">
 		<h3 class="contentheading" style="margin-top: 0;">Site News</h3>
@@ -214,7 +103,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <!--<h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>-->
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">
-<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="#">Show more recent additions</a>
+<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="/advanced-search.php">Show more recent additions</a>
 Recently added calibrations
 </h3>
 <!--
@@ -238,7 +127,7 @@ $featuredPos = 0;
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
-$query='SELECT DISTINCT C . *, img.image
+$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
 	FROM (
 		SELECT CF.CalibrationID, V . *
 		FROM View_Fossils V
@@ -251,7 +140,9 @@ $query='SELECT DISTINCT C . *, img.image
 $calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 // mysql_num_rows($calibration_list) 
-while ($row = mysql_fetch_array($calibration_list)) { ?>
+while ($row = mysql_fetch_array($calibration_list)) {
+	$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
+	 ?>
 	<div class="search-result" style="">
 		<table class="qualifiers" border="0" Xstyle="width: 120px; float: right;">
 			<tr>
@@ -261,22 +152,23 @@ while ($row = mysql_fetch_array($calibration_list)) { ?>
 				</td>
 			</tr>
 		</table>
-		<a class="calibration-link">
+		<a class="calibration-link" href="<?= $calibrationDisplayURL ?>">
 			<span class="name"><?= $row['NodeName'] ?></span>
 			<span class="citation">&ndash; from <?= $row['ShortName'] ?></span>
 		</a>
 		<? // if there's an image mapped to this publication, show it
 		   if ($row['image']) { ?>
-		<div class="optional-thumbnail" style="height: 60px;"><img src="/publication_image.php?id=<?= $row['PublicationID'] ?>" style="height: 60px;"/></div>
+		<div class="optional-thumbnail" style="height: 60px;">
+		    <a href="<?= $calibrationDisplayURL ?>">
+			<img src="/publication_image.php?id=<?= $row['PublicationID'] ?>" style="height: 60px;"
+			alt="<?= $row['image_caption'] ?>" title="<?= $row['image_caption'] ?>"
+			/></a>
+		</div>
 		<? } ?>
 		<div class="details">
-			Here are some fascinating details about the calibration in this result.
-			Here are some fascinating details about the calibration in this result.
-			Here are some fascinating details about the calibration in this result.
-			Here are some fascinating details about the calibration in this result.
-			Here are some fascinating details about the calibration in this result...
+			<?= $row['FullReference'] ?>
 			&nbsp;
-			<a class="more" href="#">more</a>
+			<a class="more" style="display: block; text-align: right;" href="<?= $calibrationDisplayURL ?>">more &raquo;</a>
 		</div>
 	</div>
 	<?
