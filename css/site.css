@@ -241,6 +241,14 @@ dl.filter-list dd.active-filter {
 .announcement p:last-child {
 	margin-bottom: 0.3em;
 }
+.announcement ul {
+	margin: 0;
+	padding-left: 1em;
+}
+.announcement li {
+	margin: 8px 0;
+	line-height: 1.3em;
+}
 
 .center-column {
 /*
@@ -465,6 +473,10 @@ blockquote.odd, tr.odd td {
 	margin-left: 60px;
 	padding-bottom: 20px;
 	overflow: hidden; /* prevents margin collapse */
+}
+
+.ancestor-path, .child-listing {
+	margin-bottom: 1em;
 }
 
 .diagnostic {
