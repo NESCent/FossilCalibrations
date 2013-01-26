@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 ?>
 
 <?php
@@ -19,21 +19,21 @@ if($_POST['PubID']=="New") {
 	
 	if($_POST['ShortForm']=="") { echo "<h1 class=\"validation-error\">Incomplete publication information</h1><p><a href=\"createclade1.php\">Return to previous page.</a></p>"; }
 
-//Check to make sure publication isn't already in database
-$query='SELECT * FROM publications WHERE FullReference =\''.$_POST['FullCite'].'\'';
-$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-if (mysql_num_rows($result)==0) {
+	//Check to make sure publication isn't already in database
+	$query='SELECT * FROM publications WHERE FullReference =\''.$_POST['FullCite'].'\'';
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	if (mysql_num_rows($result)==0) {
 
-//Enter publication
-$query='INSERT INTO publications (ShortName, FullReference, DOI) VALUES (\''.$_POST['ShortForm'].'\', \''.$_POST['FullCite'].'\', \''.$_POST['DOI'].'\')';
-$enter_pub=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-$publicationID=mysql_insert_id();
-$query='Select * FROM publications WHERE PublicationID='.$publicationID;
-$publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-$row = mysql_fetch_array($publication_list);
-$publicationID=$row['PublicationID'];
+		//Enter publication
+		$query='INSERT INTO publications (ShortName, FullReference, DOI) VALUES (\''.$_POST['ShortForm'].'\', \''.$_POST['FullCite'].'\', \''.$_POST['DOI'].'\')';
+		$enter_pub=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+		$publicationID=mysql_insert_id();
+		$query='Select * FROM publications WHERE PublicationID='.$publicationID;
+		$publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+		$row = mysql_fetch_array($publication_list);
+		$publicationID=$row['PublicationID'];
 
-
+		// echo the new publication to user
 ?>
 <h1>The following publication was entered in the database</h1>
 
@@ -58,22 +58,26 @@ $publicationID=$row['PublicationID'];
 </table>
 
 <?php
-//the next three lines are the end of the if statement checking for the publication in the database
-} else {
-	$row = mysql_fetch_array($result);
- 	$publicationID=$row['PublicationID'];}
+	//the next three lines are the end of the if statement checking for the publication in the database
+	} else {  
+		// this publication is already in the database; keep going with the existing pub
+		// TODO: allow updates/edits here instead?
+		$row = mysql_fetch_array($result);
+		$publicationID=$row['PublicationID'];
+	}
 
 // the next line ends the if statement about whether a new publication is to be entered
-} else { $publicationID=$_POST['PubID']; }
+} else { 
+	// use the existing publication (selected ID)
+	$publicationID=$_POST['PubID']; 
+}
 
 //Retrieve publication info, having gotten the ID from one of three above sources
 $query='SELECT * FROM publications WHERE PublicationID >=\''.$publicationID.'\'';
 $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $pub_info=mysql_fetch_assoc($publication_list);
 
-
 ?>
-
 
         <form action="createclade3.php" method="post" name="CreateCalibration" id="CreateCalibration">
           <table width="100%" border="0">
@@ -134,5 +138,5 @@ $pub_info=mysql_fetch_assoc($publication_list);
 <?php 
 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

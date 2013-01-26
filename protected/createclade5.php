@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 
 
 // connect to mySQL server and select the Fossil Calibration database
@@ -14,9 +14,9 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 $NodeName=$_POST['NodeName'];
 $CalibrationID=$_POST['CalibrationID'];
 $NumTipPairs=$_POST['NumTipPairs'];
-$NumFossils=$_POST['NumFossils'];
-$NumNodes=$_POST['NumNodes'];
-$NodeCount=$_POST['NodeCount'];
+$NumFossils=isset($_POST['NumFossils']) ? $_POST['NumFossils'] : '?';
+$NumNodes=isset($_POST['NumNodes']) ? $_POST['NumNodes'] : '?';
+$NodeCount=isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?';
 $publicationID=$_POST['PubID'];
 
 //Retrieve publication info
@@ -185,6 +185,7 @@ step 5: enter fossil information</h1>
 <input type="hidden" name="NodeCount" value="<?=$_POST['NodeCount']?>">
 <input type="hidden" name="NumFossils" value="<?=$_POST['NumFossils']?>">
 <input type="hidden" name="FossilCount" value="<?=$_POST['FossilCount']?>">
+<input type="hidden" name="NumTipPairs" value="<?=$_POST['NumTipPairs']?>">
 
 
                 <tr>
@@ -256,7 +257,7 @@ step 5: enter fossil information</h1>
 						}
 					?>
                     </select>
-                    (<a href="Show_Publications.php" target="_new">Show complete citations</a>)</td>
+                    (<a href="/Show_Publications.php" target="_new">Show complete citations</a>)</td>
                 </tr>
   <tr><td></td>
     <td>short form <input type="text" name="FossShortForm" id="FossShortForm" size="10"> full ref <input type="text" name="FossFullCite" id="FossFullCite" > doi <input type="text" name="FossDOI" id="FossDOI" size="10"></td>
@@ -362,5 +363,5 @@ step 5: enter fossil information</h1>
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

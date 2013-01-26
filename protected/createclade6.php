@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 
 
 // connect to mySQL server and select the Fossil Calibration database
@@ -203,5 +203,5 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

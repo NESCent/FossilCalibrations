@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 ?>
 
 <?php
@@ -25,21 +25,21 @@ $query='SELECT * FROM calibrations WHERE NodeName =\''.$_POST['NodeName'].'\' AN
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 // following if statement enters the data then shows it to the user
 if (mysql_num_rows($result)==0) {
+	// yes, this is a new calibration; enter its information now
 
-// the following several queries enter the information from Form 1 into the database
+	//Enter initial calibration/clade information
+	$query='INSERT INTO calibrations (NodeName, HigherTaxon, MinAge, MinAgeExplanation, MaxAge, MaxAgeExplanation, NodePub) VALUES (\''.$_POST['NodeName'].'\',\''.$_POST['HigherTaxon'].'\',\''.$_POST['MinAge'].'\',\''.$_POST['MinAgeJust'].'\',\''.$_POST['MaxAge'].'\',\''.$_POST['MaxAgeJust'].'\',\''.$_POST['PubID'].'\')';
+	$enter_calibration=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
-//Enter initial calibration/clade information
-$query='INSERT INTO calibrations (NodeName, HigherTaxon, MinAge, MinAgeExplanation, MaxAge, MaxAgeExplanation, NodePub) VALUES (\''.$_POST['NodeName'].'\',\''.$_POST['HigherTaxon'].'\',\''.$_POST['MinAge'].'\',\''.$_POST['MinAgeJust'].'\',\''.$_POST['MaxAge'].'\',\''.$_POST['MaxAgeJust'].'\',\''.$_POST['PubID'].'\')';
-$enter_calibration=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	//Query the database for the clade that was just entered, which should be the only one newer than "$now", which is when the script started
+	// TODO: safer to choose via unique NodeName and NodePub, as in the test above?
+	$query='SELECT * FROM calibrations WHERE DateCreated >= \''.$now.'\'';
+	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
-//Query the database for the clade that was just entered, which should be the only one newer than "$now", which is when the script started
-$query='SELECT * FROM calibrations WHERE DateCreated >= \''.$now.'\'';
-$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-
-$row=mysql_fetch_assoc($calibration_list);
-$NodeName=$row['NodeName'];
-$CalibrationID=$row['CalibrationID'];
-$NumTipPairs=$_POST['NumTipPairs'];
+	$row=mysql_fetch_assoc($calibration_list);
+	$NodeName=$row['NodeName'];
+	$CalibrationID=$row['CalibrationID'];
+	$NumTipPairs=$_POST['NumTipPairs'];
 
 ?>
 <h1>The following node information was entered in the database (justifications not shown)</h1>
@@ -69,6 +69,7 @@ $NumTipPairs=$_POST['NumTipPairs'];
 <?php
 // the following bracket ends the if statement related to testing whether the calibration is already in the database
 } else {
+	// it seems this calibration already exists (matches an existing publication and NodeName)
 	$row=mysql_fetch_assoc($result);
 	$NodeName=$row['NodeName'];
 	$CalibrationID=$row['CalibrationID'];
@@ -131,5 +132,5 @@ for ($i = 1; $i <= $NumTipPairs; $i++) {
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

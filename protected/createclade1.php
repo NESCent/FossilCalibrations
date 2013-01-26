@@ -58,7 +58,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 						}
 					?>
                     </select>
-                    (<a href="Show_Publications.php" target="_new">Show complete citations</a>)</td>
+                    (<a href="/Show_Publications.php" target="_new">Show complete citations</a>)</td>
                 </tr>
 
     <tr>

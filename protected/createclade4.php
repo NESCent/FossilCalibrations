@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 
 
 // connect to mySQL server and select the Fossil Calibration database
@@ -14,8 +14,8 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 $NodeName=$_POST['NodeName'];
 $CalibrationID=$_POST['CalibrationID'];
 $NumTipPairs=$_POST['NumTipPairs'];
-$NumFossils=$_POST['NumFossils'];
-$NumNodes=$_POST['NumNodes'];
+$NumFossils=isset($_POST['NumFossils']) ? $_POST['NumFossils'] : '?';
+$NumNodes=isset($_POST['NumNodes']) ? $_POST['NumNodes'] : '?';
 $NodeCount=isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?';
 $publicationID=$_POST['PubID'];
 
@@ -207,5 +207,5 @@ foreach($all_tips as $key => $value) { echo $value."/"; }
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 
 // set useful variables (assert defaults if not provided?)
 $NodeName= isset($_POST['NodeName']) ? $_POST['NodeName'] : '?';
@@ -58,7 +58,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <!-- Calibration view code here -->
 <p>
-<a href="Show_Calibration.php?CalibrationID=<?=$_POST['CalibrationID']?>">View this calibration</a>
+<a href="/Show_Calibration.php?CalibrationID=<?=$_POST['CalibrationID']?>">View this calibration</a>
 </p>
 <!-- end Calibration view code -->
 
@@ -66,5 +66,5 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>
