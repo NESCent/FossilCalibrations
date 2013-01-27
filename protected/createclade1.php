@@ -13,8 +13,53 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 $query='SELECT * FROM publications ORDER BY ShortName';
 $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
-
 ?>
+<script type="text/javascript">
+//<![CDATA[ 
+	$(document).ready(function() {
+		$('#AC_PubID-display').autocomplete({
+			source: '/autocomplete_publications.php',
+/*
+			source: function(request, response) {
+				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
+				// TODO: call response() with suggested data (groomed for display?)
+			},
+*/
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+			response: function(event, ui) {
+				// another place to manipulate returned matches
+				console.log("RESPONSE > "+ ui.content);
+			},
+			focus: function(event, ui) {
+				console.log("FOCUSED > "+ ui.item.FullReference);
+				// clobber any existing hidden value!?
+				$('#AC_PubID').val('');
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			select: function(event, ui) {
+				console.log("CHOSEN > "+ ui.item.FullReference);
+				$('#AC_PubID-display').val(ui.item.label);
+				$('#AC_PubID').val(ui.item.value);
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+/*
+			matchSubset: 1,
+			matchContains: 1,
+			cacheLength: 10,
+			onItemSelect: function() {console.log('onItemSelect!');},
+			onFindValue: function() {console.log('onFindValue!');},
+			formatItem: function() {console.log('onFindValue!');},
+			autoFill: true
+*/
+			minChars: 4,
+		});
+	});
+//]]>
+</script>
 
 
 <form action="createclade2.php" method="post" name="EnterPub" id="EnterPub">
@@ -58,8 +103,20 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 						}
 					?>
                     </select>
-                    (<a href="/Show_Publications.php" target="_new">Show complete citations</a>)</td>
+                    (<a href="/Show_Publications.php" target="_new">Show all citations</a>)</td>
                 </tr>
+		<?php
+		if(mysql_num_rows($publication_list) > 0) {
+			// test of auto-complete widget
+		?>
+                  <tr>
+                  <td align="right" valign="top"><b>find existing publication</b></td>
+                  <td>
+			<input type="text" name="AC_PubID-display" id="AC_PubID-display" value="" />
+			<input type="text" name="AC_PubID" id="AC_PubID" value="" />
+		  </td>
+                </tr>
+		<? } ?>
 
     <tr>
     <td width="21%" align="right" valign="top">&nbsp;</td>

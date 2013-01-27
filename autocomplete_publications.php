@@ -22,14 +22,16 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 // TODO: show un-published names only to logged-in admins/reviewers
 
 // fetch any matching publication names
-$query='SELECT PublicationID AS id, ShortName, FullReference
+//$query='SELECT PublicationID AS value, ShortName as label, FullReference  // works with vanilla jQuery UI autocomplete
+$query='SELECT PublicationID AS value, ShortName as label, FullReference
 	FROM publications 
-	WHERE FullReference LIKE "%'. $q .'%"'.
+	WHERE FullReference LIKE "%'. $q .'%" OR ShortName LIKE "%'. $q .'%"'.
 	// non-admin users should only see *Published* publication names
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 		'AND EXISTS(SELECT PublicationStatus FROM calibrations WHERE PublicationID = publications.PublicationID AND PublicationStatus = 4)'
 	)
-	.'LIMIT 10';
+      //.'ORDER BY ShortName'; // slows things down...
+      .'LIMIT 10';
 
 $match_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 

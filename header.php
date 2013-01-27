@@ -1,14 +1,28 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <?php 
-	if (!isset($_SESSION['IS_ADMIN_USER']) $_SESSION['IS_ADMIN_USER'] = false;
+	$IS_ADMIN_USER = isset($_SESSION['IS_ADMIN_USER']) ? $_SESSION['IS_ADMIN_USER'] : false;  // default value
 	if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; 
 ?>
 <title><?= $PageTitle ?></title>
 
 <link href="/css/site.css" rel="stylesheet" type="text/css">
+<link href="/css/fcd-theme/jquery-ui-1.9.2.custom.css" rel="stylesheet" type="text/css">
 
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+<!-- local jQuery 
+<script type="text/javascript" src="/js/jquery-1.8.3.js"></script>
+-->
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.js"></script>
+<!-- NEWER jQuery and jQuery UI
+<script type="text/javascript" src="/js/jquery-1.9.0.js"></script>
+<script type="text/javascript" src="/js/jquery-ui-1.10.0.custom.js"></script>
+-->
+<!--
+TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></script>
+-->
 
 </head>
 <body>
