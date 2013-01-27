@@ -24,6 +24,10 @@
 TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></script>
 -->
 
+<!-- support for jQuery-Tagit plugin -->
+<script src="/js/tagit.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/tagit-stylish-yellow.css">
+
 </head>
 <body>
 <div id="header">

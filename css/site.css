@@ -482,3 +482,20 @@ blockquote.odd, tr.odd td {
 .diagnostic {
 	color: #d88;
 }
+
+div.tagit-label {
+	white-space: nowrap;
+	padding-right: 8px;
+}
+ul.tagit.ui-sortable li.tagit-choice {
+	cursor: move !important; /* IF draggable without handles */
+}
+ul.tagit li.tagit-choice a.tagit-close {
+	color: #999 !important;
+	font-family: Helvetica, Arial, sans-serif;
+	text-shadow: none !important;
+	top: 2px !important;
+}
+ul.tagit a:hover {
+	background-color: transparent;
+}

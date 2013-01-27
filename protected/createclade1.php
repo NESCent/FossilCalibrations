@@ -57,6 +57,23 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 */
 			minChars: 4,
 		});
+
+		/* alternate test with jQuery-Tagit plugin */
+		$('#tagit-PubID').tagit({
+			// sortable: 'handle', 
+			// sortable: true,
+			triggerKeys:['enter', 'tab'], // allow spaces and commas in tag value
+			seperatorKeys:[ ], // (sic) don't split auto-added tags on spaces or commas
+				// default is ['comma','semicolon']
+			select: true,  // uses a select widget to hold values (named after this UL)
+			//editable: true,
+			tagSource: '/autocomplete_publications.php',
+			allowNewTags: false,
+			maxTags: 1,
+
+			ignoreMe: true
+		});
+
 	});
 //]]>
 </script>
@@ -109,11 +126,19 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 		if(mysql_num_rows($publication_list) > 0) {
 			// test of auto-complete widget
 		?>
-                  <tr>
+                <tr>
                   <td align="right" valign="top"><b>find existing publication</b></td>
                   <td>
 			<input type="text" name="AC_PubID-display" id="AC_PubID-display" value="" />
 			<input type="text" name="AC_PubID" id="AC_PubID" value="" />
+		  </td>
+                </tr>
+                <tr>
+                  <td align="right" valign="top"><b>existing pubs (TagIt test)</b></td>
+                  <td>
+			<ul id="tagit-PubID" name="tagit-PubID[]">
+				<li>test value</li>
+			</ul>
 		  </td>
                 </tr>
 		<? } ?>
