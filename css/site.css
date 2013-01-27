@@ -499,3 +499,9 @@ ul.tagit li.tagit-choice a.tagit-close {
 ul.tagit a:hover {
 	background-color: transparent;
 }
+
+div.text-excerpt {
+	background-color: #eee;
+	padding: 4px 6px;
+	margin: 6px 0;
+}

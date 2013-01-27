@@ -25,6 +25,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 				// TODO: call response() with suggested data (groomed for display?)
 			},
 */
+			autoSelect: true,  // recognizes typed-in values if they match an item
 			autoFocus: true,
 			delay: 20,
 			minLength: 3,
@@ -39,20 +40,34 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 				// override normal display (would show numeric ID!)
 				return false;
 			},
+			change: function(event, ui) {
+				console.log("CHANGED TO ITEM > "+ ui.item);
+				if (!ui.item) {
+					// widget blurred with invalid value; clear any 
+					// stale values from the UI
+					$('#AC_PubID-display').val('');
+					$('#AC_PubID').val('');
+					$('#AC_PubID-more-info').html('&nbsp;');
+				}
+			},
 			select: function(event, ui) {
 				console.log("CHOSEN > "+ ui.item.FullReference);
 				$('#AC_PubID-display').val(ui.item.label);
 				$('#AC_PubID').val(ui.item.value);
+				$('#AC_PubID-more-info').html(ui.item.FullReference);
 				// override normal display (would show numeric ID!)
 				return false;
 			},
+			close: function(event, ui) {
+				console.log("CLOSING VALUE > "+ this.value);
+			},
 /*
+			onFindValue: function() {console.log('onFindValue!');},
+			formatItem: function() {console.log('onFindValue!');},
 			matchSubset: 1,
 			matchContains: 1,
 			cacheLength: 10,
 			onItemSelect: function() {console.log('onItemSelect!');},
-			onFindValue: function() {console.log('onFindValue!');},
-			formatItem: function() {console.log('onFindValue!');},
 			autoFill: true
 */
 			minChars: 4,
@@ -130,7 +145,8 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
                   <td align="right" valign="top"><b>find existing publication</b></td>
                   <td>
 			<input type="text" name="AC_PubID-display" id="AC_PubID-display" value="" />
-			<input type="text" name="AC_PubID" id="AC_PubID" value="" />
+			<input type="text" name="AC_PubID" id="AC_PubID" value="" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
+			<div id="AC_PubID-more-info" class="text-excerpt">&nbsp;</p>
 		  </td>
                 </tr>
                 <tr>
