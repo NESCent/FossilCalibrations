@@ -1,5 +1,8 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<?php if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; ?>
+<?php 
+	if (!isset($_SESSION['IS_ADMIN_USER']) $_SESSION['IS_ADMIN_USER'] = false;
+	if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; 
+?>
 <title><?= $PageTitle ?></title>
 
 <link href="/css/site.css" rel="stylesheet" type="text/css">
