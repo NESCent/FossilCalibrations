@@ -505,3 +505,20 @@ div.text-excerpt {
 	padding: 4px 6px;
 	margin: 6px 0;
 }
+.big-prompt {
+	font-size: 120%;
+	margin-top: 0px;
+	margin-bottom: 4px;
+}
+table.add-form {
+	background-color: #eee;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+.ui-widget-content p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+textarea {
+	padding: 3px;
+}
