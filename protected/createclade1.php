@@ -101,6 +101,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
   </tr>
   <tr><td>
   <table width="100%" border="0">
+
   <tr>
     <td width="21%" align="right" valign="top"></td>
     <td width="79%"><p>
@@ -113,7 +114,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
   </tr>
   <tr>
     <td width="21%" align="right" valign="top"><b>full citation</b></td>
-    <td width="79%"><input type="text" name="FullCite" id="FullCite"  size="50" ></td>
+    <td width="79%"><input type="text" name="FullCite" id="FullCite"  size="500" style="width: 100%;"></td>
   </tr>
   <tr>
     <td width="21%" align="right" valign="top"><b>doi</b></td>
@@ -121,7 +122,8 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
   </tr>
                   <tr>
                   <td align="right" valign="top"></td>
-                  <td><select name="PubID" id="PubID">
+                  <td>
+		    <select name="PubID" id="PubID">
                 	<?php
 						if(mysql_num_rows($publication_list)==0){
 						?>
@@ -135,7 +137,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 						}
 					?>
                     </select>
-                    (<a href="/Show_Publications.php" target="_new">Show all citations</a>)</td>
+                    (<a href="/Show_Publications.php" target="_new">Show all publications</a>)</td>
                 </tr>
 		<?php
 		if(mysql_num_rows($publication_list) > 0) {
