@@ -192,20 +192,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 
 		$('#AC_FossilPubID-display').autocomplete({
 			source: '/autocomplete_publications.php',
-		     /* source: function(request, response) {
-				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
-				// TODO: call response() with suggested data (groomed for display?)
-			},
-		     */
 			autoSelect: true,  // recognizes typed-in values if they match an item
 			autoFocus: true,
 			delay: 20,
 			minLength: 3,
-	             /* response: function(event, ui) {
-				// another place to manipulate returned matches
-				console.log("RESPONSE > "+ ui.content);
-			},
-		      */
 			focus: function(event, ui) {
 				console.log("FOCUSED > "+ ui.item.FullReference);
 				// clobber any existing hidden value!?
@@ -231,28 +221,14 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 				// override normal display (would show numeric ID!)
 				return false;
 			},
-		     /* close: function(event, ui) {
-				console.log("CLOSING VALUE > "+ this.value);
-			},
-		      */
 			minChars: 3
 		});
 		$('#AC_PhyloPubID-display').autocomplete({
 			source: '/autocomplete_publications.php',
-		     /* source: function(request, response) {
-				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
-				// TODO: call response() with suggested data (groomed for display?)
-			},
-		     */
 			autoSelect: true,  // recognizes typed-in values if they match an item
 			autoFocus: true,
 			delay: 20,
 			minLength: 3,
-	             /* response: function(event, ui) {
-				// another place to manipulate returned matches
-				console.log("RESPONSE > "+ ui.content);
-			},
-		      */
 			focus: function(event, ui) {
 				console.log("FOCUSED > "+ ui.item.FullReference);
 				// clobber any existing hidden value!?
@@ -278,12 +254,57 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 				// override normal display (would show numeric ID!)
 				return false;
 			},
+			minChars: 3
+		});
+
+		$('#AC_FossilSpeciesID-display').autocomplete({
+			source: '/autocomplete_publications.php',
+		     /* source: function(request, response) {
+				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
+				// TODO: call response() with suggested data (groomed for display?)
+			},
+		     */
+			autoSelect: true,  // recognizes typed-in values if they match an item
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+	             /* response: function(event, ui) {
+				// another place to manipulate returned matches
+				console.log("RESPONSE > "+ ui.content);
+			},
+		      */
+			focus: function(event, ui) {
+				console.log("FOCUSED > "+ ui.item.FullReference);
+				// clobber any existing hidden value!?
+				$('#AC_FossilSpeciesID').val('');
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			change: function(event, ui) {
+				console.log("CHANGED TO ITEM > "+ ui.item);
+				if (!ui.item) {
+					// widget blurred with invalid value; clear any 
+					// stale values from the UI
+					$('#AC_FossilSpeciesID-display').val('');
+					$('#AC_FossilSpeciesID').val('');
+					//$('#AC_FossilSpeciesID-more-info').html('&nbsp;');
+				}
+			},
+			select: function(event, ui) {
+				console.log("CHOSEN > "+ ui.item.FullReference);
+				$('#AC_FossilSpeciesID-display').val(ui.item.label);
+				$('#AC_FossilSpeciesID').val(ui.item.value);
+				//$('#AC_FossilSpeciesID-more-info').html(ui.item.FullReference);
+				// override normal display (would show numeric ID!)
+				return false;
+			},
 		     /* close: function(event, ui) {
 				console.log("CLOSING VALUE > "+ this.value);
 			},
 		      */
 			minChars: 3
 		});
+
 
 		// init widget groups
 		$('#newPublication, #existingPublication').unbind('click').click(updatePublicationWidgets);
@@ -294,6 +315,9 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 
 		$('#newLocality, #existingLocality').unbind('click').click(updateLocalityWidgets);
 		updateLocalityWidgets();
+
+		$('#newFossilSpecies, #existingFossilSpecies').unbind('click').click(updateFossilSpeciesWidgets);
+		updateFossilSpeciesWidgets();
 
 		$('#newFossilPublication, #existingFossilPublication').unbind('click').click(updateFossilPublicationWidgets);
 		updateFossilPublicationWidgets();
@@ -376,6 +400,15 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		} else {
 			$('#pick-existing-phylo-pub').hide();
 			$('#enter-new-phylo-pub').show();
+		}		
+	}
+	function updateFossilSpeciesWidgets() {
+		if ($('#existingFossilSpecies').is(':checked')) {
+			$('#pick-existing-fossil-species').show();
+			$('#enter-new-fossil-species').hide();
+		} else {
+			$('#pick-existing-fossil-species').hide();
+			$('#enter-new-fossil-species').show();
 		}		
 	}
 </script>
@@ -528,8 +561,80 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
 </table>
 </div>
 
+<h3>4. Identify the calibrated fossil species</h3>
+<div>
+<? /* TODO: Do we still need this section? It tries to reconcile non-matching species name (assigned to fossil) or add a new taxon,
+      including some interesting metadata (beyond NCBI stuff) about authorship and PaleoDB taxon IDs.
+    */ ?>
+<p><input type="radio" name="newOrExistingFossilSpecies" id="existingFossilSpecies" checked="checked"> <label for="existingFossilSpecies">Choose an existing <b>species</b></label></input></p>
+<table id="pick-existing-fossil-species" width="100%" border="0">
+    <tr>
+      <td align="right" valign="top" width="30%"><strong>enter partial name</strong></td>
+      <td align="left" width="70%">
+	<!-- <input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value=""> -->
+	  <input type="text" name="AC_FossilSpeciesID-display" id="AC_FossilSpeciesID-display" value="<?= testForProp($fossil_data, 'Species', '') ?>" />
+<? // reckon the matching node-ID for this species name (if name is found in NCBI and FCD names, who wins?) 
+   $matchingFossilNodeID = 0; // TODO
+?>
+	  <input type="text" name="FossilSpeciesID" id="AC_FossilSpeciesID" value="<?= $matchingFossilNodeID ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
+      </td>
+    </tr>
+<? /* Fuzzy matching against entered species name...
+    <tr>
+	<td width="70%" align="left" valign="top"><select name="SpeciesID" id="SpeciesID">
+    
+		<?php
+			$query = "SELECT *,MATCH(TaxonName, CommonName) AGAINST ('".$_POST['SpeciesName']."') AS score FROM `fossiltaxa` WHERE MATCH(TaxonName, CommonName) AGAINST ('".$_POST['SpeciesName']."' IN NATURAL LANGUAGE MODE) ORDER BY score DESC";
+			$close_matches=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+			if(mysql_num_rows($close_matches)==0) { echo "<option value=\"New\" id=\"New\">no exact match. choose a species from list or enter new taxon below.</option>"; } 
+			else {
+			while($row=mysql_fetch_assoc($close_matches)) {
+		?>
+            <option value="<?=$row['TaxonID']?>" id="<?=$row['TaxonID']?>" /><i><?=$row['TaxonName']?></i> <?=$row['TaxonAuthor']?> (<?=$row['CommonName']?>)</option>
+			<?php
+				}
+			}
+			?>
+			</select>
+		    </td></tr>
+*/ ?>
+      <tr>
+	<td width="30%" align="right" valign="top"><strong>scientific name</strong></td><td width="70%" align="left" valign="top"><em id="existing-fossil-species-scientific-name">-</em></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top"><strong>common name</strong></td><td width="70%" align="left" valign="top"><em id="existing-fossil-species-common-name">-</em></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top"><strong>author and date</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesAuthor" type="text" /></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top"><strong>PaleoDB taxon number</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesPBDBTaxonNum" type="text" /></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top">&nbsp;</td><td width="70%" align="left" valign="top">
+		<em>Changes to existing species (authorship and PaleoDB) will be reflected in all calibrations!</em>
+</td>
+      </tr>
+</table>
 
-<h3>4. Enter fossil information</h3>
+<p><input type="radio" name="newOrExistingFossilSpecies" id="newFossilSpecies"> <label for="newFossilSpecies">... <b>or</b> enter a new species into the database</label></input></p>
+<table id="enter-new-fossil-species" class="add-form" width="100%" border="0">
+      <tr>
+	<td width="30%" align="right" valign="top">Species name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesName" type="text" /></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top">Common name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesCommonName" type="text" /></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top">Author and date</td><td width="70%" align="left" valign="top"><input name="NewSpeciesAuthor" type="text" /></td>
+      </tr>
+      <tr>
+	<td width="30%" align="right" valign="top">PaleoDB taxon number</td><td width="70%" align="left" valign="top"><input name="NewSpeciesPBDBTaxonNum" type="text" /></td>
+      </tr>
+</table>
+</div>
+
+<h3>4. Provide further details about this fossil</h3>
 <div>
 
 <p><input type="radio" name="newOrExistingLocality" id="existingLocality" checked="checked"> <label for="existingLocality">Choose an existing <b>locality</b></label></input></p>
@@ -663,10 +768,6 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 <tr>
                   <td align="right" valign="top" width="30%"><strong>collection number</strong></td>
                   <td align="left" width="70%"><input type="text" name="CollectionNum" id="CollectionNum" value="<?= testForProp($fossil_data, 'CollectionNumber', '') ?>"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>species name</strong></td>
-                  <td align="left" width="70%"><input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value="<?= testForProp($fossil_data, 'Species', '') ?>"></td>
                 </tr>
                 <tr>
                   <td align="right" valign="top" width="30%"><strong>minimum age</strong></td>
@@ -850,66 +951,6 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 </tr>
 </table>
 
-<? /* TODO: Do we still need this form? it tries to reconcile non-matching species name (assigned to fossil) or add a new taxa.
-
-  <table width="100%" border="0">
-	<tr><td width="30%" align="right" valign="top"><b><i><?=$_POST['SpeciesName']?></i></b></td>
-    <td width="70%" align="left" valign="top"><select name="SpeciesID" id="SpeciesID">
-    
-		<?php
-			$query = "SELECT *,MATCH(TaxonName, CommonName) AGAINST ('".$_POST['SpeciesName']."') AS score FROM `fossiltaxa` WHERE MATCH(TaxonName, CommonName) AGAINST ('".$_POST['SpeciesName']."' IN NATURAL LANGUAGE MODE) ORDER BY score DESC";
-			$close_matches=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-			if(mysql_num_rows($close_matches)==0) { echo "<option value=\"New\" id=\"New\">no exact match. choose a species from list or enter new taxon below.</option>"; } 
-			else {
-			while($row=mysql_fetch_assoc($close_matches)) {
-		?>
-            <option value="<?=$row['TaxonID']?>" id="<?=$row['TaxonID']?>" /><i><?=$row['TaxonName']?></i> <?=$row['TaxonAuthor']?> (<?=$row['CommonName']?>)</option>
-			<?php
-				}
-			}
-			?>
-			</select>
-		    </td></tr>
-			<td width="30%" align="right" valign="top">Species name</td><td width="70%" align="left" valign="top"><input name="SpeciesName" type="text" /></td></tr>
-			<td width="30%" align="right" valign="top">Common name</td><td width="70%" align="left" valign="top"><input name="CommonName" type="text" /></td></tr>
-			<td width="30%" align="right" valign="top">Author and date</td><td width="70%" align="left" valign="top"><input name="Author" type="text" /></td></tr>
-			<td width="30%" align="right" valign="top">PaleoDB taxon number</td><td width="70%" align="left" valign="top"><input name="PBDBTaxonNum" type="text" /></td></tr>
-
-	<?php
-	if($_POST['CollectionAcro']=="New") { 
-		$query = 'INSERT INTO L_CollectionAcro (Acronym, CollectionName) VALUES (\''.$_POST['NewAcro'].'\',\''.$_POST['NewInst'].'\')';
-		$enter=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		echo '<input type="hidden" name="CollectionAcro" value="'.$_POST['NewAcro'].'">';
-	} else { echo '<input type="hidden" name="CollectionAcro" value="'.$_POST['CollectionAcro'].'">';} 
-
-	?>
-    <input type="hidden" name="CollectionNum" value="<?=$_POST['CollectionNum']?>">
-	<input type="hidden" name="FossilMinAge" value="<?=$_POST['FossilMinAge']?>">
-	<input type="hidden" name="MinAgeType" value="<?=$_POST['MinAgeType']?>">
-	<input type="hidden" name="FossilMaxAge" value="<?=$_POST['FossilMaxAge']?>">
-	<input type="hidden" name="MaxAgeType" value="<?=$_POST['MaxAgeType']?>">
-	<input type="hidden" name="PhyJustType" value="<?=$_POST['PhyJustType']?>">
-	<input type="hidden" name="PhyJustification" value="<?=$_POST['PhyJustification']?>">
-
-	<?php
-
-	if($_POST['FossilPub']=="New") { 
-		$query = 'INSERT INTO publications (ShortName, FullReference, DOI) VALUES (\''.$_POST['FossShortForm'].'\',\''.$_POST['FossFullCite'].'\',\''.$_POST['FossDOI'].'\')';
-		$enter=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		echo '<input type="hidden" name="FossilPub" value="'.mysql_insert_id().'">';
-	} else { echo '<input type="hidden" name="FossilPub" value="'.$_POST['FossilPub'].'">';} 
-	if($_POST['PhyPub']=="New") { 
-		$query = 'INSERT INTO publications (ShortName, FullReference, DOI) VALUES (\''.$_POST['PhyloShortForm'].'\',\''.$_POST['PhyloFullCite'].'\',\''.$_POST['PhyloDOI'].'\')';
-		$enter=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		echo '<input type="hidden" name="PhyPub" value="'.mysql_insert_id().'">';
-	} else { echo '<input type="hidden" name="PhyPub" value="'.$_POST['PhyPub'].'">';} 
-
-	?>
-
-  </table>
-<? 
-	<input type="hidden" name="Locality" value="'.$_POST['Locality'].'">
-*/ ?>
 </div><!-- END of final step -->
 
 </div><!-- END of div#edit-steps -->
