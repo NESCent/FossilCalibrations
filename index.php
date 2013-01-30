@@ -10,6 +10,59 @@ $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEIN
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 ?>
+<script type="text/javascript">
+	$(document).ready(function() {
+		
+		$('#simple-search-input').autocomplete({
+			source: '/autocomplete_all_names.php',
+		     /* source: function(request, response) {
+				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
+				// TODO: call response() with suggested data (groomed for display?)
+			},
+		     */
+			autoSelect: true,  // recognizes typed-in values if they match an item
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+	             /* response: function(event, ui) {
+				// another place to manipulate returned matches
+				console.log("RESPONSE > "+ ui.content);
+			},
+			focus: function(event, ui) {
+				console.log("FOCUSED > "+ ui.item.FullReference);
+				// clobber any existing hidden value!?
+				$('#AC_FossilSpeciesID').val('');
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			change: function(event, ui) {
+				console.log("CHANGED TO ITEM > "+ ui.item);
+				if (!ui.item) {
+					// widget blurred with invalid value; clear any 
+					// stale values from the UI
+					$('#AC_FossilSpeciesID-display').val('');
+					$('#AC_FossilSpeciesID').val('');
+					//$('#AC_FossilSpeciesID-more-info').html('&nbsp;');
+				}
+			},
+			select: function(event, ui) {
+				console.log("CHOSEN > "+ ui.item.FullReference);
+				$('#AC_FossilSpeciesID-display').val(ui.item.label);
+				$('#AC_FossilSpeciesID').val(ui.item.value);
+				//$('#AC_FossilSpeciesID-more-info').html(ui.item.FullReference);
+				// TODO: AJAX load of taxon metadata below
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+		        close: function(event, ui) {
+				console.log("CLOSING VALUE > "+ this.value);
+			},
+		      */
+			minChars: 3
+		});
+	});
+</script>
+
 <div style="position: absolute; top: 0; right: 0; width: 50%; height: 40px; background-color: #27292B;">&nbsp;</div>
 
 <div class="right-column">
@@ -94,7 +147,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
  <div style="height: 160px; text-align: center; padding-top: 60px;">
 		<div id="simple-search" style="float: none; text-align: center; margin: 3px auto 10px;">
 			<input type="submit" style="float: right;" value="Go" />
-			<input type="text" style="width: 80%;" value="Search by author, clade, publication, species,etc." />
+			<input id="simple-search-input" type="text" style="width: 80%;" value="Search by author, clade, publication, species,etc." />
 		</div>
 		<p>
 			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a href="#">Advanced search</a> &nbsp;|&nbsp; <a href="#">Example searches</a>
