@@ -26,6 +26,14 @@ if (isset($_GET['id']) && !empty($_GET['id']) && is_numeric($_GET['id'])) {
 /*
  * If we're editing an existing calibration, load all related records (publications, etc)
  */
+$calibration_data = null;
+$node_pub_data = null;
+$fossil_data = null;
+$locality_data = null;
+$collection_data = null;
+$fossil_pub_data = null;
+$phylo_pub_data = null;
+
 if ($addOrEdit == 'EDIT') {
 	// retrieve the main calibration record (or die trying)
 	$query="SELECT * FROM calibrations WHERE CalibrationID = '".$CalibrationID."'";
@@ -91,7 +99,6 @@ if ($addOrEdit == 'EDIT') {
 // This should generally Do the Right Thing, whether we're add a new calibration, editing a 
 // complete existing calibration, or one that's partially complete.
 function testForProp( $data, $property, $default ) {
-	if (!isset($data)) return $default;
 	if (!is_array($data)) return $default;
 	return $data[$property];
 }
@@ -258,7 +265,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		});
 
 		$('#AC_FossilSpeciesID-display').autocomplete({
-			source: '/autocomplete_publications.php',
+			source: '/autocomplete_species.php',
 		     /* source: function(request, response) {
 				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
 				// TODO: call response() with suggested data (groomed for display?)
@@ -295,6 +302,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 				$('#AC_FossilSpeciesID-display').val(ui.item.label);
 				$('#AC_FossilSpeciesID').val(ui.item.value);
 				//$('#AC_FossilSpeciesID-more-info').html(ui.item.FullReference);
+				// TODO: AJAX load of taxon metadata below
 				// override normal display (would show numeric ID!)
 				return false;
 			},
@@ -304,6 +312,8 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		      */
 			minChars: 3
 		});
+
+		initTipTaxaWidgets();
 
 
 		// init widget groups
@@ -328,9 +338,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		$('input.deleteTipTaxaPair').unbind('click').click(function() {
 			var $itsRow = $(this).closest('tr');
 			// de-activate the autocomplete for its widgets
-			$itsRow.find('.select-tip-taxa').each(function() {
-				// TODO
-			});
+			$itsRow.find('.select-tip-taxa').autocomplete('destroy');
 			// remove the entire row
 			$itsRow.remove();
 			// TODO: re-number the remaining rows?
@@ -338,6 +346,8 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		$('#AddTipTaxaPair').unbind('click').click(function() {
 			var $itsRow = $(this).closest('tr');
 			var $prevRow = $itsRow.prev('tr'); // should always be a valid pair
+			// restore default markup for previous row (we'll fix this below)
+			$prevRow.find('.select-tip-taxa').autocomplete('destroy');
 			$itsRow.before($prevRow.clone(true));
 			var $newRow = $itsRow.prev('tr');
 			// clear the new row's inputs and show its delete button
@@ -349,9 +359,39 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			$itsCounter.text( position );
 			$newRow.find('input:text[name$=A]').attr('name', 'Pair'+position+'TaxonA').attr('id', 'Pair'+position+'TaxonA');;
 			$newRow.find('input:text[name$=B]').attr('name', 'Pair'+position+'TaxonB').attr('id', 'Pair'+position+'TaxonB');;
+			// init autocomplete behavior (and fix previous row)
+			$prevRow.find('.select-tip-taxa').autocomplete(tipTaxaSettings);
+			$newRow.find('.select-tip-taxa').autocomplete(tipTaxaSettings);
 		});
 
 	});
+
+	// shared autocomplete settings for tip-taxa widgets
+	tipTaxaSettings = {
+		source: '/autocomplete_species.php',
+		autoSelect: true,  // recognizes typed-in values if they match an item
+		autoFocus: true,
+		delay: 20,
+		minLength: 3,
+		// ASSUMES simplest case (value = label)
+		change: function(event, ui) {
+			console.log("CHANGED TO ITEM > "+ ui.item);
+			if (!ui.item) {
+				// widget was blurred with invalid value; clear any 
+				// stale values from the UI!
+				$(this).val('');
+			}
+		},
+		select: function(event, ui) {
+			console.log("CHOSEN > "+ ui.item.value);
+			// TODO: any follow-up action, a la tagging UI?
+		},
+		minChars: 3
+	};
+
+	function initTipTaxaWidgets() {
+		$('#tip-taxa-panel .select-tip-taxa').autocomplete(tipTaxaSettings);
+	}
 
 	// prepare widget groups and dependent widgets
 	function updatePublicationWidgets() {
@@ -529,7 +569,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
 <input type="hidden" name="NodeCount" value="<?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?>">
 <input type="hidden" name="NumTipPairs" value="<?=$_POST['NumTipPairs']?>">
 
-<table width="100%" border="0">
+<table id="tip-taxa-panel" width="100%" border="0">
 <!--
     <tr>
       <td align="right" valign="top">Specify taxa by species </td>
@@ -572,11 +612,11 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
       <td align="right" valign="top" width="30%"><strong>enter partial name</strong></td>
       <td align="left" width="70%">
 	<!-- <input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value=""> -->
-	  <input type="text" name="AC_FossilSpeciesID-display" id="AC_FossilSpeciesID-display" value="<?= testForProp($fossil_data, 'Species', '') ?>" />
+	  <input type="text" name="AC_FossilSpeciesID-display" id="AC_FossilSpeciesID-display" value="<?= testForProp($fossil_data, 'Species', '') ?>" style="width: 45%;"/>
 <? // reckon the matching node-ID for this species name (if name is found in NCBI and FCD names, who wins?) 
    $matchingFossilNodeID = 0; // TODO
 ?>
-	  <input type="text" name="FossilSpeciesID" id="AC_FossilSpeciesID" value="<?= $matchingFossilNodeID ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
+	  <input type="text" name="FossilSpeciesID" id="AC_FossilSpeciesID" value="<?= $matchingFossilNodeID ?>" readonly="readonly" style="width: 45%; color: #999; text-align: center;"/>
       </td>
     </tr>
 <? /* Fuzzy matching against entered species name...
