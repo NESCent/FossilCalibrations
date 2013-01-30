@@ -70,13 +70,18 @@ while ($row = mysqli_fetch_array($ancestors_info_results)) {
 $ancestor_trees = array_unique($ancestor_trees);
 
 // grab target node information from tip of ancestors array
-$targetNodeInfo = $ancestors[ count($ancestors) - 1 ];
+if (count($ancestors) > 0) {
+	$targetNodeInfo = $ancestors[ count($ancestors) - 1 ];
+} else {
+	$targetNodeInfo = $ancestors[ 0 ];
+}
 
 
 /*
- * fetch information on the current node's descendants (on all trees)
+ * fetch information on the current node's descendants (on all trees). Limit
+ * this to a few levels, lest we choke on nodes close to the root.
  */
-$sql = 'CALL getCladeFromNode('. $nodeMultitreeID .', "TEMP_descendants", "ALL TREES" );';
+$sql = 'CALL getCladeFromNode('. $nodeMultitreeID .', "TEMP_descendants", "ALL TREES", 1 )';
 
 //mysqli_free_result($results);
 ///set_time_limit( 0 ); // kill the SQL time limit!?

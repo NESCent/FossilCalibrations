@@ -300,7 +300,7 @@ DELIMITER ;
 
 
 /*
- * getCladeFromNode( p_multitree_node_id, destinationTableName, treeFilter )
+ * getCladeFromNode( p_multitree_node_id, destinationTableName, treeFilter, limitDepth )
  *
  * NOTE that this requires a multitree ID for the target node!
  *
@@ -308,13 +308,17 @@ DELIMITER ;
  *  'ALL TREES'
  *  'ALL PUBLIC'
  *  '{tree-id}[,{another_tree_id} ...]'
+ *
+ * limitDepth returns n levels of descendants (eg, children only if 1), or all
+ * descendants if NULL
+ *
  */
 
 DROP PROCEDURE IF EXISTS getCladeFromNode;
 
 DELIMITER #
 
-CREATE PROCEDURE getCladeFromNode (IN p_multitree_node_id MEDIUMINT(8), IN destinationTableName VARCHAR(80), IN treeFilter VARCHAR(200))
+CREATE PROCEDURE getCladeFromNode (IN p_multitree_node_id MEDIUMINT(8), IN destinationTableName VARCHAR(80), IN treeFilter VARCHAR(200), IN limitDepth TINYINT UNSIGNED)
 BEGIN
 
 -- Declarations must be at the very top of BEGIN/END block!
@@ -353,6 +357,12 @@ WHILE NOT v_done DO
 
         TRUNCATE TABLE tmp;
         INSERT INTO tmp SELECT * FROM hier WHERE depth = v_depth;
+
+        IF limitDepth IS NOT NULL THEN
+            IF v_depth > limitDepth THEN
+	        SET v_done = 1;
+            END IF;
+	END IF;
 
     ELSE
         SET v_done = 1;
@@ -435,7 +445,7 @@ SELECT CONCAT("=========================== CLADE TEST for NCBI node: ", @nodeA_i
 SET @multitreeID = getMultitreeNodeID( 'NCBI', @nodeA_id  );
 
 -- TODO: add tree_filter argument? eg, 'ALL_TREES', 'ALL_PUBLIC', or '{tree-id}[,{another_tree_id} ...]'
-CALL getCladeFromNode( @multitreeID, "cladeA_ids", 'ALL_TREES' );
+CALL getCladeFromNode( @multitreeID, "cladeA_ids", 'ALL_TREES', NULL );
 SELECT * FROM cladeA_ids;
 
 system echo "=========================== FULL INFO for clade members ==========================="
