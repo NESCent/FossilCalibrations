@@ -23,7 +23,7 @@ CREATE TABLE AC_names_nodes (
   -- status? published, draft, deprecated...
   is_public_name TINYINT(1) NOT NULL,   -- true (1) if this name is used in ANY public tree
 
-  PRIMARY KEY (name), KEY (is_extant_species)
+  KEY (name, description), KEY (is_extant_species)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_AC_names_nodes;
@@ -58,7 +58,7 @@ CREATE TABLE AC_names_searchable (
   description VARCHAR(255) NOT NULL,	-- type and source, eg, 'author, Linnaeus'
   is_public_name TINYINT(1) NOT NULL,   -- true (1) if this name is used in ANY public tree
 
-  PRIMARY KEY (name)
+  KEY (name, description)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_AC_names_searchable;
@@ -489,25 +489,28 @@ BEGIN
 --
 TRUNCATE TABLE tmp_AC_names_nodes;
 
-INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species)
+INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species, is_public_name)
 SELECT
- names.name, -- uniquename?
+ COALESCE(NULLIF(names.uniquename, ''), names.name),  -- use uniquename if provided, else name
  CONCAT(names.class,", NCBI taxon"),
  1,  -- all NCBI names(?) are taxa
- IF(nodes.rank = 'species', 1, 0)     -- OR -- IF((SELECT COUNT(*) FROM NCBI_nodes WHERE parenttaxonid = names.taxonid) = 0, 1, 0)
+ IF(nodes.rank = 'species', 1, 0),     -- OR -- IF((SELECT COUNT(*) FROM NCBI_nodes WHERE parenttaxonid = names.taxonid) = 0, 1, 0)
+ 1   -- all NCBI names(?) are public
 FROM
  NCBI_names AS names
 LEFT OUTER JOIN NCBI_nodes AS nodes ON nodes.taxonid = names.taxonid;
 
-INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species)
+INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species, is_public_name)
 SELECT
- names.name, -- uniquename?
+ COALESCE(NULLIF(names.uniquename, ''), names.name),  -- use uniquename if provided, else name
  CONCAT(names.class,", FCD node"),
  1,  -- all NCBI names(?) are taxa
- IF((SELECT COUNT(*) FROM FCD_nodes WHERE parent_node_id = names.node_id) = 0, 1, 0)
+ IF((SELECT COUNT(*) FROM FCD_nodes WHERE parent_node_id = names.node_id) = 0, 1, 0),
+ IF(trees.is_public_tree, 1, 0)  -- this name is public if it appears in a published tree
 FROM
  FCD_names AS names
 LEFT OUTER JOIN FCD_nodes AS nodes ON nodes.node_id = names.node_id
+LEFT OUTER JOIN FCD_trees AS trees ON trees.tree_id = nodes.tree_id
 LEFT OUTER JOIN pinned_nodes ON pinned_nodes.pinned_node_id = names.node_id;
 -- also filter on publication status? JOIN calibration, publication
 
@@ -517,46 +520,63 @@ LEFT OUTER JOIN pinned_nodes ON pinned_nodes.pinned_node_id = names.node_id;
 TRUNCATE TABLE tmp_AC_names_searchable;
 
 -- add node names (copied from above)
-INSERT INTO tmp_AC_names_searchable (name, description)
+INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
 SELECT
- name, -- uniquename?
- description
+ name,
+ description,
+ is_public_name
 FROM
  tmp_AC_names_nodes;
 
 -- add author names?
 -- add journal names
 -- add publications (eg, Smith 2001)
-INSERT INTO tmp_AC_names_searchable (name, description)
+INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
 SELECT
  ShortName,
- FullReference
+ FullReference,
+ IF(EXISTS(SELECT PublicationStatus FROM calibrations WHERE NodePub = publications.PublicationID AND PublicationStatus = 4), 1, 0)
+   -- ie, a publication is public if any of its calibrations are
 FROM
  publications;
 
 -- add collection names
-INSERT INTO tmp_AC_names_searchable (name, description)
-SELECT
+INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
+SELECT DISTINCT
  CollectionName,
- 'Fossil collection'
+ 'Fossil collection',
+ IF(calibrations.PublicationStatus = 4, 1, 0)
+   -- ie, a collection is public if its fossils are used in any published calibrations
 FROM
- collections;
+ L_CollectionAcro
+LEFT OUTER JOIN fossils ON CollectionAcro
+LEFT OUTER JOIN Link_CalibrationFossil AS link ON link.FossilID = fossils.FossilID
+LEFT OUTER JOIN calibrations ON calibrations.CalibrationID = link.CalibrationID;
 
 -- add fossil names
-INSERT INTO tmp_AC_names_searchable (name, description)
+INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
 SELECT
  Species, 	-- shouldn't these become node names?
- 'Fossil species'
+ 'Fossil species',
+ IF(calibrations.PublicationStatus = 4, 1, 0)
+   -- ie, a fossil is public if it's used in any published calibrations
 FROM
- fossils;
+ fossils
+LEFT OUTER JOIN Link_CalibrationFossil AS link ON link.FossilID = fossils.FossilID
+LEFT OUTER JOIN calibrations ON calibrations.CalibrationID = link.CalibrationID;
 
 -- add location names
-INSERT INTO tmp_AC_names_searchable (name, description)
+INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
 SELECT
  LocalityName, 	-- shouldn't these become node names?
- CONCAT('Locality; ', Stratum)
+ CONCAT('Locality; ', Stratum),
+ IF(calibrations.PublicationStatus = 4, 1, 0)
+   -- ie, a locality is public if its fossils are used in any published calibrations
 FROM
- localities;
+ localities
+LEFT OUTER JOIN fossils ON localities.LocalityID = fossils.LocalityID
+LEFT OUTER JOIN Link_CalibrationFossil AS link ON fossils.FossilID = link.FossilID
+LEFT OUTER JOIN calibrations ON link.CalibrationID = calibrations.CalibrationID;
 
 
 -- if we're serious, replace/rename the real tables
