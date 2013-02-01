@@ -31,7 +31,7 @@ create table NCBI_names (
   uniquename VARCHAR(100) DEFAULT NULL,
   class VARCHAR(50) NOT NULL DEFAULT '',
 
-  KEY taxonid (taxonid), KEY type (class), KEY name (name)
+  KEY taxonid (taxonid), KEY type (class), KEY name (name), KEY uniquename (uniquename)
 ) ENGINE=INNODB CHARSET=UTF8;
 
 
