@@ -33,6 +33,7 @@ $locality_data = null;
 $collection_data = null;
 $fossil_pub_data = null;
 $phylo_pub_data = null;
+$tip_pair_data = null;
 
 if ($addOrEdit == 'EDIT') {
 	// retrieve the main calibration record (or die trying)
@@ -93,6 +94,19 @@ if ($addOrEdit == 'EDIT') {
 		// TODO: respond more gracefully to missing pub
 	$phylo_pub_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
+
+	// retrieve explicit (directly entered) tip pairs
+	$query="SELECT * 
+		FROM Link_CalibrationPair 
+		JOIN Link_Tips ON Link_CalibrationPair.TipPairsID = Link_Tips.PairID 
+		WHERE CalibrationID = '". $CalibrationID ."'
+		ORDER BY PairID";
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$tip_pair_data = array();
+	while($row=mysql_fetch_assoc($result)) {
+		$tip_pair_data[] = $row;
+	}
+	mysql_free_result($result);
 }
 
 // Return a desired property from any of the data objects above, or a default if not found.
@@ -106,6 +120,14 @@ function testForProp( $data, $property, $default ) {
 /*
  * Query for controlled lists of misc values
  */
+
+// list of all publication-status values
+$query='SELECT * FROM L_PublicationStatus';
+$pubstatus_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+
+// list of all calibration-quality values
+$query='SELECT * FROM L_CalibrationQuality';
+$calibrationquality_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 // list of all higher taxa
 $query='SELECT * FROM L_HigherTaxa';
@@ -301,8 +323,36 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 				console.log("CHOSEN > "+ ui.item.FullReference);
 				$('#AC_FossilSpeciesID-display').val(ui.item.label);
 				$('#AC_FossilSpeciesID').val(ui.item.value);
-				//$('#AC_FossilSpeciesID-more-info').html(ui.item.FullReference);
-				// TODO: AJAX load of taxon metadata below
+				// fetch and display taxon metadata below
+				$.ajax( '/fetch_taxon_properties.php', {
+					dataType: 'json',
+					data: {'calibration_ID': $('#CalibrationID').val(), 'autocomplete_match': ui.item.value},
+					success: function(data) {
+						$('input[name=ExistingSpeciesName]').val(data.properName);
+						$('input[name=ExistingSpeciesCommonName]').val(data.commonName);
+						$('input[name=ExistingSpeciesAuthor]').val(data.author);
+						$('input[name=ExistingSpeciesPBDBTaxonNum]').val(data.pbdbTaxonNumber);
+						if (data.properName === '') {
+							$('#author-matched-from').html('no match found');
+						} else {
+							$('#species-matched-from').html('matched from table <b>'+ data.SOURCE_TABLE +'</b>');
+						}
+						if (data.author === '') {
+							$('#author-matched-from').html('no match found');
+						} else {
+							$('#author-matched-from').html('matched from table <b>'+ data.AUTHOR_SOURCE_TABLE +'</b>');
+						}
+					},
+					error: function(data) {
+						// clear all fields below
+						$('input[name=ExistingSpeciesName]').val('');
+						$('input[name=ExistingSpeciesCommonName]').val('');
+						$('input[name=ExistingSpeciesAuthor]').val('');
+						$('input[name=ExistingSpeciesPBDBTaxonNum]').val('');
+						$('#species-matched-from').html('no match found');
+						$('#author-matched-from').html('&nbsp;');
+					}
+				});
 				// override normal display (would show numeric ID!)
 				return false;
 			},
@@ -455,9 +505,11 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 
 <form action="update_calibration.php" method="post" id="edit-calibration">
 <input type="hidden" name="nonce" value="<?= $nonce; ?>" />
+<input type="hidden" name="addOrEdit" value="<?= $addOrEdit; ?>" />
+<input type="hidden" id="CalibrationID" name="CalibrationID" value="<?= $CalibrationID; ?>" />
 
 <div style="float: right; text-align: right;">
-	<a href="#" onclick="alert('Note that any publications, fossils, or locations created will be preserved.'); return false;">Cancel</a>
+	<a href="/protected/index.php">Cancel</a>
 	&nbsp;
 	&nbsp;
 	<input type="submit" value="Save Calibration" />
@@ -465,12 +517,59 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 
 <h1><?=($addOrEdit == 'ADD') ? "Add a new calibration" : "Edit an existing calibration (id: ".$CalibrationID.")" ?> </h1>
 
-<div id="edit-steps">
+<div>
+  <table id="xxxxxx" width="100%" border="0">
+  <tr>
+    <td width="15%" align="right" valign="top"><b>publication status</b></td>
+    <td width="25%" valign="top">&nbsp;
+	<select name="PublicationStatus">
+	  <?php
+		$currentStatus = testForProp($calibration_data, 'PublicationStatus', '1');  // default is Private Draft
+		while ($row = mysql_fetch_array($pubstatus_list)) {
+			$thisStatus = $row['PubStatusID'];
+			if ($currentStatus == $thisStatus) {
+				echo '<option value="'.$row['PubStatusID'].'" selected="selected">'.$row['PubStatus'].'</option>';
+			} else {
+				echo '<option value="'.$row['PubStatusID'].'">'.$row['PubStatus'].'</option>';
+			}			
+		}
+	  ?>
+	</select>
+    </td>
+    <td width="10%" rowspan="2" align="right" valign="top">
+	<b>admin comments</b>
+    </td>
+    <td width="50%" rowspan="2" valign="top">
+	<textarea name="AdminComments" style="width: 95%; overflow: auto;" rows="3"><?= testForProp($calibration_data, 'AdminComments', '') ?></textarea>
+    </td>
+  </tr>
+  <tr>
+    <td width="15%" align="right" valign="top"><b>calibration quality</b></td>
+    <td width="25%" valign="top">&nbsp;
+	<select name="CalibrationQuality">
+	  <?php
+		$currentQuality = testForProp($calibration_data, 'CalibrationQuality', '1');  // default is Current
+		while ($row = mysql_fetch_array($calibrationquality_list)) {
+			$thisQuality = $row['QualityID'];
+			if ($currentQuality == $thisQuality) {
+				echo '<option value="'.$row['QualityID'].'" selected="selected">'.$row['Quality'].'</option>';
+			} else {
+				echo '<option value="'.$row['QualityID'].'">'.$row['Quality'].'</option>';
+			}			
+		}
+	  ?>
+	</select>
+    </td>
+  </tr>
+  </table>
+</div>
 
+
+<div id="edit-steps">
 
 <h3>1. Cite the initial publication of this calibration</h3>
 <div>
-  <p><input type="radio" name="newOrExistingPublication" id="existingPublication" checked="checked"> <label for="existingPublication">Choose an existing publication</label></input></p>
+  <p><input type="radio" name="newOrExistingPublication" value="EXISTING" id="existingPublication" checked="checked"> <label for="existingPublication">Choose an existing publication</label></input></p>
   <table id="pick-existing-pub" width="100%" border="0">
   <tr>
     <td width="25%" align="right" valign="top"><b>enter partial name</b></td>
@@ -482,7 +581,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
     </td>
   </tr>
   </table>
-  <p><input type="radio" name="newOrExistingPublication" id="newPublication"> <label for="newPublication">... <b>or</b> enter a new publication into the database</label></input></p>
+  <p><input type="radio" name="newOrExistingPublication" value="NEW" id="newPublication"> <label for="newPublication">... <b>or</b> enter a new publication into the database</label></input></p>
   <table id="enter-new-pub" class="add-form" width="100%" border="0">
   <tr>
     <td width="25%" align="right" valign="top"><b>short form (author, date)</b></td>
@@ -557,63 +656,19 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 </div>
 
 
-<h3>3. Define tip taxa for the calibrated node</h3>
-<!-- NOTE that this also incorporates the old createclade4, which was just validating these taxa -->
-<div>
-
-<p>
-Enter pairs of extant taxa whose last common ancestor was the node being calibrated. You may enter tip taxa as pairs of species or any other class, e.g., genera or families. If you choose genera (or other higher-level taxa), searches on species within those taxa will also point to this common ancestor.  
-</p>
-<input type="hidden" name="NodeName" value="<?=$_POST['NodeName']?>">
-<input type="hidden" name="NumNodes" value="<?=$_POST['NumNodes']?>">
-<input type="hidden" name="NodeCount" value="<?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?>">
-<input type="hidden" name="NumTipPairs" value="<?=$_POST['NumTipPairs']?>">
-
-<table id="tip-taxa-panel" width="100%" border="0">
-<!--
-    <tr>
-      <td align="right" valign="top">Specify taxa by species </td>
-      <td><input type="radio" name="EntryType" value="species" id="EntryType_0" checked="checked" /> or genus? <input type="radio" name="EntryType" value="genus" id="EntryType_1" /></td>
-    </tr>
--->
-    <tr>
-      <td width="10%" align="right" valign="top">&nbsp;</td>
-      <td width="40%" style="background-color: #eee;">&nbsp; <b>Side A</b></td>
-      <td width="40%" style="background-color: #eee;">&nbsp; <b>Side B</b></td>
-      <td width="10%">&nbsp;</td>
-    </tr>
-<?php
-   $NumTipPairs = 1; // TODO
-   for ($i = 1; $i <= $NumTipPairs; $i++) { ?>
-    <tr>
-      <td align="right" valign="top"><strong>Tip pair <span class="nth-pair"><?=$i?></span></strong></td>
-      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonA" id="Pair<?=$i?>TaxonA"></td>
-      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonB" id="Pair<?=$i?>TaxonB"></td>
-      <td><input type="button" class="deleteTipTaxaPair" style="<?= ($i == 1) ? 'display: none;' : '' ?>" value="delete" /></td>
-    </tr>
-<? } ?>
-    <tr>
-      <td>&nbsp;</td>
-      <td colspan="3" style="">
-	<input type="button" name="AddTipTaxaPair" id="AddTipTaxaPair" value="add a tip-taxa pair" />
-      </td>
-    </tr>
-</table>
-</div>
-
-<h3>4. Identify the calibrated fossil species</h3>
+<h3>3. Identify the calibrated fossil species</h3>
 <div>
 <? /* TODO: Do we still need this section? It tries to reconcile non-matching species name (assigned to fossil) or add a new taxon,
       including some interesting metadata (beyond NCBI stuff) about authorship and PaleoDB taxon IDs.
     */ ?>
-<p><input type="radio" name="newOrExistingFossilSpecies" id="existingFossilSpecies" checked="checked"> <label for="existingFossilSpecies">Choose an existing <b>species</b></label></input></p>
+<p><input type="radio" name="newOrExistingFossilSpecies" value="EXISTING" id="existingFossilSpecies" checked="checked"> <label for="existingFossilSpecies">Choose an existing <b>species</b></label></input></p>
 <table id="pick-existing-fossil-species" width="100%" border="0">
-    <tr>
-      <td align="right" valign="top" width="30%"><strong>enter partial name</strong></td>
-      <td align="left" width="70%">
+    <tr style="background-color: #eee;">
+      <td align="right" valign="top" width="30%" style="background-color: #eee; color: #888;"><strong>search existing species...</strong></td>
+      <td align="left" width="70%" style="background-color: #eee;">
 	<!-- <input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value=""> -->
 	  <input type="text" name="AC_FossilSpeciesID-display" id="AC_FossilSpeciesID-display" value="<?= testForProp($fossil_data, 'Species', '') ?>" style="width: 45%;"/>
-<? // reckon the matching node-ID for this species name (if name is found in NCBI and FCD names, who wins?) 
+<? // reckon the matching node-ID for this species name (if name is found in NCBI and FCD names, who wins? or multiple records in table 'fossiltaxa'?) 
    $matchingFossilNodeID = 0; // TODO
 ?>
 	  <input type="text" name="FossilSpeciesID" id="AC_FossilSpeciesID" value="<?= $matchingFossilNodeID ?>" readonly="readonly" style="width: 45%; color: #999; text-align: center;"/>
@@ -639,13 +694,17 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
 		    </td></tr>
 */ ?>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>scientific name</strong></td><td width="70%" align="left" valign="top"><em id="existing-fossil-species-scientific-name">-</em></td>
+	<td width="30%" align="right" valign="top"><strong>scientific name</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesName" type="text" />
+		<em id="species-matched-from">&nbsp;</em>
+	</td>
       </tr>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>common name</strong></td><td width="70%" align="left" valign="top"><em id="existing-fossil-species-common-name">-</em></td>
+	<td width="30%" align="right" valign="top"><strong>common name</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesCommonName" type="text" /></td>
       </tr>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>author and date</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesAuthor" type="text" /></td>
+	<td width="30%" align="right" valign="top"><strong>author and date</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesAuthor" type="text" />
+		<em id="author-matched-from">&nbsp;</em>
+	</td>
       </tr>
       <tr>
 	<td width="30%" align="right" valign="top"><strong>PaleoDB taxon number</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesPBDBTaxonNum" type="text" /></td>
@@ -657,7 +716,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
       </tr>
 </table>
 
-<p><input type="radio" name="newOrExistingFossilSpecies" id="newFossilSpecies"> <label for="newFossilSpecies">... <b>or</b> enter a new species into the database</label></input></p>
+<p><input type="radio" name="newOrExistingFossilSpecies" value="NEW" id="newFossilSpecies"> <label for="newFossilSpecies">... <b>or</b> enter a new species into the database</label></input></p>
 <table id="enter-new-fossil-species" class="add-form" width="100%" border="0">
       <tr>
 	<td width="30%" align="right" valign="top">Species name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesName" type="text" /></td>
@@ -674,10 +733,11 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
 </table>
 </div>
 
+
 <h3>4. Provide further details about this fossil</h3>
 <div>
 
-<p><input type="radio" name="newOrExistingLocality" id="existingLocality" checked="checked"> <label for="existingLocality">Choose an existing <b>locality</b></label></input></p>
+<p><input type="radio" name="newOrExistingLocality" value="EXISTING" id="existingLocality" checked="checked"> <label for="existingLocality">Choose an existing <b>locality</b></label></input></p>
 <table id="pick-existing-locality" width="100%" border="0">
                 <tr>
                   <td width="30%" align="right" valign="top"><strong>locality</strong></td>
@@ -701,7 +761,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                     </select>
                 </tr>
 </table>
-<p><input type="radio" name="newOrExistingLocality" id="newLocality"> <label for="newLocality">... <b>or</b> enter a new locality into the database</label></input></p>
+<p><input type="radio" name="newOrExistingLocality" value="NEW" id="newLocality"> <label for="newLocality">... <b>or</b> enter a new locality into the database</label></input></p>
 <table id="enter-new-locality" class="add-form" width="100%" border="0">
   <tr>
     <td width="30%" align="right" valign="top"><b>locality name</b></td>
@@ -764,7 +824,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 
 <hr/>
 
-<p><input type="radio" name="newOrExistingCollectionAcronym" id="existingCollectionAcronym" checked="checked"> <label for="existingCollectionAcronym">Choose an existing <b>collection</b></label></input></p>
+<p><input type="radio" name="newOrExistingCollectionAcronym" value="EXISTING" id="existingCollectionAcronym" checked="checked"> <label for="existingCollectionAcronym">Choose an existing <b>collection</b></label></input></p>
 <table id="pick-existing-collection-acronym" width="100%" border="0">
                 <tr>
                   <td width="30%" align="right" valign="top"><strong>collection acronym</strong></td>
@@ -790,7 +850,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                     </select>
                 </tr>
 </table>
-<p><input type="radio" name="newOrExistingCollectionAcronym" id="newCollectionAcronym"> <label for="newCollectionAcronym">... <b>or</b> enter a new collection acronym into the database</label></input></p>
+<p><input type="radio" name="newOrExistingCollectionAcronym" value="NEW" id="newCollectionAcronym"> <label for="newCollectionAcronym">... <b>or</b> enter a new collection acronym into the database</label></input></p>
 <table id="enter-new-collection-acronym" class="add-form" width="100%" border="0">
                 <tr>
                   <td align="right" valign="top" width="30%"><strong>new acronym</strong></td>
@@ -894,7 +954,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 
 <hr/>
 
-<p><input type="radio" name="newOrExistingFossilPublication" id="existingFossilPublication" checked="checked"> <label for="existingFossilPublication">Choose an existing <b>fossil publication</b></label></input></p>
+<p><input type="radio" name="newOrExistingFossilPublication" value="EXISTING" id="existingFossilPublication" checked="checked"> <label for="existingFossilPublication">Choose an existing <b>fossil publication</b></label></input></p>
 <table id="pick-existing-fossil-pub" width="100%" border="0">
   <tr>
     <td width="25%" align="right" valign="top"><b>enter partial name</b></td>
@@ -925,7 +985,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 </tr>
 -->
 </table>
-<p><input type="radio" name="newOrExistingFossilPublication" id="newFossilPublication"> <label for="newFossilPublication">... <b>or</b> enter a new publication into the database</label></input></p>
+<p><input type="radio" name="newOrExistingFossilPublication" value="NEW" id="newFossilPublication"> <label for="newFossilPublication">... <b>or</b> enter a new publication into the database</label></input></p>
 <table id="enter-new-fossil-pub" class="add-form" width="100%" border="0">
                 <tr>
                   <td align="right" valign="top" width="30%"><strong>short form (author, date)</strong></td>
@@ -943,7 +1003,7 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 
 <hr/>
 
-<p><input type="radio" name="newOrExistingPhylogenyPublication" id="existingPhylogenyPublication" checked="checked"> <label for="existingPhylogenyPublication">Choose an existing <b>phylogeny publication</b></label></input></p>
+<p><input type="radio" name="newOrExistingPhylogenyPublication" value="EXISTING" id="existingPhylogenyPublication" checked="checked"> <label for="existingPhylogenyPublication">Choose an existing <b>phylogeny publication</b></label></input></p>
 <table id="pick-existing-phylo-pub" width="100%" border="0">
   <tr>
     <td width="25%" align="right" valign="top"><b>enter partial name</b></td>
@@ -974,8 +1034,8 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                 </tr>
 -->
 </table>
-<p><input type="radio" name="newOrExistingPhylogenyPublication" id="repeatFossilPublication"> <label for="repeatFossilPublication">... <b>or</b> re-use the fossil publication above</label></input></p>
-<p><input type="radio" name="newOrExistingPhylogenyPublication" id="newPhylogenyPublication"> <label for="newPhylogenyPublication">... <b>or</b> enter a new publication into the database</label></input></p>
+<p><input type="radio" name="newOrExistingPhylogenyPublication" value="REUSE_FOSSIL_PUB" id="repeatFossilPublication"> <label for="repeatFossilPublication">... <b>or</b> re-use the fossil publication above</label></input></p>
+<p><input type="radio" name="newOrExistingPhylogenyPublication" value="NEW" id="newPhylogenyPublication"> <label for="newPhylogenyPublication">... <b>or</b> enter a new publication into the database</label></input></p>
 <table id="enter-new-phylo-pub" class="add-form" width="100%" border="0">
                 <tr>
                   <td align="right" valign="top" width="30%"><strong>short form (author, date)</strong></td>
@@ -990,13 +1050,53 @@ Enter pairs of extant taxa whose last common ancestor was the node being calibra
                   <td align="left" width="70%"><input type="text" name="PhyloDOI" id="PhyloDOI" size="10"></td>
                 </tr>
 </table>
+</div>
 
+
+<h3>5. Define tip taxa for the calibrated node</h3>
+<!-- NOTE that this also incorporates the old createclade4, which was just validating these taxa -->
+<div>
+
+<p>
+Enter pairs of extant taxa whose last common ancestor was the node being calibrated. You may enter tip taxa as pairs of species or any other class, e.g., genera or families. If you choose genera (or other higher-level taxa), searches on species within those taxa will also point to this common ancestor.  
+</p>
+<table id="tip-taxa-panel" width="100%" border="0">
+<!--
+    <tr>
+      <td align="right" valign="top">Specify taxa by species </td>
+      <td><input type="radio" name="EntryType" value="species" id="EntryType_0" checked="checked" /> or genus? <input type="radio" name="EntryType" value="genus" id="EntryType_1" /></td>
+    </tr>
+-->
+    <tr>
+      <td width="10%" align="right" valign="top">&nbsp;</td>
+      <td width="40%" style="background-color: #eee;">&nbsp; <b>Side A</b></td>
+      <td width="40%" style="background-color: #eee;">&nbsp; <b>Side B</b></td>
+      <td width="10%">&nbsp;</td>
+    </tr>
+<?php
+   $NumTipPairs = count($tip_pair_data);
+   for ($i = 1; $i <= $NumTipPairs; $i++) {
+	$index = $i - 1; ?>
+    <tr>
+      <td align="right" valign="top"><strong>Tip pair <span class="nth-pair"><?=$i?></span></strong></td>
+      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonA" id="Pair<?=$i?>TaxonA" value="<?= $tip_pair_data[$index]['TaxonA'] ?>"></td>
+      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonB" id="Pair<?=$i?>TaxonB" value="<?= $tip_pair_data[$index]['TaxonB'] ?>"></td>
+      <td><input type="button" class="deleteTipTaxaPair" style="<?= ($i == 1) ? 'display: none;' : '' ?>" value="delete" /></td>
+    </tr>
+<? } ?>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="3" style="">
+	<input type="button" name="AddTipTaxaPair" id="AddTipTaxaPair" value="add tip-taxon pair" />
+      </td>
+    </tr>
+</table>
 </div><!-- END of final step -->
 
 </div><!-- END of div#edit-steps -->
 
 <div style="float: right; text-align: right; margin-top: 12px;">
-	<a href="#" onclick="alert('Note that any publications, fossils, or locations created will be preserved.'); return false;">Cancel</a>
+	<a href="/protected/index.php">Cancel</a>
 	&nbsp;
 	&nbsp;
 	<input type="submit" value="Save Calibration" />
