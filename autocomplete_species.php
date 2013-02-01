@@ -29,7 +29,7 @@ $query='SELECT name AS value, name as label, description
 	WHERE name LIKE "'. $q .'%"'.
 	// non-admin users should only see *Published* publication names
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
-		' AND is_public_name = 1'
+		''  // ' AND is_public_name = 1'
 	)
       //.'ORDER BY ShortName'; // slows things down...
       .' LIMIT 10;';

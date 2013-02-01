@@ -48,7 +48,6 @@ if ($_POST['newOrExistingPublication'] == 'NEW') {
 
 /* Add or update the fossil species record (in table fossiltaxa)
  */
-$fossilSpeciesID = $_POST['FossilSpeciesID'];  // should be replaced by new/existing species name below
 $fossilSpeciesName = '???';
 // TODO: What does this really mean? We might have matched+entered an NCBI taxon name, but still need to
 // create a matching fossiltaxa record. Check for an existing (matching) record in fossiltaxa first! then 
@@ -61,18 +60,31 @@ if ($_POST['newOrExistingFossilSpecies'] == 'NEW') {
 			,TaxonAuthor = '". mysql_real_escape_string($_POST['NewSpeciesAuthor']) ."'
 		        ,PBDBTaxonNum = '". mysql_real_escape_string($_POST['NewSpeciesPBDBTaxonNum']) ."'";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$fossilSpeciesID = mysql_insert_id();
+	$fossiltaxaID = mysql_insert_id();
 	$fossilSpeciesName = $_POST['NewSpeciesName'];
 } else if ($_POST['newOrExistingFossilSpecies'] == 'EXISTING') {
-	// apply any updates to existing species
-	$query="UPDATE fossiltaxa  
-		SET
-			 TaxonName = '". mysql_real_escape_string($_POST['ExistingSpeciesName']) ."'
-			,CommonName = '". mysql_real_escape_string($_POST['ExistingSpeciesCommonName']) ."'
-			,TaxonAuthor = '". mysql_real_escape_string($_POST['ExistingSpeciesAuthor']) ."'
-		        ,PBDBTaxonNum = '". mysql_real_escape_string($_POST['ExistingSpeciesPBDBTaxonNum']) ."'
-		WHERE TaxonID = '". mysql_real_escape_string($fossilSpeciesID) ."'
-	";
+	// apply any updates to existing fossiltaxa record (or build one now)
+	$fossiltaxaID = $_POST['ExistingFossilSpeciesID'];
+		// NOTE that this refers to the ID of any existing _fossiltaxa_ record, regardless of whether
+		// or not this taxon name is known within the system.
+	if ($fossiltaxaID == 'ADD TO FOSSILTAXA') {
+		// create a new fossiltaxa record
+		$query="INSERT INTO fossiltaxa SET
+				 TaxonName = '". mysql_real_escape_string($_POST['ExistingSpeciesName']) ."'
+				,CommonName = '". mysql_real_escape_string($_POST['ExistingSpeciesCommonName']) ."'
+				,TaxonAuthor = '". mysql_real_escape_string($_POST['ExistingSpeciesAuthor']) ."'
+				,PBDBTaxonNum = '". mysql_real_escape_string($_POST['ExistingSpeciesPBDBTaxonNum']) ."'";
+	} else {
+		// update the existing fossiltaxa record
+		$query="UPDATE fossiltaxa  
+			SET
+				 TaxonName = '". mysql_real_escape_string($_POST['ExistingSpeciesName']) ."'
+				,CommonName = '". mysql_real_escape_string($_POST['ExistingSpeciesCommonName']) ."'
+				,TaxonAuthor = '". mysql_real_escape_string($_POST['ExistingSpeciesAuthor']) ."'
+				,PBDBTaxonNum = '". mysql_real_escape_string($_POST['ExistingSpeciesPBDBTaxonNum']) ."'
+			WHERE TaxonID = '". mysql_real_escape_string($fossiltaxaID) ."'
+		";
+	}
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	$fossilSpeciesName = $_POST['ExistingSpeciesName'];
 }

@@ -504,7 +504,7 @@ INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species, 
 SELECT
  COALESCE(NULLIF(names.uniquename, ''), names.name),  -- use uniquename if provided, else name
  CONCAT(names.class,", FCD node"),
- 1,  -- all NCBI names(?) are taxa
+ 1,  -- all FCD names(?) are taxa
  IF((SELECT COUNT(*) FROM FCD_nodes WHERE parent_node_id = names.node_id) = 0, 1, 0),
  IF(trees.is_public_tree, 1, 0)  -- this name is public if it appears in a published tree
 FROM
@@ -513,6 +513,24 @@ LEFT OUTER JOIN FCD_nodes AS nodes ON nodes.node_id = names.node_id
 LEFT OUTER JOIN FCD_trees AS trees ON trees.tree_id = nodes.tree_id
 LEFT OUTER JOIN pinned_nodes ON pinned_nodes.pinned_node_id = names.node_id;
 -- also filter on publication status? JOIN calibration, publication
+
+-- add other available names from taxa and fossiltaxa tables (NOTE that these
+-- may not be associated with any visible calibrations)
+INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species, is_public_name)
+SELECT
+ TaxonName,  -- use uniquename if provided, else name
+ "FCD taxon name", -- shared description
+ 1,  -- all these names are taxa
+ 1,  -- all are species, I think (but not extant! many are extinct)
+ 0  -- these names are for admins only (if used in a public tree, they'll appear through FCD_names above)
+FROM
+(
+ (SELECT TaxonName FROM taxa) UNION
+ (SELECT CommonName FROM taxa) UNION
+ (SELECT TaxonName FROM fossiltaxa) UNION 
+ (SELECT CommonName FROM fossiltaxa)
+) AS FCD_taxon_names
+;
 
 --
 -- clear staging tables for all searchable names, then rebuild

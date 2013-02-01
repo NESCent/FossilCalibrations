@@ -29,6 +29,7 @@ if (isset($_GET['id']) && !empty($_GET['id']) && is_numeric($_GET['id'])) {
 $calibration_data = null;
 $node_pub_data = null;
 $fossil_data = null;
+$fossil_species_data = null;
 $locality_data = null;
 $collection_data = null;
 $fossil_pub_data = null;
@@ -66,10 +67,15 @@ if ($addOrEdit == 'EDIT') {
 	$fossil_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
+	// retrieve any fossil-species record matching this fossil, based on its 'Species' (scientific name)
+	$query="SELECT * FROM fossiltaxa WHERE TaxonName = '". $fossil_data['Species'] ."'";
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$fossil_species_data = mysql_fetch_assoc($result);
+	mysql_free_result($result);
+
 	// retrieve fossil locality
 	$query="SELECT * FROM localities WHERE LocalityID = '".$fossil_data['LocalityID']."'";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		// TODO: respond more gracefully to missing pub
 	$locality_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
@@ -77,21 +83,18 @@ if ($addOrEdit == 'EDIT') {
 	$query="SELECT * FROM L_CollectionAcro WHERE Acronym = '".$fossil_data['CollectionAcro']."'";
 	// TODO: force uniqueness of Acronym field here!?
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		// TODO: respond more gracefully to missing pub
 	$collection_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
 	// retrieve fossil pub
 	$query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['FossilPub']."'";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		// TODO: respond more gracefully to missing pub
 	$fossil_pub_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
 	// retrieve phylogeny pub
 	$query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['PhyloPub']."'";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		// TODO: respond more gracefully to missing pub
 	$phylo_pub_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
@@ -140,6 +143,7 @@ $collectionacro_list=mysql_query($query) or die ('Error  in query: '.$query.'|'.
 //Retrieve list of fossils
 $query='SELECT FossilID, Species, CollectionAcro, CollectionNumber, LocalityID, LocalityName, Country FROM View_Fossils';
 $fossil_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+// TODO: where is this used?
 
 //Retrieve list of localities
 $query='SELECT * FROM View_Localities ORDER BY StratumMinAge';
@@ -305,7 +309,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			focus: function(event, ui) {
 				console.log("FOCUSED > "+ ui.item.FullReference);
 				// clobber any existing hidden value!?
-				$('#AC_FossilSpeciesID').val('');
+				//$('#AC_FossilSpeciesID').val('');
 				// override normal display (would show numeric ID!)
 				return false;
 			},
@@ -315,19 +319,19 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 					// widget blurred with invalid value; clear any 
 					// stale values from the UI
 					$('#AC_FossilSpeciesID-display').val('');
-					$('#AC_FossilSpeciesID').val('');
+					//$('#AC_FossilSpeciesID').val('');
 					//$('#AC_FossilSpeciesID-more-info').html('&nbsp;');
 				}
 			},
 			select: function(event, ui) {
 				console.log("CHOSEN > "+ ui.item.FullReference);
 				$('#AC_FossilSpeciesID-display').val(ui.item.label);
-				$('#AC_FossilSpeciesID').val(ui.item.value);
 				// fetch and display taxon metadata below
 				$.ajax( '/fetch_taxon_properties.php', {
 					dataType: 'json',
 					data: {'calibration_ID': $('#CalibrationID').val(), 'autocomplete_match': ui.item.value},
 					success: function(data) {
+						$('input[name=ExistingFossilSpeciesID]').val(data.fossiltaxaID);
 						$('input[name=ExistingSpeciesName]').val(data.properName);
 						$('input[name=ExistingSpeciesCommonName]').val(data.commonName);
 						$('input[name=ExistingSpeciesAuthor]').val(data.author);
@@ -345,6 +349,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 					},
 					error: function(data) {
 						// clear all fields below
+						$('input[name=ExistingFossilSpeciesID]').val('');
 						$('input[name=ExistingSpeciesName]').val('');
 						$('input[name=ExistingSpeciesCommonName]').val('');
 						$('input[name=ExistingSpeciesAuthor]').val('');
@@ -664,14 +669,12 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 <p><input type="radio" name="newOrExistingFossilSpecies" value="EXISTING" id="existingFossilSpecies" checked="checked"> <label for="existingFossilSpecies">Choose an existing <b>species</b></label></input></p>
 <table id="pick-existing-fossil-species" width="100%" border="0">
     <tr style="background-color: #eee;">
-      <td align="right" valign="top" width="30%" style="background-color: #eee; color: #888;"><strong>search existing species...</strong></td>
+      <td align="right" valign="top" width="30%" style="background-color: #eee; color: #888;"><strong>search all existing species...</strong></td>
       <td align="left" width="70%" style="background-color: #eee;">
 	<!-- <input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value=""> -->
 	  <input type="text" name="AC_FossilSpeciesID-display" id="AC_FossilSpeciesID-display" value="<?= testForProp($fossil_data, 'Species', '') ?>" style="width: 45%;"/>
-<? // reckon the matching node-ID for this species name (if name is found in NCBI and FCD names, who wins? or multiple records in table 'fossiltaxa'?) 
-   $matchingFossilNodeID = 0; // TODO
-?>
-	  <input type="text" name="FossilSpeciesID" id="AC_FossilSpeciesID" value="<?= $matchingFossilNodeID ?>" readonly="readonly" style="width: 45%; color: #999; text-align: center;"/>
+	<? // stash the ID of the matching fossil-species record (from table fossiltaxa), to make sure we're updating the same record ?>
+	  <input type="text" name="ExistingFossilSpeciesID" id="AC_FossilSpeciesID" value="<?= testForProp($fossil_species_data, 'TaxonID', 0) ?>" readonly="readonly" style="width: 45%; color: #999; text-align: center;"/>
       </td>
     </tr>
 <? /* Fuzzy matching against entered species name...
@@ -694,25 +697,31 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		    </td></tr>
 */ ?>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>scientific name</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesName" type="text" />
-		<em id="species-matched-from">&nbsp;</em>
+	<td width="30%" align="right" valign="top"><strong>scientific name</strong></td><td width="70%" align="left" valign="top">
+		<input name="ExistingSpeciesName" type="text" readonly="readonly" value="<?= testForProp($fossil_species_data, 'TaxonName', '') ?>" />
+		<em id="species-matched-from">This name is not editable; instead, enter a new species below.</em>
 	</td>
       </tr>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>common name</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesCommonName" type="text" /></td>
+	<td width="30%" align="right" valign="top"><strong>common name</strong></td><td width="70%" align="left" valign="top">
+		<input name="ExistingSpeciesCommonName" type="text" value="<?= testForProp($fossil_species_data, 'CommonName', '') ?>" />
+	</td>
       </tr>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>author and date</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesAuthor" type="text" />
+	<td width="30%" align="right" valign="top"><strong>author and date</strong></td><td width="70%" align="left" valign="top">
+		<input name="ExistingSpeciesAuthor" type="text" value="<?= testForProp($fossil_species_data, 'TaxonAuthor', '') ?>" />
 		<em id="author-matched-from">&nbsp;</em>
 	</td>
       </tr>
       <tr>
-	<td width="30%" align="right" valign="top"><strong>PaleoDB taxon number</strong></td><td width="70%" align="left" valign="top"><input name="ExistingSpeciesPBDBTaxonNum" type="text" /></td>
+	<td width="30%" align="right" valign="top"><strong>PaleoDB taxon number</strong></td><td width="70%" align="left" valign="top">
+		<input name="ExistingSpeciesPBDBTaxonNum" type="text" value="<?= testForProp($fossil_species_data, 'PBDBTaxonNum', '') ?>" />
+	</td>
       </tr>
       <tr>
 	<td width="30%" align="right" valign="top">&nbsp;</td><td width="70%" align="left" valign="top">
-		<em>Changes to existing species (authorship and PaleoDB) will be reflected in all calibrations!</em>
-</td>
+		<em>Changes above will be reflected in all calibrations of this fossil species!</em>
+	</td>
       </tr>
 </table>
 
@@ -1058,7 +1067,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 <div>
 
 <p>
-Enter pairs of extant taxa whose last common ancestor was the node being calibrated. You may enter tip taxa as pairs of species or any other class, e.g., genera or families. If you choose genera (or other higher-level taxa), searches on species within those taxa will also point to this common ancestor.  
+Enter pairs of taxa whose last common ancestor was the node being
+calibrated. You may enter tip taxa as extant species or any other class,
+e.g., genera or families. If you choose genera (or other higher-level taxa),
+searches on species within those taxa will also point to this common ancestor.  
 </p>
 <table id="tip-taxa-panel" width="100%" border="0">
 <!--

@@ -17,9 +17,9 @@ function isNullOrEmptyString($str){
     return (!isset($str) || ($str == null) || trim($str)==='');
 }
 
-
 // prepare an associative array for fossiltaxa values
 $taxon_properties = array(
+	'fossiltaxaID' => '',
 	'properName' => '',
 	'commonName' => '',
 	'author' => '',
@@ -67,6 +67,7 @@ if (is_numeric($CalibrationID) && $CalibrationID > 0) {
 		$row = mysql_fetch_assoc($result);
 
 		$bestMatchFound = true;
+		$taxon_properties['fossiltaxaID'] = $row['TaxonID'];
 		$taxon_properties['properName'] = $row['TaxonName'];
 		$taxon_properties['commonName'] = $row['CommonName'];
 		$taxon_properties['author'] = $row['TaxonAuthor'];
@@ -100,6 +101,7 @@ if  (!$bestMatchFound || !$authorshipFound) {
 		$taxon_properties['AUTHOR_SOURCE_TABLE'] = "taxa";
 
 		if (!$bestMatchFound) {
+			$taxon_properties['fossiltaxaID'] = 'ADD TO FOSSILTAXA';
 			$taxon_properties['properName'] = $row['TaxonName'];
 			$taxon_properties['commonName'] = $row['CommonName'];
 			$taxon_properties['pbdbTaxonNumber'] = '';  // this is not included in table 'taxa'
@@ -151,6 +153,7 @@ if  (!$bestMatchFound || !$authorshipFound) {
 		$taxon_properties['AUTHOR_SOURCE_TABLE'] = "NCBI_names";
 
 		if  (!$bestMatchFound) {
+			$taxon_properties['fossiltaxaID'] = 'ADD TO FOSSILTAXA';
 			$taxon_properties['properName'] = $scientificName;
 			$taxon_properties['commonName'] = !isNullOrEmptyString($genbankCommonName) ? $genbankCommonName : $commonName;
 			$taxon_properties['pbdbTaxonNumber'] = "";  // sorry, not available here
