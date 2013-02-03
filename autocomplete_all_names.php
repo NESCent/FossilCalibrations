@@ -31,7 +31,7 @@ $query='SELECT name AS value, name as label, description
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 		' AND is_public_name = 1'
 	)
-      //.'ORDER BY ShortName'; // slows things down...
+      .' ORDER BY label' // slows things down, but necessary to choose some names
       .' LIMIT 10;';
 
 $match_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	

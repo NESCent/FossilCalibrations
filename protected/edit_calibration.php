@@ -51,16 +51,7 @@ if ($addOrEdit == 'EDIT') {
 	$node_pub_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
-	// TODO: retrieve tip taxa pairs for this node, if any (report the count of these?)
-/*
-	$query="SELECT * FROM publications WHERE PublicationID = '".$calibration_data['NodePub']."'";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		// TODO: respond more gracefully to missing pub
-	$node_pub_data = mysql_fetch_assoc($result);
-	mysql_free_result($result);
-*/
-
-	// TODO: retrieve fossil record for this node, if any (ASSUMES only one fossil per calibration!)
+	// retrieve fossil record for this node, if any (ASSUMES only one fossil per calibration!)
 	$query="SELECT * FROM fossils WHERE FossilID = (SELECT FossilID FROM Link_CalibrationFossil WHERE CalibrationID = '".$CalibrationID."')";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	// TODO: respond more gracefully to missing fossil (skip dependent data below)
@@ -397,6 +388,14 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			// remove the entire row
 			$itsRow.remove();
 			// TODO: re-number the remaining rows?
+			var nthPosition = 1;
+			$('#tip-taxa-panel tr.tip-taxa-pair').each(function() {
+				var $testRow = $(this);
+				$testRow.find('.nth-pair').text( nthPosition );
+				$testRow.find('input:text[name$=A]').attr('name', 'Pair'+nthPosition+'TaxonA').attr('id', 'Pair'+nthPosition+'TaxonA');;
+				$testRow.find('input:text[name$=B]').attr('name', 'Pair'+nthPosition+'TaxonB').attr('id', 'Pair'+nthPosition+'TaxonB');;
+				nthPosition++;
+			});
 		});
 		$('#AddTipTaxaPair').unbind('click').click(function() {
 			var $itsRow = $(this).closest('tr');
@@ -1087,15 +1086,25 @@ searches on species within those taxa will also point to this common ancestor.
     </tr>
 <?php
    $NumTipPairs = count($tip_pair_data);
-   for ($i = 1; $i <= $NumTipPairs; $i++) {
-	$index = $i - 1; ?>
-    <tr>
-      <td align="right" valign="top"><strong>Tip pair <span class="nth-pair"><?=$i?></span></strong></td>
-      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonA" id="Pair<?=$i?>TaxonA" value="<?= $tip_pair_data[$index]['TaxonA'] ?>"></td>
-      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonB" id="Pair<?=$i?>TaxonB" value="<?= $tip_pair_data[$index]['TaxonB'] ?>"></td>
-      <td><input type="button" class="deleteTipTaxaPair" style="<?= ($i == 1) ? 'display: none;' : '' ?>" value="delete" /></td>
+   if ($NumTipPairs == 0) { 
+      // add one empty pair to start things off ?>
+    <tr class="tip-taxa-pair">
+      <td align="right" valign="top"><strong>Tip pair <span class="nth-pair">1</span></strong></td>
+      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair1TaxonA" id="Pair1TaxonA" value=""></td>
+      <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair1TaxonB" id="Pair1TaxonB" value=""></td>
+      <td><input type="button" class="deleteTipTaxaPair" style="display: none;" value="delete" /></td>
     </tr>
-<? } ?>
+<? } else { 
+      for ($i = 1; $i <= $NumTipPairs; $i++) {
+	   $index = $i - 1; ?>
+       <tr class="tip-taxa-pair">
+         <td align="right" valign="top"><strong>Tip pair <span class="nth-pair"><?=$i?></span></strong></td>
+         <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonA" id="Pair<?=$i?>TaxonA" value="<?= $tip_pair_data[$index]['TaxonA'] ?>"></td>
+         <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonB" id="Pair<?=$i?>TaxonB" value="<?= $tip_pair_data[$index]['TaxonB'] ?>"></td>
+         <td><input type="button" class="deleteTipTaxaPair" style="<?= ($i == 1) ? 'display: none;' : '' ?>" value="delete" /></td>
+       </tr>
+   <? }
+   } ?>
     <tr>
       <td>&nbsp;</td>
       <td colspan="3" style="">

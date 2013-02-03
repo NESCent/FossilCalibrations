@@ -30,8 +30,8 @@ $query='SELECT PublicationID AS value, ShortName as label, FullReference
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 		'AND EXISTS(SELECT PublicationStatus FROM calibrations WHERE PublicationID = publications.PublicationID AND PublicationStatus = 4)'
 	)
-      //.'ORDER BY ShortName'; // slows things down...
-      .'LIMIT 10';
+      .' ORDER BY label' // slows things down...
+      .' LIMIT 10';
 
 $match_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 

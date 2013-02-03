@@ -11,11 +11,10 @@ require('../Site.conf');
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
-echo '<a href="/protected/edit_calibration.php?id='. $_POST['CalibrationID'] .'">return to editor</a><br/><br/>';
-
 // check nonce (one-time key) to make sure this is not an accidental re-submit
 if ($_SESSION['nonce'] != $_POST['nonce']) {
     echo 'This form has already been submitted!';  
+    echo '<a href="/protected/edit_calibration.php?id='. $_POST['CalibrationID'] .'">return to editor</a><br/><br/>';
     return;
 } else {
     // clear the session nonce and keep going
@@ -49,7 +48,7 @@ if ($_POST['newOrExistingPublication'] == 'NEW') {
 /* Add or update the fossil species record (in table fossiltaxa)
  */
 $fossilSpeciesName = '???';
-// TODO: What does this really mean? We might have matched+entered an NCBI taxon name, but still need to
+// What does this really mean? We might have matched+entered an NCBI taxon name, but still need to
 // create a matching fossiltaxa record. Check for an existing (matching) record in fossiltaxa first! then 
 // whether or not to create or update a record here.
 if ($_POST['newOrExistingFossilSpecies'] == 'NEW') {
@@ -213,6 +212,10 @@ $query="INSERT INTO calibrations
 	ON DUPLICATE KEY UPDATE $newValues";
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $calibrationID = mysql_insert_id();
+if ($calibrationID == 0) {
+	// this calibration already exists, keep the original ID
+	$calibrationID = $_POST['CalibrationID'];
+}
 
 // now that we have a known-good calibration ID, we might need to add a link to its fossil
 if ($addingFossilCalibrationLink) {
@@ -225,12 +228,43 @@ if ($addingFossilCalibrationLink) {
 	
 
 /*
- * TODO: Add or update tip taxa for this node
+ * Add or update tip taxa for this node
  */
 
+// clobber all existing pair-calibration links for this calibration (leave defined tips in place)
+$query="DELETE FROM Link_CalibrationPair WHERE 
+        CalibrationID = '". mysql_real_escape_string($calibrationID) ."'";
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+
+// process any pair variables found
+$nthPair = 1;
+while (isset($_POST["Pair{$nthPair}TaxonA"])) {
+	$taxonA = $_POST["Pair{$nthPair}TaxonA"];
+	$taxonB = $_POST["Pair{$nthPair}TaxonB"];
+	// SKIP any pair with missing/empty names??
+	if (!empty($taxonA) && !empty($taxonB)) {
+		$query= 'SELECT * FROM Link_Tips WHERE (TaxonA=\''.$taxonA.'\' AND TaxonB=\''.$taxonB.'\') OR (TaxonA=\''.$taxonB.'\' && TaxonB=\''.$taxonA.'\')';
+		$pair_result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+		if( mysql_num_rows($pair_result)==0 ) {
+			// add this new pair and assign to the current calibration
+			$query= 'INSERT INTO Link_Tips (TaxonA,TaxonB) VALUES (\''.mysql_real_escape_string($taxonA).'\', \''.mysql_real_escape_string($taxonB).'\')';
+			$newpairs=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+			$pairID=mysql_insert_id();
+		} else {
+			// this pair already exists, probably entered with another calibration
+			$row=mysql_fetch_assoc($pair_result);
+			$pairID=$row['PairID'];
+		}
+		$query='INSERT INTO Link_CalibrationPair (CalibrationID,TipPairsID) VALUES (\''.mysql_real_escape_string($calibrationID).'\',\''.$pairID.'\')';
+		$newcladepair=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	}
+	$nthPair++;
+}
+
+// NOTE that we're careful to return to a new calibration with its new assigned ID
+echo '<a href="/protected/edit_calibration.php?id='. $calibrationID .'">return to editor</a><br/><br/>';
+
 // bounce back to the edit page? or a simple result page
-/*
-header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/edit_calibration.php?id='. $_POST['id'] .'&result=success');
+header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/edit_calibration.php?id='. $calibrationID .'&result=success');
 exit();
-*/
 ?>

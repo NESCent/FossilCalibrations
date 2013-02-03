@@ -93,12 +93,12 @@ $taxonnum++;
 // SOMEWHERE HERE WE NOW HAVE TO ADD THE TIP PAIRS, checking whether the pair already exists, adding it if it doesn't, then inserting the proper!!!!!
 $taxa_names=array();
 foreach($all_ids as $key => $value) { 
-//get the taxon names
-$query='SELECT * FROM taxa WHERE TaxonID='.$value;
-$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-$row=mysql_fetch_assoc($result);
-array_push($taxa_names,$row['TaxonName']);
-echo $row['TaxonName'];
+	//get the taxon names
+	$query='SELECT * FROM taxa WHERE TaxonID='.$value;
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$row=mysql_fetch_assoc($result);
+	array_push($taxa_names,$row['TaxonName']);
+	echo $row['TaxonName'];
 }
 
 for($i=1; $i<= $_POST['NumTipPairs'];$i++) {
@@ -107,19 +107,20 @@ for($i=1; $i<= $_POST['NumTipPairs'];$i++) {
 	$query= 'SELECT * FROM Link_Tips WHERE (TaxonA=\''.$taxonA.'\' AND TaxonB=\''.$taxonB.'\') OR (TaxonA=\''.$taxonB.'\' && TaxonB=\''.$taxonA.'\')';
 	$pair_result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	if( mysql_num_rows($pair_result)==0 ) {
+		// add this new pair and assign to the current calibration
 		$query= 'INSERT INTO Link_Tips (TaxonA,TaxonB) VALUES (\''.$taxonA.'\', \''.$taxonB.'\')';
 		$newpairs=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 		$pairID=mysql_insert_id();
 		$query='INSERT INTO Link_CalibrationPair (CalibrationID,TipPairsID) VALUES (\''.$_POST['CalibrationID'].'\',\''.$pairID.'\')';
 		$newcladepair=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		} else {
-			$row=mysql_fetch_assoc($pair_result);
-			$pairID=$row['PairID'];
-			$query='INSERT INTO Link_CalibrationPair (CalibrationID,TipPairsID) VALUES (\''.$_POST['CalibrationID'].'\',\''.$pairID.'\')';
-			$newcladepair=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-			}
-	
+	} else {
+		// this pair already exists, probably entered with another calibration
+		$row=mysql_fetch_assoc($pair_result);
+		$pairID=$row['PairID'];
+		$query='INSERT INTO Link_CalibrationPair (CalibrationID,TipPairsID) VALUES (\''.$_POST['CalibrationID'].'\',\''.$pairID.'\')';
+		$newcladepair=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	}
+}
 
 } else {
 // above code is for when entry is by species, below is entry by genera

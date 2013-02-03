@@ -26,7 +26,8 @@ $taxon_properties = array(
 	'pbdbTaxonNumber' => '',
 	'TOTAL_MATCHING_TAXA' => '',
 	'SOURCE_TABLE' => '',
-	'AUTHOR_SOURCE_TABLE' => ''
+	'AUTHOR_SOURCE_TABLE' => '',
+	'ERROR' => '?'
 );
 
 // check for a valid (non-empty) query
@@ -37,6 +38,7 @@ if (!isset($_GET["autocomplete_match"])) {
 $q = strtolower($_GET["autocomplete_match"]);
 if (!$q || trim($q) == "") {
 	// if string is empty, don't bother checking; just return no matches
+	$taxonProperties['ERROR'] = "empty match term!";
 	echo json_encode($taxon_properties);
 	return;
 }
@@ -50,37 +52,38 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 $bestMatchFound = false;
 $authorshipFound = false;
 $CalibrationID = $_GET['calibration_ID']; 
+$taxonProperties['ERROR'] = "empty match term!";
+/* look for a fossiltaxa record already assigned to this calibration?
 if (is_numeric($CalibrationID) && $CalibrationID > 0) {
-	/* look for a fossiltaxa record already assigned to this calibration
 	$query="SELECT fossiltaxa.* FROM fossiltaxa 
 		INNER JOIN fossils ON fossils.Species = fossiltaxa.TaxonName
 		LEFT OUTER JOIN Link_CalibrationFossil AS link ON link.FossilID = fossils.FossilID
 		INNER JOIN calibrations ON calibrations.CalibrationID = link.CalibrationID AND calibrations.CalibrationID = '". mysql_real_escape_string($CalibrationID) ."'";
-	*/
-
-	// look for an existing fossiltaxa record matching this name
-	$query="SELECT * FROM fossiltaxa 
-		WHERE TaxonName LIKE '". mysql_real_escape_string($q) ."' OR CommonName LIKE '". mysql_real_escape_string($q) ."'";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
-
-	if (mysql_num_rows($result) > 0) {
-		$row = mysql_fetch_assoc($result);
-
-		$bestMatchFound = true;
-		$taxon_properties['fossiltaxaID'] = $row['TaxonID'];
-		$taxon_properties['properName'] = $row['TaxonName'];
-		$taxon_properties['commonName'] = $row['CommonName'];
-		$taxon_properties['author'] = $row['TaxonAuthor'];
-		$taxon_properties['pbdbTaxonNumber'] = $row['PBDBTaxonNum'];
-		$taxon_properties['TOTAL_MATCHING_TAXA'] = mysql_num_rows($result);
-		$taxon_properties['SOURCE_TABLE'] = "fossiltaxa";
-		$taxon_properties['AUTHOR_SOURCE_TABLE'] = "fossiltaxa";
-	}
-	if (!isNullOrEmptyString($taxon_properties['author'])) {
-		$authorshipFound = true;
-	}
-
 }
+*/
+
+// look for an existing fossiltaxa record matching this name
+$query="SELECT * FROM fossiltaxa 
+	WHERE TaxonName LIKE '". mysql_real_escape_string($q) ."' OR CommonName LIKE '". mysql_real_escape_string($q) ."'";
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+
+if (mysql_num_rows($result) > 0) {
+	$row = mysql_fetch_assoc($result);
+
+	$bestMatchFound = true;
+	$taxon_properties['fossiltaxaID'] = $row['TaxonID'];
+	$taxon_properties['properName'] = $row['TaxonName'];
+	$taxon_properties['commonName'] = $row['CommonName'];
+	$taxon_properties['author'] = $row['TaxonAuthor'];
+	$taxon_properties['pbdbTaxonNumber'] = $row['PBDBTaxonNum'];
+	$taxon_properties['TOTAL_MATCHING_TAXA'] = mysql_num_rows($result);
+	$taxon_properties['SOURCE_TABLE'] = "fossiltaxa";
+	$taxon_properties['AUTHOR_SOURCE_TABLE'] = "fossiltaxa";
+}
+if (!isNullOrEmptyString($taxon_properties['author'])) {
+	$authorshipFound = true;
+}
+
 if  (!$bestMatchFound || !$authorshipFound) {
 	/* fall back to any 'taxa' record that matches fossil's species name (worth a try, if only for fossil species and authorship info)
 	$query="SELECT taxa.* FROM taxa 
