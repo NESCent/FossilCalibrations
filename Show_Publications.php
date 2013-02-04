@@ -32,7 +32,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
     <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>short form</strong></td>
     <td width="55%" align="center" valign="middle" bgcolor="#999999"><strong>full citation</strong></td>
     <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>doi/url</strong></td>
-    <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>doi/url</strong></td>
+    <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>actions</strong></td>
   </tr>
 
 <?php

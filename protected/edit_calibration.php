@@ -597,7 +597,9 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
   </tr>
   <tr>
     <td width="21%" align="right" valign="top"><b>doi</b></td>
-    <td width="79%"><input type="text" name="DOI" id="DOI"></td>
+    <td width="79%"><input type="text" name="DOI" id="DOI">
+	<br/><i>You will be able to add a featured image and set its publication status <br/>later, from the <a href="/Show_Publications.php" target="_blank">Manage Publications</a> page.</i>
+    </td>
   </tr>
 </table>
 </div>

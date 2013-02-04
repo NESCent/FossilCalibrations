@@ -90,6 +90,6 @@ if ($requestedAction == 'Save Publication') {
 echo '<a href="/protected/edit_publication.php?id='. $publicationID .'">return to editor</a><br/><br/>';
 
 // bounce back to the edit page? or a simple result page
-//header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/edit_publication.php?id='. $publicationID .'&result=success');
+header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/edit_publication.php?id='. $publicationID .'&result=success');
 exit();
 ?>
