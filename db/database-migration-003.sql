@@ -23,7 +23,7 @@ CREATE TABLE AC_names_nodes (
   -- status? published, draft, deprecated...
   is_public_name TINYINT(1) NOT NULL,   -- true (1) if this name is used in ANY public tree
 
-  KEY (name, description), KEY (is_extant_species)
+  KEY (name, description), KEY (is_taxon), KEY (is_extant_species)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- create a staging table with same structure
 DROP TABLE IF EXISTS tmp_AC_names_nodes;

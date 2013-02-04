@@ -32,6 +32,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
     <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>short form</strong></td>
     <td width="55%" align="center" valign="middle" bgcolor="#999999"><strong>full citation</strong></td>
     <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>doi/url</strong></td>
+    <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>doi/url</strong></td>
   </tr>
 
 <?php
@@ -43,6 +44,12 @@ while ($row = mysql_fetch_array($publication_list)) {
     <td><?=$row['ShortName']?></td>
     <td><?=$row['FullReference']?></td>
     <td><a href="http://dx.doi.org/<?=$row['DOI']?>" target="_new"><?=$row['DOI']?></a></td>
+    <td><a href="/protected/edit_publication.php?id=<?=$row['PublicationID']?>">edit</a>
+	&nbsp;
+	&nbsp;
+	&nbsp;
+        <a style="color: #f88;" href="/protected/delete_publication.php?id=<?=$row['PublicationID']?>" onclick="return confirm('Are you sure you want to delete this publication? This action cannot be undone!');">delete</a></td>
+	<? /* TODO: check for depedencies, calibrations that are still bound to this publication? Or delete them too? */ ?>
   </tr>
 
 <?php } ?>  
