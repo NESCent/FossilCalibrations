@@ -18,4 +18,13 @@ ALTER TABLE publications
 UPDATE publications SET PublicationStatus=4
     WHERE PublicationStatus IS NULL;
 
+-- changes to this field should be mirrored in all related calibrations
+DROP TRIGGER IF EXISTS push_pub_status;
+CREATE TRIGGER push_pub_status 
+	AFTER UPDATE ON publications 
+	FOR EACH ROW 
+	UPDATE calibrations SET PublicationStatus = NEW.PublicationStatus WHERE NodePub = NEW.PublicationID;
+
+
+
 

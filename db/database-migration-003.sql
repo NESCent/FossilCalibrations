@@ -553,8 +553,7 @@ INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
 SELECT
  ShortName,
  FullReference,
- IF(EXISTS(SELECT PublicationStatus FROM calibrations WHERE NodePub = publications.PublicationID AND PublicationStatus = 4), 1, 0)
-   -- ie, a publication is public if any of its calibrations are
+ IF(PublicationStatus = 4, 1, 0)
 FROM
  publications;
 

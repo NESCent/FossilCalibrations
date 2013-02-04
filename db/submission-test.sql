@@ -43,7 +43,7 @@ SET
    root_node_id = NULL
   ,calibration_id = @calibrationID
   ,comments = 'This is an empty test tree'
-  ,is_public_tree = 0   -- (SELECT MAX(PublicationStatus) FROM publications WHERE PublicationID = @pubID)
+  ,is_public_tree = (SELECT MAX(PublicationStatus) FROM publications WHERE PublicationID = @pubID)
 ;
 
 SET @treeID = LAST_INSERT_ID();

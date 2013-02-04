@@ -28,7 +28,8 @@ $query='SELECT PublicationID AS value, ShortName as label, FullReference
 	WHERE FullReference LIKE "%'. $q .'%" OR ShortName LIKE "%'. $q .'%"'.
 	// non-admin users should only see *Published* publication names
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
-		'AND EXISTS(SELECT PublicationStatus FROM calibrations WHERE PublicationID = publications.PublicationID AND PublicationStatus = 4)'
+		// 'AND EXISTS(SELECT PublicationStatus FROM calibrations WHERE PublicationID = publications.PublicationID AND PublicationStatus = 4)'
+		'AND PublicationStatus = 4'
 	)
       .' ORDER BY label' // slows things down...
       .' LIMIT 10';

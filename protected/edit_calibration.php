@@ -526,8 +526,9 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
   <tr>
     <td width="15%" align="right" valign="top"><b>publication status</b></td>
     <td width="25%" valign="top">&nbsp;
+<!-- Make this a static field for now (inherits from publication's PublicationStatus
 	<select name="PublicationStatus">
-	  <?php
+	  <?php /*
 		$currentStatus = testForProp($calibration_data, 'PublicationStatus', '1');  // default is Private Draft
 		while ($row = mysql_fetch_array($pubstatus_list)) {
 			$thisStatus = $row['PubStatusID'];
@@ -537,8 +538,20 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 				echo '<option value="'.$row['PubStatusID'].'">'.$row['PubStatus'].'</option>';
 			}			
 		}
+		*/
 	  ?>
 	</select>
+-->
+	  <?php $currentStatus = testForProp($calibration_data, 'PublicationStatus', '1');  // default is Private Draft ?>
+	  <input type="hidden" name="PublicationStatus" value="<?= $currentStatus ?>" />
+	  <?
+		while ($row = mysql_fetch_array($pubstatus_list)) {
+			$thisStatus = $row['PubStatusID'];
+			if ($currentStatus == $thisStatus) {
+				echo '<i>'.$row['PubStatus'].'</i>';
+			}			
+		}
+	  ?>
     </td>
     <td width="10%" rowspan="2" align="right" valign="top">
 	<b>admin comments</b>
