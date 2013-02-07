@@ -72,7 +72,7 @@ $pubstatus_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysq
 <input type="hidden" id="PublicationID" name="PublicationID" value="<?= $PublicationID; ?>" />
 
 <div style="float: right; text-align: right;">
-	<a href="/protected/index.php">Cancel</a>
+	<a href="/protected/manage_publications.php">Cancel</a>
 	&nbsp;
 	&nbsp;
 	<input type="submit" name="requestedAction" value="Save Publication" />
@@ -136,7 +136,7 @@ $pubstatus_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysq
 </table>
 
 <div style="float: right; text-align: right; margin-top: 12px;">
-	<a href="/protected/index.php">Cancel</a>
+	<a href="/protected/manage_publications.php">Cancel</a>
 	&nbsp;
 	&nbsp;
 	<input type="submit" name="requestedAction" value="Save Publication" />

@@ -1,7 +1,7 @@
 <?php 
 /*
- * This is a faceless script that tries to delete an publication record, and 
- * any accomponpanying image file, then redirect to the main publications list.
+ * This is a faceless script that tries to delete a publication record, and 
+ * any accompanying image file, then redirect to the main publications list.
  */
 
 // open and load site variables
@@ -22,6 +22,6 @@ $query="DELETE FROM publication_images
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 // bounce back to the edit page? or a simple result page
-header('Location: https://'. $_SERVER['HTTP_HOST'] .'/Show_Publications.php');
+header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/manage_publications.php');
 exit();
 ?>

@@ -21,7 +21,7 @@ if ($_SESSION['nonce'] != $_POST['nonce']) {
     $_SESSION['nonce'] = null;
 }
 
-echo '<pre>'.print_r($_POST, true).'</pre>';
+//echo '<pre>'.print_r($_POST, true).'</pre>';
 
 $addOrEdit = $_POST['addOrEdit']; // should be 'ADD' or 'EDIT'
 
@@ -262,7 +262,7 @@ while (isset($_POST["Pair{$nthPair}TaxonA"])) {
 }
 
 // NOTE that we're careful to return to a new calibration with its new assigned ID
-echo '<a href="/protected/edit_calibration.php?id='. $calibrationID .'">return to editor</a><br/><br/>';
+//echo '<a href="/protected/edit_calibration.php?id='. $calibrationID .'">return to editor</a><br/><br/>';
 
 // bounce back to the edit page? or a simple result page
 header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/edit_calibration.php?id='. $calibrationID .'&result=success');

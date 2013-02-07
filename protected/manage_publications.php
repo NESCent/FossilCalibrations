@@ -1,9 +1,9 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../Site.conf');
 
 // open and print header template
-require('header.php');
+require('../header.php');
 ?>
 
 <?php
@@ -26,6 +26,11 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 
 ?>
 
+<div style="margin: 12px 0;">
+	<button style="float: right;" onclick="window.location = '/protected/edit_publication.php';">Add a new publication</button>
+	<a href="/protected/index.php">&laquo; Back to admin dashboard</a>
+</div>
+
 <table width="100%" border="0">
   <tr>
     <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>id</strong></td>
@@ -36,15 +41,18 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
   </tr>
 
 <?php
+$nthRow = 0;
 while ($row = mysql_fetch_array($publication_list)) {
+	$nthRow++;
+	$oddOrEven = ($nthRow % 2) ? 'odd' : 'even';
 ?>
   
-  <tr align="left" valign="top">
+  <tr align="left" valign="top" class="<?= $oddOrEven ?>">
     <td align="center"><?=$row['PublicationID']?></td>
     <td><?=$row['ShortName']?></td>
     <td><?=$row['FullReference']?></td>
     <td><a href="http://dx.doi.org/<?=$row['DOI']?>" target="_new"><?=$row['DOI']?></a></td>
-    <td><a href="/protected/edit_publication.php?id=<?=$row['PublicationID']?>">edit</a>
+    <td style="white-space: nowrap;"><a href="/protected/edit_publication.php?id=<?=$row['PublicationID']?>">edit</a>
 	&nbsp;
 	&nbsp;
 	&nbsp;
@@ -56,9 +64,12 @@ while ($row = mysql_fetch_array($publication_list)) {
   
 </table>
 
-	
+<div style="margin: 12px 0 6px;">
+	<button style="float: right;" onclick="window.location = '/protected/edit_publication.php';">Add a new publication</button>
+	<a href="/protected/index.php">&laquo; Back to admin dashboard</a>
+</div>
 
 <?php 
 //open and print page footer template
-require('footer.php');
+require('../footer.php');
 ?>

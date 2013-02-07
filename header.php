@@ -50,6 +50,9 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 	<h2 class="fc-title"><a href="/">Fossil Calibration Database</a></h2>
 	<ul id="top-menu">
 	    <li>
+		<a href="/protected/index.php" style="color: #fcc;" >Admin Dashboard</a> 
+	    </li>
+	    <li>
 		<a href="#">About Us</a> 
 	    </li>
 	    <li>
