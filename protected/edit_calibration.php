@@ -675,7 +675,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 </div>
 
 
-<h3>3. Identify the calibrated fossil species</h3>
+<h3>3. Identify the calibrating fossil specimen</h3>
 <div>
 <? /* TODO: Do we still need this section? It tries to reconcile non-matching species name (assigned to fossil) or add a new taxon,
       including some interesting metadata (beyond NCBI stuff) about authorship and PaleoDB taxon IDs.

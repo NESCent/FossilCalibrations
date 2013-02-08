@@ -42,8 +42,8 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 		<!-- <a class="selected">Admin Dashboard</a> -->
 		<a href="/protected/manage_calibrations.php">Manage Calibrations</a>
 		<a href="/protected/manage_publications.php">Manage Publications</a>
-		<a Xhref="#">Manage Fossils</a>
-		<a Xhref="#">Site Announcement</a>
+		<!-- <a Xhref="#">Manage Fossils</a> -->
+		<a href="/protected/edit_site_announcement.php">Edit Site Announcement</a>
 	</div>
 </div>
 

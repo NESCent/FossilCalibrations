@@ -10,6 +10,7 @@ if (isset($mysqli)) {
 	$announcement_results = mysql_query($sql) or die ('Error  in query: '.$sql.'|'. mysql_error());
 	$current_announcement = mysql_fetch_assoc($announcement_results);
 }
+$showMessage = false;
 if ($current_announcement['body']) {
   $showMessage = true;
   if (isset($_SESSION['most_recent_hidden_announcement'])) {
@@ -17,24 +18,9 @@ if ($current_announcement['body']) {
       $showMessage = false;
     }
   }
-
-  if ($showMessage) { ?>
-		<div class="announcement">
-		  <strong><?= $current_announcement['title'] ?></strong>
-		<?= $current_announcement['body'] ?>
-<!--
-		  <ul>
-		    <li>
-			Kristin's <strong>FCD logo</strong> in the site header. (Re)load any page to see three variations.
-		    </li>
-		    <li>
-			Site "<strong>favicon</strong>" based on the black-and-white logo.
-		    </li>
-		    <li>
-			Password-protected <strong>administrative features</strong>, with a single (shared) account. 
-		    </li>
-		  </ul>
--->
+}
+?>
+		<div id="site_announcement" class="announcement" style="display: <?= $showMessage ? 'block' : 'none' ?>;">
+		  <div id="announcement_title_display" style="font-weight: bold; margin-bottom: 4px;"><?= $current_announcement['title'] ?></div>
+		  <div id="announcement_body_display"><?= $current_announcement['body'] ?></div>
 		</div>
-<? } 
-} ?>

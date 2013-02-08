@@ -56,7 +56,8 @@ while ($row = mysql_fetch_array($calibration_list)) {
   
   <tr align="left" valign="top" class="<?= $oddOrEven ?>">
     <td align="center"><?=$row['CalibrationID']?></td>
-    <td><?=$row['NodeName']?></td>
+    <td><a href="/Show_Calibration.php?CalibrationID=<?=$row['CalibrationID'] ?>"><?=
+	isset($row['NodeName']) && !empty($row['NodeName']) ? $row['NodeName'] : '<i>(unnamed node)</i>' ?></a></td>
     <td><?=$row['AdminComments']?></td>
     <td align="right"><? if (is_numeric($row['PublicationStatus'])) {
 		echo '<i>'.$pubstatus_values[ $row['PublicationStatus'] ].'</i>&nbsp; ';
