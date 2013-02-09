@@ -44,8 +44,8 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 		$nthLogo = ($nthLogo + 1) % 3;  // modulo 3 (rotates 0,1,2,0....)
 		$_SESSION['nthLogo'] = $nthLogo;
 	?>
-	<a href="/"><img width="74" height="74" border="0" align="left"
-	     src="/images/header-logo-<?= $logoOptions[ $nthLogo ] ?>.png"></a>
+  <? /* <a href="/"><img width="74" height="74" border="0" align="left" src="/images/header-logo-<?= $logoOptions[ $nthLogo ] ?>.png"></a> */ ?>
+	<a href="/"><img width="74" height="74" border="0" align="left" src="/images/header-logo-light.png"></a>
 	<h3 class="pe-title"><a href="http://palaeo-electronica.org/">Palaeontologia Electronica</a></h3>
 	<h2 class="fc-title"><a href="/">Fossil Calibration Database</a></h2>
 	<ul id="top-menu">
