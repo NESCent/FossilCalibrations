@@ -38,7 +38,12 @@ $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 require('header.php');
 ?>
 
-<p><h1>View calibration:  <?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1></p>
+<p>
+<? if (userIsAdmin()) { ?>
+   <input type="button" style="float: right;" onclick="window.location ='/protected/edit_calibration.php?id=<?= $calibration_info['CalibrationID'] ?>'; return false;" value="Edit calibration" />
+<? } ?>
+   <h1>View calibration:  <?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1>
+</p>
 
 <p class="featured-information" style="overflow: hidden;">
 
