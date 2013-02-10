@@ -45,4 +45,8 @@ function userIsReviewer() {
    return userHasRole( 'REVIEWER' );
 }
 
+function userIsLoggedIn() {
+   return userHasRole( 'ADMIN' ) || userHasRole( 'REVIEWER' );
+}
+
 ?>
