@@ -16,12 +16,19 @@ $value=array_values($_GET);
 
 //retrieve publications
 if($_GET) {
-$query="SELECT * FROM publications WHERE $key[0]=$value[0] ORDER BY ShortName";
-$publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+   $query="SELECT * FROM publications WHERE $key[0]=$value[0] ORDER BY ShortName";
+   $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 } else {
-$query='SELECT * FROM publications ORDER BY ShortName';
-$publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	
+   $query='SELECT * FROM publications ORDER BY ShortName';
+   $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+}
+
+// list of all publication-status values
+$query='SELECT * FROM L_PublicationStatus';
+$pubstatus_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$pubstatus_values = Array();
+while ($row = mysql_fetch_array($pubstatus_list)) {
+	$pubstatus_values[ $row['PubStatusID'] ] = $row['PubStatus'];
 }
 
 ?>
@@ -35,8 +42,9 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
   <tr>
     <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>id</strong></td>
     <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>short form</strong></td>
-    <td width="55%" align="center" valign="middle" bgcolor="#999999"><strong>full citation</strong></td>
+    <td width="37%" align="center" valign="middle" bgcolor="#999999"><strong>full citation</strong></td>
     <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>doi/url</strong></td>
+    <td width="18%" align="center" valign="middle" bgcolor="#999999"><strong>status</strong></td>
     <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>actions</strong></td>
   </tr>
 
@@ -52,6 +60,12 @@ while ($row = mysql_fetch_array($publication_list)) {
     <td><?=$row['ShortName']?></td>
     <td><?=$row['FullReference']?></td>
     <td><a href="http://dx.doi.org/<?=$row['DOI']?>" target="_new"><?=$row['DOI']?></a></td>
+    <td align="right"><? if (is_numeric($row['PublicationStatus'])) {
+         echo '<i>'.$pubstatus_values[ $row['PublicationStatus'] ].'</i>';
+	   } else {
+         echo '<i>?</i>';
+	   }
+  ?></td>
     <td style="white-space: nowrap;"><a href="/protected/edit_publication.php?id=<?=$row['PublicationID']?>">edit</a>
 	&nbsp;
 	&nbsp;

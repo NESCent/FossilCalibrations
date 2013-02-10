@@ -13,6 +13,26 @@ require('../header.php');
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
+// count the publications in different NON-PUBLISHED states
+$query="SELECT COUNT(*) AS count FROM publications WHERE PublicationStatus = 1"; // Private Draft
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$values = mysql_fetch_assoc($result);
+$pubs_PrivateDraft = $values['count'];
+mysql_free_result($result);
+
+$query="SELECT COUNT(*) AS count FROM publications WHERE PublicationStatus = 2"; // Under Revision
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$values = mysql_fetch_assoc($result);
+$pubs_UnderRevision = $values['count'];
+mysql_free_result($result);
+
+$query="SELECT COUNT(*) AS count FROM publications WHERE PublicationStatus = 3"; // Ready for Publication
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$values = mysql_fetch_assoc($result);
+$pubs_ReadyForPublication = $values['count'];
+mysql_free_result($result);
+
+
 // gather some key stats for the FCD site
 $query="SELECT COUNT(*) AS count FROM calibrations";
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
@@ -49,9 +69,34 @@ Admin Dashboard
 </h1>
 
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">
-Pending Calibrations and Other Tasks
+Pending Publications
 </h3>
-<p>Here's a paragraph.</p>
+<table border="0" cellspacing="5">
+ <tr>
+  <td align="right" valign="top">
+   <a href="/protected/manage_publications.php?PublicationStatus=1">Private Draft</a>
+  </td>
+  <td valign="top" style="font-weight: bold;">
+   <?= $pubs_PrivateDraft ?>
+  </td>
+ </tr>
+ <tr>
+  <td align="right" valign="top">
+   <a href="/protected/manage_publications.php?PublicationStatus=2">Under Revision</a> 
+  </td>
+  <td valign="top" style="font-weight: bold;">
+    <?= $pubs_UnderRevision ?>
+  </td>
+ </tr>
+ <tr>
+  <td align="right" valign="top">
+   <a href="/protected/manage_publications.php?PublicationStatus=3">Ready for Publication</a> 
+  </td>
+  <td valign="top" style="font-weight: bold;">
+   <?= $pubs_ReadyForPublication ?>
+  </td>
+ </tr>
+</table>
 
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">
 Site Statistics

@@ -593,7 +593,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
     <td width="75%">
 	  <input type="text" name="AC_PubID-display" id="AC_PubID-display" value="<?= testForProp($node_pub_data, 'ShortName', '') ?>" />
 	  <input type="text" name="PubID" id="AC_PubID" value="<?= testForProp($node_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
-                    <a href="/protected/manage_publicaitions.php" target="_new" style="float: right;">Show all publications in a new window</a>
+                    <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
 	  <div id="AC_PubID-more-info" class="text-excerpt"><?= testForProp($node_pub_data, 'FullReference', '&nbsp;') ?></p>
     </td>
   </tr>
@@ -611,7 +611,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
   <tr>
     <td width="21%" align="right" valign="top"><b>doi</b></td>
     <td width="79%"><input type="text" name="DOI" id="DOI">
-	<br/><i>You will be able to add a featured image and set its publication status <br/>later, from the <a href="/protected/manage_publicaitions.php" target="_blank">Manage Publications</a> page.</i>
+	<br/><i>You will be able to add a featured image and set its publication status <br/>later, from the <a href="/protected/manage_publications.php" target="_blank">Manage Publications</a> page.</i>
     </td>
   </tr>
 </table>
@@ -984,29 +984,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
     <td width="75%">
 	  <input type="text" name="AC_FossilPubID-display" id="AC_FossilPubID-display" value="<?= testForProp($fossil_pub_data, 'ShortName', '') ?>" />
 	  <input type="text" name="FossilPub" id="AC_FossilPubID" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
-                    <a href="/protected/manage_publicaitions.php" target="_new" style="float: right;">Show all publications in a new window</a>
+                    <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
 	  <div id="AC_FossilPubID-more-info" class="text-excerpt"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></p>
     </td>
   </tr>
-<!--
-                <tr>
-                  <td align="right" valign="top"><strong>fossil publication</strong></td>
-                  <td><select name="FossilPub" id="FossilPub">
-                	<?php
-						if(mysql_num_rows($publication_list)==0){
-							echo "<option value=\"New\">Add new publication below</option>";
-					} else {
-							mysql_data_seek($publication_list,0);
-							echo "<option value=\"New\">Add new publication below or choose from list</option>";
-						while($row=mysql_fetch_assoc($publication_list)) {
-							echo "<option value=\"".$row['PublicationID']."\">".$row['ShortName']." (ID:".$row['PublicationID'].")</option>";
-							}
-						}
-					?>
-                    </select>
-                    (<a href="/protected/manage_publicaitions.php" target="_new">Show complete citations</a>)</td>
-                </tr>
--->
 </table>
 <p><input type="radio" name="newOrExistingFossilPublication" value="NEW" id="newFossilPublication"> <label for="newFossilPublication">... <b>or</b> enter a new publication into the database</label></input></p>
 <table id="enter-new-fossil-pub" class="add-form" width="100%" border="0">
@@ -1033,29 +1014,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
     <td width="75%">
 	  <input type="text" name="AC_PhyloPubID-display" id="AC_PhyloPubID-display" value="<?= testForProp($fossil_pub_data, 'ShortName', '') ?>" />
 	  <input type="text" name="PhyPub" id="AC_PhyloPubID" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
-                    <a href="/protected/manage_publicaitions.php" target="_new" style="float: right;">Show all publications in a new window</a>
+                    <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
 	  <div id="AC_PhyloPubID-more-info" class="text-excerpt"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></p>
     </td>
   </tr>
-<!--
-                <tr>
-                  <td align="right" valign="top"><strong>phylogeny publication</strong></td>
-                  <td><select name="PhyPub" id="PhyPub">
-                	<?php
-						if(mysql_num_rows($publication_list)==0){
-							echo "<option value=\"New\">Add new publication below</option>";
-					} else {
-							mysql_data_seek($publication_list,0);
-							echo "<option value=\"New\">Add new publication below or choose from list</option>";
-							while($row=mysql_fetch_assoc($publication_list)) {
-							echo "<option value=\"".$row['PublicationID']."\">".$row['ShortName']." (ID:".$row['PublicationID'].")</option>";
-							}
-						}
-					?>
-                    </select>
-                    (<a href="protected/manage_publicaitions.php" target="_new">Show complete citations</a>)</td>
-                </tr>
--->
 </table>
 <p><input type="radio" name="newOrExistingPhylogenyPublication" value="REUSE_FOSSIL_PUB" id="repeatFossilPublication"> <label for="repeatFossilPublication">... <b>or</b> re-use the fossil publication above</label></input></p>
 <p><input type="radio" name="newOrExistingPhylogenyPublication" value="NEW" id="newPhylogenyPublication"> <label for="newPhylogenyPublication">... <b>or</b> enter a new publication into the database</label></input></p>
