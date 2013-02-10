@@ -66,16 +66,16 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 -->
 <? } ?>
 	    <li>
-		<a href="#">About Us</a> 
+		<a href="/about.php">About Us</a> 
 	    </li>
 	    <li>
-		<a href="index.php">Find Calibrations</a>
+		<a href="/index.php">Find Calibrations</a>
 	    </li>
 	    <li>
 		<a href="http://palaeo-electronica.org/guide2011.pdf">Submit to PE</a>
 	    </li>
 	    <li>
-		<a href="#">Help</a> 
+		<a href="/help.php">Help</a> 
 	    </li>
 	</ul>
     </div>
