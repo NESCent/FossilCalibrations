@@ -1,33 +1,10 @@
 <?php
-
 // open and load site variables
 require('../Site.conf');
+require('../FCD-helpers.php');
 
-/* Here's a self-contained Basic Auth login, in case .htaccess + .htpasswd is
- * not appropriate for some reason. Note that this login must still be forced
- * into HTTPS to avoid sending credentials in the clear.
-
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
-    header('WWW-Authenticate: Basic realm="Fossil Calibration Database (admin area)"');
-    header('HTTP/1.0 401 Unauthorized');
-    echo 'Please <a href="/">contact us</a> to request permission in this area.';
-    exit;
-} else {
-    $expectdUsername = 'username';
-    $expectedPassword =  'secret';
-
-    if($_SERVER['PHP_AUTH_USER'] != $expectdUsername || 
-        $_SERVER['PHP_AUTH_PW'] != $expectedPassword) {
-        echo 'Invalid username/password';
-        exit;
-    }
-
-    //Add a cookie, set a flag on session or something
-    $SESSION['blah'] = true;
-
-    //display the page
-}
-*/
+// this page requires admin login
+requireRoleOrLogin('ADMIN');
 
 // open and print header template
 require('../header.php');

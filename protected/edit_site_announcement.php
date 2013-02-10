@@ -1,9 +1,10 @@
 <?php 
 // open and load site variables
 require('../Site.conf');
+require('../FCD-helpers.php');
 
 // secure this page
-///require('../secure-page.php');
+requireRoleOrLogin('ADMIN');
 
 // open and print header template
 require('../header.php');

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <?php 
-	$IS_ADMIN_USER = isset($_SESSION['IS_ADMIN_USER']) ? $_SESSION['IS_ADMIN_USER'] : false;  // default value
+   require_once('FCD-helpers.php');
 	if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; 
 ?>
 <title><?= $PageTitle ?></title>
@@ -49,9 +49,16 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 	<h3 class="pe-title"><a href="http://palaeo-electronica.org/">Palaeontologia Electronica</a></h3>
 	<h2 class="fc-title"><a href="/">Fossil Calibration Database</a></h2>
 	<ul id="top-menu">
+<? if (userIsAdmin()) { ?>
 	    <li>
 		<a href="/protected/index.php" style="color: #fcc;" >Admin Dashboard</a> 
 	    </li>
+	    <li>
+		<a href="/logout.php" style="color: #fcc;" >Logout</a> 
+	    </li>
+<? } else if (userIsReviewer()) {
+      // TODO: add reviewer items here?
+  } ?>
 	    <li>
 		<a href="#">About Us</a> 
 	    </li>

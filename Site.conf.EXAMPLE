@@ -21,13 +21,18 @@ $SITEINFO['docroot']='/var/www/REPLACE_ME/';
 $SITEINFO['GoogleMapKey']='AAAAAAA-BBBBBBB-CCCCCCCCCCC-REPLACE_ME';
 
 
-// Admin pages bounce to HTTPS
+// Standard public-facing domain name and port
+$SITEINFO['hostname_and_port'] = 'EXAMPLE.COM';
+
+// Login should always be under HTTPS
 $SITEINFO['secure_hostname_and_port'] = 'EXAMPLE.COM:443';
 
 // shared admin username (required for data entry and site management)
 $SITEINFO['AdminUserName']='REPLACE_ME';
-
-// shared admin password
 $SITEINFO['AdminUserPassword']='REPLACE_ME_TOO';
+
+// shared reviewer username (required for review of unpublished calibrations)
+$SITEINFO['ReviewerName']='REPLACE_ME';
+$SITEINFO['ReviewerPassword']='REPLACE_ME_TOO';
 
 ?>
