@@ -51,7 +51,26 @@ $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error(
 $site_status = mysql_fetch_assoc($result);
 mysql_free_result($result);
 
+/* Get current status values for all site maintenance tasks/tables
+ *  values should be 'needs update', 'updating now', 'up to date'
+$autoCompleteStatus = $site_status['autocomplete_status'];
+$multitreeStatus = $site_status['multitree_status'];
+$NCBIStatus = $site_status['NCBI_status'];
+ */
+
+
 ?>
+<script type="text/javascript">
+   var autoCompleteStatus = 'ready';
+   $(document).ready(function() {
+      // bind site maintenance buttons
+      $('#update-auto-complete').unbind('click').click(function() {
+         var $button = $(this);
+         var $indicator = $('#update-auto-complete-status');
+      });
+   });
+</script>
+
 <div class="left-column">
 	<div class="link-menu" style="">
 		<!-- <a class="selected">Admin Dashboard</a> -->
@@ -123,10 +142,10 @@ Site Statistics
    Last multitree update
   </td>
   <td valign="top" style="font-weight: bold;">
-   <?= date("M d, Y", strtotime($site_status['last_build_time'])) ?>
-   <? if ($site_status['needs_build'] == 1) { ?>
+   <?= date("M d, Y", strtotime($site_status['last_multitree_update'])) ?>
+   <? /*if ($site_status['needs_build'] == 1) { ?>
         <b style="color: #c33;">&mdash; needs update!</b>
-   <? } ?>
+   <? } */ ?>
   </td>
  </tr>
  <tr>
@@ -134,7 +153,7 @@ Site Statistics
    Last NCBI update
   </td>
   <td valign="top" style="font-weight: bold;">
-   <?= date("M d, Y", strtotime($site_status['last_NCBI_update_time'])) ?>
+   <?= date("M d, Y", strtotime($site_status['last_NCBI_update'])) ?>
   </td>
  </tr>
 </table>
@@ -145,28 +164,35 @@ Site Maintenance
 <table border="0" cellspacing="5">
  <tr>
   <td align="right" valign="top">
-   &nbsp;
+   <input type="button" id="update-auto-complete" value="Update auto-complete lists" />
   </td>
   <td valign="top">
-   <input type="button" value="Refresh auto-complete lists" />
-        &nbsp; <i>requires ~45 minutes</i>
+   <div id="update-auto-complete-status">
+      <img align="absmiddle" src="/images/status-red.png" title="ready" alt="ready" />
+      &nbsp; <i>Needs update (requires ~10 minutes)</i>
+   </div>
   </td>
  </tr>
  <tr>
   <td align="right" valign="top">
-   &nbsp;
+   <input type="button" id="update-multitree" value="Update searchable multitree" />
   </td>
   <td valign="top">
-   <input type="button" value="Rebuild searchable multitree" />
-        &nbsp; <i>requires ~10 minutes</i>
+   <div id="update-multitree-status">
+      <img align="absmiddle" src="/images/status-yellow.png" title="ready" alt="ready" />
+      &nbsp; <i>Updating now, ~6 minutes remaining</i>
+   </div>
   </td>
  </tr>
  <tr>
   <td align="right" valign="top">
-   &nbsp;
+   <input type="button" id="update-NCBI" value="Upload and import NCBI taxonomy" />
   </td>
   <td valign="top">
-   <input type="button" value="Upload and import NCBI taxonomy" />
+    <div id="update-NCBI-status">
+       <img align="absmiddle" src="/images/status-green.png" title="ready" alt="ready" />
+       &nbsp; <i>Last update: <?= date("M d, Y", strtotime($site_status['last_NCBI_update'])) ?> </i>
+   </div>
   </td>
  </tr>
 </table>

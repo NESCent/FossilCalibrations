@@ -27,10 +27,30 @@ INSERT INTO publication_images VALUES (
  */
 DROP TABLE IF EXISTS site_status;
 CREATE TABLE site_status (
-  last_build_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  needs_build TINYINT(1) DEFAULT 0,
-  build_comment VARCHAR(255),
-  last_NCBI_update_time TIMESTAMP NOT NULL,
+  -- timestamps for each long-running task
+  last_autocomplete_update TIMESTAMP NOT NULL,
+  last_multitree_update TIMESTAMP NOT NULL,
+  last_NCBI_update TIMESTAMP NOT NULL,
+  -- status for each long-running task ('Up to date', 'Updating now', 'Needs update')
+  autocomplete_status VARCHAR(50) NOT NULL DEFAULT 'Up to date',
+  multitree_status VARCHAR(50) NOT NULL DEFAULT 'Up to date',
+  NCBI_status VARCHAR(50) NOT NULL DEFAULT 'Up to date',
+  -- flags to flip when underlying data changes
+  needs_autocomplete_build TINYINT(1) DEFAULT 0,
+  needs_multitree_build TINYINT(1) DEFAULT 0,
+  -- scratch-pad for admin comments
+  last_update_comment VARCHAR(1024),
+  -- current site-wide announcement
   announcement_title VARCHAR(255),
   announcement_body VARCHAR(1024)
 ) ENGINE=InnoDB;
+
+-- insert the singleton record with sensible defaults
+INSERT INTO site_status SET
+  last_autocomplete_update = CURRENT_TIMESTAMP,
+  last_multitree_update = CURRENT_TIMESTAMP,
+  last_NCBI_update = CURRENT_TIMESTAMP,
+  last_update_comment = '',
+  announcement_title = '',
+  announcement_body = ''
+;
