@@ -52,23 +52,178 @@ $site_status = mysql_fetch_assoc($result);
 mysql_free_result($result);
 
 /* Get current status values for all site maintenance tasks/tables
- *  values should be 'needs update', 'updating now', 'up to date'
+ *  values should be 'Needs update', 'Updating now', or 'Up to date'
+ */
 $autoCompleteStatus = $site_status['autocomplete_status'];
 $multitreeStatus = $site_status['multitree_status'];
 $NCBIStatus = $site_status['NCBI_status'];
- */
-
 
 ?>
 <script type="text/javascript">
-   var autoCompleteStatus = 'ready';
+   var autoCompleteStatus = '<?= $autoCompleteStatus ?>';
+   var multitreeStatus = '<?= $multitreeStatus ?>';
+   var NCBIStatus = '<?= $NCBIStatus ?>';
+
+   var statusCheckTimeout = null;
+   var checkStatusEveryNSeconds = 10;
+
    $(document).ready(function() {
       // bind site maintenance buttons
-      $('#update-auto-complete').unbind('click').click(function() {
-         var $button = $(this);
-         var $indicator = $('#update-auto-complete-status');
+      $('#update-autocomplete').unbind('click').click(function() {
+         // AJAX call to start operation, returns all status vars
+         $.ajax({
+            type: 'POST',
+            url: '/protected/remote_operation.php',
+            data: {'operation': 'UPDATE_AUTOCOMPLETE'},
+            success: function(data) {
+               console.log('success! from initial call to UPDATE_AUTOCOMPLETE');
+               checkRemoteUpdateStatus();
+            },
+            dataType: 'json',
+            async: true
+         });
       });
+      $('#update-multitree').unbind('click').click(function() {
+         // AJAX call to start operation, returns all status vars
+         $.ajax({
+            type: 'POST',
+            url: '/protected/remote_operation.php',
+            data: {'operation': 'UPDATE_MULTITREE'},
+            success: function(data) {
+               console.log('success! from initial call to UPDATE_MULTITREE');
+               checkRemoteUpdateStatus();
+            },
+            dataType: 'json',
+            async: true
+         });
+      });
+      $('#update-NCBI').unbind('click').click(function() {
+         alert('This feature is not currently available through the web.'); // TODO
+      });
+
+      // initialize display of all indicators
+      updateStatusIndicators();
+      // begin ongoing polling of server status
+      checkRemoteUpdateStatus();
    });
+
+   function checkRemoteUpdateStatus() {
+      // clear any pending check and (re)start right now
+      if (statusCheckTimeout) {
+        clearTimeout(statusCheckTimeout);
+        statusCheckTimeout = null;
+      }
+      blurStatusIndicators();
+      $.ajax({
+         type: 'POST',
+         url: '/protected/remote_operation.php',
+         data: {'operation': 'CHECK_UPDATE_STATUS'},
+         success: function(data) {
+             // console.log('success! from call to CHECK_UPDATE_STATUS');
+             autoCompleteStatus = data.autocomplete_status;
+             multitreeStatus = data.multitree_status;
+             NCBIStatus = data.NCBI_status;
+             updateStatusIndicators();
+             /* NOTE that we daisy-chain timeouts, instead of using
+              * setInterval, to avoid pileups if the server is slow to respond.
+              */
+             statusCheckTimeout = setTimeout(
+                checkRemoteUpdateStatus,
+                (checkStatusEveryNSeconds * 1000)     // ping every n sec
+             );
+         },
+         dataType: 'json',
+         async: true
+      });
+   }
+
+   function blurStatusIndicators() {
+      $('#update-autocomplete-status img, #update-multitree-status img').attr('src', '/images/status-black.png');
+      $('#update-autocomplete-status i, #update-multitree-status i').html('...');
+   }
+
+   function updateStatusIndicators() {
+      updateAutocompleteStatus();
+      updateMultitreeStatus();
+   }
+
+   function updateAutocompleteStatus( ) {
+      switch(autoCompleteStatus) {
+         case 'Needs update': 
+            indicatorImgPath = '/images/status-red.png';
+            msg = "Needs update (requires ~40 minutes)";
+            isDisabled = false;
+            break;
+
+         case 'Updating now': 
+            indicatorImgPath = '/images/status-yellow.png';
+            msg = "Updating now";  // TODO: add live ", ~n minutes remaining" ?
+            isDisabled = true;
+            break;
+
+         case 'Up to date':
+            indicatorImgPath = '/images/status-green.png';
+            msg = "Up to date";
+            isDisabled = false;
+            break;
+
+         default:
+            console.log('ERROR: unexpected value for autoCompleteStatus:'+ autoCompleteStatus +' <'+ typeof(autoCompleteStatus) +'>');
+            return;
+      }
+      var $button = $('#update-autocomplete');
+      if (isDisabled) {
+         $button.attr('disabled','disabled');
+      } else {
+         $button.removeAttr('disabled');
+      }
+      var $indicator = $('#update-autocomplete-status');
+      $indicator.find('img').attr({
+         'src': indicatorImgPath,
+         'alt': autoCompleteStatus,
+         'title': autoCompleteStatus
+      });
+      $indicator.find('i').html( msg );
+   }
+
+   function updateMultitreeStatus( ) {
+      switch(multitreeStatus) {
+         case 'Needs update': 
+            indicatorImgPath = '/images/status-red.png';
+            msg = "Needs update (requires ~10 minutes)";
+            isDisabled = false;
+            break;
+
+         case 'Updating now': 
+            indicatorImgPath = '/images/status-yellow.png';
+            msg = "Updating now";  // TODO: add live ", ~n minutes remaining" ?
+            isDisabled = true;
+            break;
+
+         case 'Up to date':
+            indicatorImgPath = '/images/status-green.png';
+            msg = "Up to date";
+            isDisabled = false;
+            break;
+
+         default:
+            console.log('ERROR: unexpected value for multitreeStatus:'+ autoCompleteStatus +' <'+ typeof(multitreeStatus) +'>');
+            return;
+      }
+      var $button = $('#update-multitree');
+      if (isDisabled) {
+         $button.attr('disabled','disabled');
+      } else {
+         $button.removeAttr('disabled');
+      }
+      var $indicator = $('#update-multitree-status');
+      $indicator.find('img').attr({
+         'src': indicatorImgPath,
+         'alt': multitreeStatus,
+         'title': multitreeStatus
+      });
+      $indicator.find('i').html( msg );
+   }
 </script>
 
 <div class="left-column">
@@ -142,7 +297,7 @@ Site Statistics
    Last multitree update
   </td>
   <td valign="top" style="font-weight: bold;">
-   <?= date("M d, Y", strtotime($site_status['last_multitree_update'])) ?>
+   <?= date("M d, Y - h:m a", strtotime($site_status['last_multitree_update'])) ?>
    <? /*if ($site_status['needs_build'] == 1) { ?>
         <b style="color: #c33;">&mdash; needs update!</b>
    <? } */ ?>
@@ -153,7 +308,7 @@ Site Statistics
    Last NCBI update
   </td>
   <td valign="top" style="font-weight: bold;">
-   <?= date("M d, Y", strtotime($site_status['last_NCBI_update'])) ?>
+   <?= date("M d, Y - h:m a", strtotime($site_status['last_NCBI_update'])) ?>
   </td>
  </tr>
 </table>
@@ -164,10 +319,10 @@ Site Maintenance
 <table border="0" cellspacing="5">
  <tr>
   <td align="right" valign="top">
-   <input type="button" id="update-auto-complete" value="Update auto-complete lists" />
+   <input type="button" id="update-autocomplete" value="Update auto-complete lists" />
   </td>
   <td valign="top">
-   <div id="update-auto-complete-status">
+   <div id="update-autocomplete-status">
       <img align="absmiddle" src="/images/status-red.png" title="ready" alt="ready" />
       &nbsp; <i>Needs update (requires ~10 minutes)</i>
    </div>
@@ -191,7 +346,7 @@ Site Maintenance
   <td valign="top">
     <div id="update-NCBI-status">
        <img align="absmiddle" src="/images/status-green.png" title="ready" alt="ready" />
-       &nbsp; <i>Last update: <?= date("M d, Y", strtotime($site_status['last_NCBI_update'])) ?> </i>
+       &nbsp; <i>Last update: <?= date("M d, Y - h:m a", strtotime($site_status['last_NCBI_update'])) ?> </i>
    </div>
   </td>
  </tr>

@@ -5,6 +5,9 @@ date_default_timezone_set('America/Indianapolis');
 
 $SITEINFO['servername']='127.0.0.1';
 
+// complete path to local mysql executable
+$SITEINFO['mysql_exec']='/REPLACE_ME/bin/mysql';
+
 // mySQL username
 $SITEINFO['UserName']='REPLACE_ME';
 

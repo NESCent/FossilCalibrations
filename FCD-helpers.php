@@ -49,4 +49,29 @@ function userIsLoggedIn() {
    return userHasRole( 'ADMIN' ) || userHasRole( 'REVIEWER' );
 }
 
+/*
+ * Cross-platform stub for calling asynchronous operations (command-line stuff)
+ */
+function execInBackground($cmd) { 
+    if (substr(php_uname(), 0, 7) == "Windows"){ 
+        pclose(popen("start /B ". $cmd, "r"));  
+    } 
+    else { 
+        exec($cmd . " > /dev/null &");   
+    } 
+} 
+
+function runSQLScript( $relativePathToScript ) {
+   global $SITEINFO;
+
+   // execInBackground("/opt/lampp/bin/mysql --host='127.0.0.1' --user='zzzzzzzz' --password='xxxxxxxxxx' --database='FossilCalibration' --execute='source /opt/lampp/htdocs/fossil-calibration/protected/SQL_TEST.sql'");
+
+   $mysql = $SITEINFO['mysql_exec'];
+   $host = $SITEINFO['servername'];
+   $dbuser = $SITEINFO['UserName'];
+   $dbpass = $SITEINFO['password'];
+   $docroot = $SITEINFO['docroot'];
+   execInBackground( "$mysql --host='$host' --user='$dbuser' --password='$dbpass' --database='FossilCalibration' --execute='source $docroot$relativePathToScript'" );
+}
+
 ?>

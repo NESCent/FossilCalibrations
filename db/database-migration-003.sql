@@ -25,9 +25,6 @@ CREATE TABLE AC_names_nodes (
 
   KEY (name, description), KEY (is_taxon), KEY (is_extant_species)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
--- create a staging table with same structure
-DROP TABLE IF EXISTS tmp_AC_names_nodes;
-CREATE TABLE tmp_AC_names_nodes AS SELECT * FROM AC_names_nodes;
 
 -- Let's not create more huge tables just for taxa and extant species
 CREATE OR REPLACE VIEW AC_names_taxa AS
@@ -41,17 +38,6 @@ CREATE OR REPLACE VIEW AC_names_clades AS
   -- does this make sense? or is an extant species a clade with one member?
 
 
--- create matching views for staging table
-CREATE OR REPLACE VIEW tmp_AC_names_taxa AS
-  (SELECT * FROM tmp_AC_names_nodes WHERE (is_taxon = 1));
-
-CREATE OR REPLACE VIEW tmp_AC_names_extant_species AS
-  (SELECT * FROM tmp_AC_names_nodes WHERE (is_taxon = 1) AND (is_extant_species = 1));
-
-CREATE OR REPLACE VIEW tmp_AC_names_clades AS
-  (SELECT * FROM tmp_AC_names_nodes WHERE (is_extant_species = 0));
-
-
 DROP TABLE IF EXISTS AC_names_searchable;
 CREATE TABLE AC_names_searchable (
   name VARCHAR(255) NOT NULL,		-- eg, 'Smithers'
@@ -60,9 +46,6 @@ CREATE TABLE AC_names_searchable (
 
   KEY (name, description)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
--- create a staging table with same structure
-DROP TABLE IF EXISTS tmp_AC_names_searchable;
-CREATE TABLE tmp_AC_names_searchable AS SELECT * FROM AC_names_searchable;
 
 /*
  * Add tables for names and nodes submitted with calibrations to Fossil Calibration Database. These should
@@ -159,9 +142,6 @@ CREATE TABLE node_identity (
   PRIMARY KEY (source_tree, source_node_id),
   KEY (multitree_node_id) -- NOT unique, will repeat for identical nodes!
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
--- create a staging table with same structure
-DROP TABLE IF EXISTS tmp_node_identity;
-CREATE TABLE tmp_node_identity LIKE node_identity;
 
 
 /*
@@ -188,9 +168,6 @@ CREATE TABLE multitree (
 
   KEY (node_id), KEY parent_node_id (parent_node_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
--- create a staging table with same structure
-DROP TABLE IF EXISTS tmp_multitree;
-CREATE TABLE tmp_multitree LIKE multitree;
 
 
 /* 
@@ -241,7 +218,8 @@ DECLARE CONTINUE HANDLER FOR NOT FOUND
 --
 -- clear staging table, then rebuild
 --
-TRUNCATE TABLE tmp_node_identity;
+DROP TABLE IF EXISTS tmp_node_identity;
+CREATE TABLE tmp_node_identity LIKE node_identity;
 
 /*
 TODO
@@ -349,8 +327,9 @@ CLOSE pinned_node_cursor;
 
 -- if we're serious, replace/rename the real tables
 IF testOrFinal = 'FINAL' THEN
-  TRUNCATE TABLE node_identity;
-  INSERT INTO node_identity SELECT * FROM tmp_node_identity;
+  -- INSERT INTO node_identity SELECT * FROM tmp_node_identity;
+  RENAME TABLE node_identity TO doomed, tmp_node_identity TO node_identity;
+  DROP TABLE doomed;
 END IF;
 
 END #
@@ -376,15 +355,21 @@ BEGIN
 --       http://stackoverflow.com/questions/5445048/is-there-a-length-limit-to-group-concat-or-another-reason-why-it-would-not-work
 -- DECLARE pinned_NCBI_multitree_node_ids TEXT DEFAULT '';
 
+UPDATE site_status SET 
+  multitree_status = 'Updating now';
+
+-- force the prerequisite update of the node-identity table
+CALL refreshNodeIdentity(testOrFinal);
+
 --
 -- clear staging table, then rebuild
 --
+DROP TABLE IF EXISTS tmp_multitree;
+CREATE TABLE tmp_multitree LIKE multitree;
 
 -- try to turn off expensive index updates during many INSERTs
 ALTER TABLE multitree DISABLE KEYS;
 SET autocommit = 0;
-
-TRUNCATE TABLE tmp_multitree;
 
 -- add all nodes and paths from the NCBI tree (as public)
 INSERT INTO tmp_multitree (node_id, parent_node_id, is_public_path)
@@ -401,22 +386,22 @@ FROM NCBI_nodes;
 
 -- update NCBI node IDs (child and parent) for any pinned nodes
 UPDATE tmp_multitree AS tm 
- INNER JOIN tmp_node_identity AS tni 
+ INNER JOIN node_identity AS tni 
    ON tni.source_tree = 'NCBI'
    AND (tm.node_id = tni.source_node_id OR tm.parent_node_id = tni.source_node_id)
 SET 
   tm.node_id = COALESCE((SELECT multitree_node_id 
-             FROM tmp_node_identity
+             FROM node_identity
              WHERE source_tree = 'NCBI' AND source_node_id = node_id), node_id), 
   tm.parent_node_id = COALESCE((SELECT multitree_node_id 
-             FROM tmp_node_identity 
+             FROM node_identity 
              WHERE source_tree = 'NCBI' AND source_node_id = parent_node_id), parent_node_id);
 /*
  WHERE
-  node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI')
+  node_id IN (SELECT source_node_id FROM node_identity WHERE source_tree = 'NCBI')
   -- FIND_IN_SET(node_id ,pinned_NCBI_multitree_node_ids) > 0
  OR 
-  parent_node_id IN (SELECT source_node_id FROM tmp_node_identity WHERE source_tree = 'NCBI');
+  parent_node_id IN (SELECT source_node_id FROM node_identity WHERE source_tree = 'NCBI');
   -- FIND_IN_SET(parent_node_id, pinned_NCBI_multitree_node_ids) > 0;
 */
 
@@ -433,14 +418,14 @@ For each node identity,
 INSERT INTO tmp_multitree (node_id, parent_node_id, is_public_path)
 SELECT
  multitree_node_id, 
- (SELECT parent.multitree_node_id FROM tmp_node_identity AS parent WHERE source_tree = child.source_tree AND source_node_id =
+ (SELECT parent.multitree_node_id FROM node_identity AS parent WHERE source_tree = child.source_tree AND source_node_id =
       (SELECT parent_node_id FROM FCD_nodes WHERE node_id = child.source_node_id)
     -- TODO: use CASE with other source tables here...?
  ),
   -- get public flag from source tree (via any node)
  (SELECT is_public_node FROM FCD_nodes WHERE node_id = child.source_node_id)
 FROM
- tmp_node_identity as child
+ node_identity as child
 WHERE source_tree != 'NCBI';
 
 /* TODO: Do we need to "flatten" this by consolidating all identical paths (and setting the
@@ -451,17 +436,24 @@ COMMIT;
 
 -- if we're serious, replace/rename the real tables
 IF testOrFinal = 'FINAL' THEN
-  ALTER TABLE multitree DISABLE KEYS;
+  -- ALTER TABLE multitree DISABLE KEYS;
+  --
+  -- TRUNCATE TABLE multitree;
+  -- INSERT INTO multitree SELECT * FROM tmp_multitree;
+  -- COMMIT;
+  --
+  -- ALTER TABLE multitree ENABLE KEYS;
 
-  TRUNCATE TABLE multitree;
-  INSERT INTO multitree SELECT * FROM tmp_multitree;
-  COMMIT;
-
-  ALTER TABLE multitree ENABLE KEYS;
+  RENAME TABLE multitree TO doomed, tmp_multitree TO multitree;
+  DROP TABLE doomed;
 END IF;
 
 -- try to turn off expensive index updates during many INSERTs
 SET autocommit = 1;
+
+UPDATE site_status SET 
+  multitree_status = 'Up to date',
+  last_multitree_update = CURRENT_TIMESTAMP;
 
 END #
 
@@ -484,10 +476,14 @@ BEGIN
 
 -- DECLARE any local vars here
 
+UPDATE site_status SET 
+  autocomplete_status = 'Updating now';
+
 --
 -- clear staging tables for node names, then rebuild
 --
-TRUNCATE TABLE tmp_AC_names_nodes;
+DROP TABLE IF EXISTS tmp_AC_names_nodes;
+CREATE TABLE tmp_AC_names_nodes LIKE AC_names_nodes;
 
 INSERT INTO tmp_AC_names_nodes (name, description, is_taxon, is_extant_species, is_public_name)
 SELECT
@@ -535,7 +531,8 @@ FROM
 --
 -- clear staging tables for all searchable names, then rebuild
 -- 
-TRUNCATE TABLE tmp_AC_names_searchable;
+DROP TABLE IF EXISTS tmp_AC_names_searchable;
+CREATE TABLE tmp_AC_names_searchable LIKE AC_names_searchable;
 
 -- add node names (copied from above)
 INSERT INTO tmp_AC_names_searchable (name, description, is_public_name)
@@ -598,12 +595,20 @@ LEFT OUTER JOIN calibrations ON link.CalibrationID = calibrations.CalibrationID;
 
 -- if we're serious, replace/rename the real tables
 IF testOrFinal = 'FINAL' THEN
-  TRUNCATE TABLE AC_names_nodes;
-  INSERT INTO AC_names_nodes SELECT * FROM tmp_AC_names_nodes;
+  -- TRUNCATE TABLE AC_names_nodes;
+  -- INSERT INTO AC_names_nodes SELECT * FROM tmp_AC_names_nodes;
+  RENAME TABLE AC_names_nodes TO doomed, tmp_AC_names_nodes TO AC_names_nodes;
+  DROP TABLE doomed;
 
-  TRUNCATE TABLE AC_names_searchable;
-  INSERT INTO AC_names_searchable SELECT * FROM tmp_AC_names_searchable;
+  -- TRUNCATE TABLE AC_names_searchable;
+  -- INSERT INTO AC_names_searchable SELECT * FROM tmp_AC_names_searchable;
+  RENAME TABLE AC_names_searchable TO doomed, tmp_AC_names_searchable TO AC_names_searchable;
+  DROP TABLE doomed;
 END IF;
+
+UPDATE site_status SET
+  autocomplete_status = 'Up to date',
+  last_autocomplete_update = CURRENT_TIMESTAMP;
 
 END #
 
