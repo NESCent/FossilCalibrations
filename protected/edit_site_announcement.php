@@ -22,15 +22,6 @@ $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error(
 $announcement_data = mysql_fetch_assoc($result);
 mysql_free_result($result);
 
-
-// Return a desired property from any of the data objects above, or a default if not found.
-// This should generally Do the Right Thing, whether we're add a new object, a complete one, 
-// or one that's partially complete.
-function testForProp( $data, $property, $default ) {
-	if (!is_array($data)) return $default;
-	return $data[$property];
-}
-
 // Build a complete add/edit form in one page
 ?>
 <script type="text/javascript">

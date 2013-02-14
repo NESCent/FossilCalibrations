@@ -28,6 +28,7 @@ if (isset($_GET['id']) && !empty($_GET['id']) && is_numeric($_GET['id'])) {
  */
 $calibration_data = null;
 $node_pub_data = null;
+$all_fossils = null;
 $fossil_data = null;
 $fossil_species_data = null;
 $locality_data = null;
@@ -51,43 +52,65 @@ if ($addOrEdit == 'EDIT') {
 	$node_pub_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
-	// retrieve fossil record for this node, if any (ASSUMES only one fossil per calibration!)
-	$query="SELECT * FROM fossils WHERE FossilID = (SELECT FossilID FROM Link_CalibrationFossil WHERE CalibrationID = '".$CalibrationID."')";
+	// retrieve fossil record(s) for this node, if any (gather all fossils!)
+	$query="SELECT * FROM fossils WHERE FossilID = (SELECT FossilID FROM Link_CalibrationFossil WHERE CalibrationID = '".$CalibrationID."' ORDER BY FCLinkID)";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	// TODO: respond more gracefully to missing fossil (skip dependent data below)
-	$fossil_data = mysql_fetch_assoc($result);
-	mysql_free_result($result);
 
-	// retrieve any fossil-species record matching this fossil, based on its 'Species' (scientific name)
-	$query="SELECT * FROM fossiltaxa WHERE TaxonName = '". $fossil_data['Species'] ."'";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$fossil_species_data = mysql_fetch_assoc($result);
+   /* Prepare organized storage for any fossils found. We'll gather related
+    * records for each and bundle them here.
+    */
+   $all_fossils = Array();
+   while ($f = mysql_fetch_assoc($result)) {
+      $all_fossils[ ] = Array(
+         'fossil_data' => $f,
+         'fossil_species_data' => null,
+         'locality_data' => null,
+         'collection_data' => null,
+         'fossil_pub_data' => null,
+         'phylo_pub_data' => null
+      );
+   }
 	mysql_free_result($result);
+/*
+?><pre><?
+print_r($all_fossils);
+?></pre><?
+*/
 
-	// retrieve fossil locality
-	$query="SELECT * FROM localities WHERE LocalityID = '".$fossil_data['LocalityID']."'";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$locality_data = mysql_fetch_assoc($result);
-	mysql_free_result($result);
+   for ($i = 0; $i < count($all_fossils); $i++) {
+      $fossil_data = $all_fossils[$i]['fossil_data'];
 
-	// retrieve fossil collection
-	$query="SELECT * FROM L_CollectionAcro WHERE Acronym = '".$fossil_data['CollectionAcro']."'";
-	// TODO: force uniqueness of Acronym field here!?
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$collection_data = mysql_fetch_assoc($result);
-	mysql_free_result($result);
+      // retrieve any fossil-species record matching this fossil, based on its 'Species' (scientific name)
+      $query="SELECT * FROM fossiltaxa WHERE TaxonName = '". $fossil_data['Species'] ."'";
+      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+      $all_fossils[$i]['fossil_species_data'] = mysql_fetch_assoc($result);
+      mysql_free_result($result);
 
-	// retrieve fossil pub
-	$query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['FossilPub']."'";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$fossil_pub_data = mysql_fetch_assoc($result);
-	mysql_free_result($result);
+      // retrieve fossil locality
+      $query="SELECT * FROM localities WHERE LocalityID = '".$fossil_data['LocalityID']."'";
+      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+      $all_fossils[$i]['locality_data'] = mysql_fetch_assoc($result);
+      mysql_free_result($result);
 
-	// retrieve phylogeny pub
-	$query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['PhyloPub']."'";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$phylo_pub_data = mysql_fetch_assoc($result);
-	mysql_free_result($result);
+      // retrieve fossil collection
+      $query="SELECT * FROM L_CollectionAcro WHERE Acronym = '".$fossil_data['CollectionAcro']."'";
+      // TODO: force uniqueness of Acronym field here!?
+      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+      $all_fossils[$i]['collection_data'] = mysql_fetch_assoc($result);
+      mysql_free_result($result);
+
+      // retrieve fossil pub
+      $query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['FossilPub']."'";
+      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+      $all_fossils[$i]['fossil_pub_data'] = mysql_fetch_assoc($result);
+      mysql_free_result($result);
+
+      // retrieve phylogeny pub
+      $query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['PhyloPub']."'";
+      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+      $all_fossils[$i]['phylo_pub_data'] = mysql_fetch_assoc($result);
+      mysql_free_result($result);
+   }
 
 	// retrieve explicit (directly entered) tip pairs
 	$query="SELECT * 
@@ -101,14 +124,6 @@ if ($addOrEdit == 'EDIT') {
 		$tip_pair_data[] = $row;
 	}
 	mysql_free_result($result);
-}
-
-// Return a desired property from any of the data objects above, or a default if not found.
-// This should generally Do the Right Thing, whether we're add a new calibration, editing a 
-// complete existing calibration, or one that's partially complete.
-function testForProp( $data, $property, $default ) {
-	if (!is_array($data)) return $default;
-	return $data[$property];
 }
 
 /*
@@ -158,12 +173,16 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 
 ?>
 <script type="text/javascript">
+
 	$(document).ready(function() {
 		// set up the main accordion UI
 		$('#edit-steps').accordion({
-			collapsible: true,	// all panels can be collapsed
+			collapsible: true,	   // all panels can be collapsed
 			heightStyle: 'content'  // conform to contents of each panel
 		});
+
+      // set up the fossils accordion UI
+      updateFossilAccordion( 'COLLAPSE ALL' );
 
 		// prepare auto-complete widgets
 		$('#AC_PubID-display').autocomplete({
@@ -183,14 +202,14 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			},
 		      */
 			focus: function(event, ui) {
-				console.log("FOCUSED > "+ ui.item.FullReference);
+				///console.log("FOCUSED > "+ ui.item.FullReference);
 				// clobber any existing hidden value!?
 				$('#AC_PubID').val('');
 				// override normal display (would show numeric ID!)
 				return false;
 			},
 			change: function(event, ui) {
-				console.log("CHANGED TO ITEM > "+ ui.item);
+				///console.log("CHANGED TO ITEM > "+ ui.item);
 				if (!ui.item) {
 					// widget blurred with invalid value; clear any 
 					// stale values from the UI
@@ -200,7 +219,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 				}
 			},
 			select: function(event, ui) {
-				console.log("CHOSEN > "+ ui.item.FullReference);
+				///console.log("CHOSEN > "+ ui.item.FullReference);
 				$('#AC_PubID-display').val(ui.item.label);
 				$('#AC_PubID').val(ui.item.value);
 				$('#AC_PubID-more-info').html(ui.item.FullReference);
@@ -214,150 +233,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			minChars: 3
 		});
 
-		$('#AC_FossilPubID-display').autocomplete({
-			source: '/autocomplete_publications.php',
-			autoSelect: true,  // recognizes typed-in values if they match an item
-			autoFocus: true,
-			delay: 20,
-			minLength: 3,
-			focus: function(event, ui) {
-				console.log("FOCUSED > "+ ui.item.FullReference);
-				// clobber any existing hidden value!?
-				$('#AC_FossilPubID').val('');
-				// override normal display (would show numeric ID!)
-				return false;
-			},
-			change: function(event, ui) {
-				console.log("CHANGED TO ITEM > "+ ui.item);
-				if (!ui.item) {
-					// widget blurred with invalid value; clear any 
-					// stale values from the UI
-					$('#AC_FossilPubID-display').val('');
-					$('#AC_FossilPubID').val('');
-					$('#AC_FossilPubID-more-info').html('&nbsp;');
-				}
-			},
-			select: function(event, ui) {
-				console.log("CHOSEN > "+ ui.item.FullReference);
-				$('#AC_FossilPubID-display').val(ui.item.label);
-				$('#AC_FossilPubID').val(ui.item.value);
-				$('#AC_FossilPubID-more-info').html(ui.item.FullReference);
-				// override normal display (would show numeric ID!)
-				return false;
-			},
-			minChars: 3
-		});
-		$('#AC_PhyloPubID-display').autocomplete({
-			source: '/autocomplete_publications.php',
-			autoSelect: true,  // recognizes typed-in values if they match an item
-			autoFocus: true,
-			delay: 20,
-			minLength: 3,
-			focus: function(event, ui) {
-				console.log("FOCUSED > "+ ui.item.FullReference);
-				// clobber any existing hidden value!?
-				$('#AC_PhyloPubID').val('');
-				// override normal display (would show numeric ID!)
-				return false;
-			},
-			change: function(event, ui) {
-				console.log("CHANGED TO ITEM > "+ ui.item);
-				if (!ui.item) {
-					// widget blurred with invalid value; clear any 
-					// stale values from the UI
-					$('#AC_PhyloPubID-display').val('');
-					$('#AC_PhyloPubID').val('');
-					$('#AC_PhyloPubID-more-info').html('&nbsp;');
-				}
-			},
-			select: function(event, ui) {
-				console.log("CHOSEN > "+ ui.item.FullReference);
-				$('#AC_PhyloPubID-display').val(ui.item.label);
-				$('#AC_PhyloPubID').val(ui.item.value);
-				$('#AC_PhyloPubID-more-info').html(ui.item.FullReference);
-				// override normal display (would show numeric ID!)
-				return false;
-			},
-			minChars: 3
-		});
-
-		$('#AC_FossilSpeciesID-display').autocomplete({
-			source: '/autocomplete_species.php',
-		     /* source: function(request, response) {
-				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
-				// TODO: call response() with suggested data (groomed for display?)
-			},
-		     */
-			autoSelect: true,  // recognizes typed-in values if they match an item
-			autoFocus: true,
-			delay: 20,
-			minLength: 3,
-	             /* response: function(event, ui) {
-				// another place to manipulate returned matches
-				console.log("RESPONSE > "+ ui.content);
-			},
-		      */
-			focus: function(event, ui) {
-				console.log("FOCUSED > "+ ui.item.FullReference);
-				// clobber any existing hidden value!?
-				//$('#AC_FossilSpeciesID').val('');
-				// override normal display (would show numeric ID!)
-				return false;
-			},
-			change: function(event, ui) {
-				console.log("CHANGED TO ITEM > "+ ui.item);
-				if (!ui.item) {
-					// widget blurred with invalid value; clear any 
-					// stale values from the UI
-					$('#AC_FossilSpeciesID-display').val('');
-					//$('#AC_FossilSpeciesID').val('');
-					//$('#AC_FossilSpeciesID-more-info').html('&nbsp;');
-				}
-			},
-			select: function(event, ui) {
-				console.log("CHOSEN > "+ ui.item.FullReference);
-				$('#AC_FossilSpeciesID-display').val(ui.item.label);
-				// fetch and display taxon metadata below
-				$.ajax( '/fetch_taxon_properties.php', {
-					dataType: 'json',
-					data: {'calibration_ID': $('#CalibrationID').val(), 'autocomplete_match': ui.item.value},
-					success: function(data) {
-						$('input[name=ExistingFossilSpeciesID]').val(data.fossiltaxaID);
-						$('input[name=ExistingSpeciesName]').val(data.properName);
-						$('input[name=ExistingSpeciesCommonName]').val(data.commonName);
-						$('input[name=ExistingSpeciesAuthor]').val(data.author);
-						$('input[name=ExistingSpeciesPBDBTaxonNum]').val(data.pbdbTaxonNumber);
-						if (data.properName === '') {
-							$('#author-matched-from').html('no match found');
-						} else {
-							$('#species-matched-from').html('matched from table <b>'+ data.SOURCE_TABLE +'</b>');
-						}
-						if (data.author === '') {
-							$('#author-matched-from').html('no match found');
-						} else {
-							$('#author-matched-from').html('matched from table <b>'+ data.AUTHOR_SOURCE_TABLE +'</b>');
-						}
-					},
-					error: function(data) {
-						// clear all fields below
-						$('input[name=ExistingFossilSpeciesID]').val('');
-						$('input[name=ExistingSpeciesName]').val('');
-						$('input[name=ExistingSpeciesCommonName]').val('');
-						$('input[name=ExistingSpeciesAuthor]').val('');
-						$('input[name=ExistingSpeciesPBDBTaxonNum]').val('');
-						$('#species-matched-from').html('no match found');
-						$('#author-matched-from').html('&nbsp;');
-					}
-				});
-				// override normal display (would show numeric ID!)
-				return false;
-			},
-		     /* close: function(event, ui) {
-				console.log("CLOSING VALUE > "+ this.value);
-			},
-		      */
-			minChars: 3
-		});
+      // Most remaining widgets might have multiple instances (per fossil), so
+      // we should use a separate function that's called whenever (eg) a new
+      // fossil is added
+      initFossilAutocompleteWidgets();
 
 		initTipTaxaWidgets();
 
@@ -366,20 +245,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		$('#newPublication, #existingPublication').unbind('click').click(updatePublicationWidgets);
 		updatePublicationWidgets();
 
-		$('#newCollectionAcronym, #existingCollectionAcronym').unbind('click').click(updateCollectionAcronymWidgets);
-		updateCollectionAcronymWidgets();
-
-		$('#newLocality, #existingLocality').unbind('click').click(updateLocalityWidgets);
-		updateLocalityWidgets();
-
-		$('#newFossilSpecies, #existingFossilSpecies').unbind('click').click(updateFossilSpeciesWidgets);
-		updateFossilSpeciesWidgets();
-
-		$('#newFossilPublication, #existingFossilPublication').unbind('click').click(updateFossilPublicationWidgets);
-		updateFossilPublicationWidgets();
-
-		$('#newPhylogenyPublication, #existingPhylogenyPublication, #repeatFossilPublication').unbind('click').click(updatePhylogenyPublicationWidgets);
-		updatePhylogenyPublicationWidgets();
+      updateFossilPanelWidgets();
 
 		$('input.deleteTipTaxaPair').unbind('click').click(function() {
 			var $itsRow = $(this).closest('tr');
@@ -447,6 +313,164 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		$('#tip-taxa-panel .select-tip-taxa').autocomplete(tipTaxaSettings);
 	}
 
+   function initFossilAutocompleteWidgets() {
+		$('[id^=AC_FossilPubID-display-]').not('.ui-autocomplete-input').autocomplete({
+			source: '/autocomplete_publications.php',
+			autoSelect: true,  // recognizes typed-in values if they match an item
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+			focus: function(event, ui) {
+				///console.log("FOCUSED > "+ ui.item.FullReference);
+            var pos = getFossilPosition( event.target );
+				// clobber any existing hidden value!?
+				$('#AC_FossilPubID-'+ pos).val('');
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			change: function(event, ui) {
+				///console.log("CHANGED TO ITEM > "+ ui.item);
+            var pos = getFossilPosition( event.target );
+				if (!ui.item) {
+					// widget blurred with invalid value; clear any 
+					// stale values from the UI
+					$('#AC_FossilPubID-display-'+pos).val('');
+					$('#AC_FossilPubID-'+pos).val('');
+					$('#AC_FossilPubID-more-info-'+pos).html('&nbsp;');
+				}
+			},
+			select: function(event, ui) {
+				///console.log("CHOSEN > "+ ui.item.FullReference);
+            var pos = getFossilPosition( event.target );
+				$('#AC_FossilPubID-display-'+pos).val(ui.item.label);
+				$('#AC_FossilPubID-'+pos).val(ui.item.value);
+				$('#AC_FossilPubID-more-info-'+pos).html(ui.item.FullReference);
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			minChars: 3
+		});
+
+		$('[id^=AC_PhyloPubID-display-]').not('.ui-autocomplete-input').autocomplete({
+			source: '/autocomplete_publications.php',
+			autoSelect: true,  // recognizes typed-in values if they match an item
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+			focus: function(event, ui) {
+				///console.log("FOCUSED > "+ ui.item.FullReference);
+            var pos = getFossilPosition( event.target );
+				// clobber any existing hidden value!?
+				$('#AC_PhyloPubID-'+pos).val('');
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			change: function(event, ui) {
+				///console.log("CHANGED TO ITEM > "+ ui.item);
+            var pos = getFossilPosition( event.target );
+				if (!ui.item) {
+					// widget blurred with invalid value; clear any 
+					// stale values from the UI
+					$('#AC_PhyloPubID-display-'+pos).val('');
+					$('#AC_PhyloPubID-'+pos).val('');
+					$('#AC_PhyloPubID-more-info-'+pos).html('&nbsp;');
+				}
+			},
+			select: function(event, ui) {
+				///console.log("CHOSEN > "+ ui.item.FullReference);
+            var pos = getFossilPosition( event.target );
+				$('#AC_PhyloPubID-display-'+pos).val(ui.item.label);
+				$('#AC_PhyloPubID-'+pos).val(ui.item.value);
+				$('#AC_PhyloPubID-more-info-'+pos).html(ui.item.FullReference);
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			minChars: 3
+		});
+
+		$('[id^=AC_FossilSpeciesID-display-]').not('.ui-autocomplete-input').autocomplete({
+			source: '/autocomplete_species.php',
+		     /* source: function(request, response) {
+				// TODO: pass request.term to fetch page '/autocomplete_publications.php',
+				// TODO: call response() with suggested data (groomed for display?)
+			},
+		     */
+			autoSelect: true,  // recognizes typed-in values if they match an item
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+	             /* response: function(event, ui) {
+				// another place to manipulate returned matches
+				console.log("RESPONSE > "+ ui.content);
+			},
+		      */
+			focus: function(event, ui) {
+				///console.log("FOCUSED > "+ ui.item.FullReference);
+				// clobber any existing hidden value!?
+				//$('#AC_FossilSpeciesID').val('');
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+			change: function(event, ui) {
+				///console.log("CHANGED TO ITEM > "+ ui.item);
+            var pos = getFossilPosition( event.target );
+				if (!ui.item) {
+					// widget blurred with invalid value; clear any 
+					// stale values from the UI
+					$('#AC_FossilSpeciesID-display-'+pos).val('');
+					//$('#AC_FossilSpeciesID').val('');
+					//$('#AC_FossilSpeciesID-more-info').html('&nbsp;');
+				}
+			},
+			select: function(event, ui) {
+				///console.log("CHOSEN > "+ ui.item.FullReference);
+            var pos = getFossilPosition( event.target );
+				$('#AC_FossilSpeciesID-display-'+pos).val(ui.item.label);
+				// fetch and display taxon metadata below
+				$.ajax( '/fetch_taxon_properties.php', {
+					dataType: 'json',
+					data: {'calibration_ID': $('#CalibrationID').val(), 'autocomplete_match': ui.item.value},
+					success: function(data) {
+						$('input[name=ExistingFossilSpeciesID-'+pos+']').val(data.fossiltaxaID);
+						$('input[name=ExistingSpeciesName-'+pos+']').val(data.properName);
+						$('input[name=ExistingSpeciesCommonName-'+pos+']').val(data.commonName);
+						$('input[name=ExistingSpeciesAuthor-'+pos+']').val(data.author);
+						$('input[name=ExistingSpeciesPBDBTaxonNum-'+pos+']').val(data.pbdbTaxonNumber);
+						if (data.properName === '') {
+							$('#author-matched-from-'+pos).html('no match found');
+						} else {
+							$('#species-matched-from-'+pos).html('matched from table <b>'+ data.SOURCE_TABLE +'</b>');
+						}
+						if (data.author === '') {
+							$('#author-matched-from'+pos).html('no match found');
+						} else {
+							$('#author-matched-from'+pos).html('matched from table <b>'+ data.AUTHOR_SOURCE_TABLE +'</b>');
+						}
+					},
+					error: function(data) {
+						// clear all fields below
+                  var pos = getFossilPosition( event.target );
+						$('input[name=ExistingFossilSpeciesID-'+pos+']').val('');
+						$('input[name=ExistingSpeciesName-'+pos+']').val('');
+						$('input[name=ExistingSpeciesCommonName-'+pos+']').val('');
+						$('input[name=ExistingSpeciesAuthor-'+pos+']').val('');
+						$('input[name=ExistingSpeciesPBDBTaxonNum-'+pos+']').val('');
+						$('#species-matched-from-'+pos).html('no match found');
+						$('#author-matched-from-'+pos).html('&nbsp;');
+					}
+				});
+				// override normal display (would show numeric ID!)
+				return false;
+			},
+		     /* close: function(event, ui) {
+				console.log("CLOSING VALUE > "+ this.value);
+			},
+		      */
+			minChars: 3
+		});
+   }
+
+
 	// prepare widget groups and dependent widgets
 	function updatePublicationWidgets() {
 		if ($('#existingPublication').is(':checked')) {
@@ -457,54 +481,234 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			$('#enter-new-pub').show();
 		}		
 	}
+
+   function updateFossilPanelWidgets( ) {
+      // do a quick, non-destructive sweep of all panels (eg, after a new
+      // fossil panel is added)
+
+      // hide/show mutually exclusive areas based on radio and other options
+		updateCollectionAcronymWidgets();
+		updateLocalityWidgets();
+		updateFossilSpeciesWidgets();
+		updateFossilPublicationWidgets();
+		updatePhylogenyPublicationWidgets();
+
+      // bind any associated widgets to maintain this behavior
+		$('[id^=newCollectionAcronym-], [id^=existingCollectionAcronym-]')
+         .unbind('click').click(updateCollectionAcronymWidgets);
+		$('[id^=newLocality-], [id^=existingLocality-]')
+         .unbind('click').click(updateLocalityWidgets);
+		$('[id^=newFossilSpecies-], [id^=existingFossilSpecies-]')
+         .unbind('click').click(updateFossilSpeciesWidgets);
+		$('[id^=newFossilPublication-], [id^=existingFossilPublication-]')
+         .unbind('click').click(updateFossilPublicationWidgets);
+		$('[id^=newPhylogenyPublication-], [id^=existingPhylogenyPublication-], [id^=repeatFossilPublication-]')
+         .unbind('click').click(updatePhylogenyPublicationWidgets);
+
+      // bind fossil-identifier widgets to update its visible name
+      // (also triggered from updateCollectionAcronymWidgets)
+		$('[id^=CollectionNum-], [id^=CollectionAcro-], [id^=NewAcro-]')
+         .unbind('keyup change').bind('keyup change', updateFossilDisplayName);
+
+      // Activate needed autocomplete behaviors, BUT filter out
+      // existing widgets using    hasClass('ui-autocomplete-input')...
+      initFossilAutocompleteWidgets();
+   }
+
+   function updateFossilDisplayName() {
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         var pos = getFossilPosition( $panel );
+         var itsCollectionAcro;
+         if ($('#existingCollectionAcronym-'+pos).is(':checked')) {
+            itsCollectionAcro = $('#CollectionAcro-'+pos).val();
+         } else {
+            itsCollectionAcro = $('#NewAcro-'+pos).val();
+         }
+         var itsCollectionNumber = $('#CollectionNum-'+pos).val();
+         var itsDisplayName = itsCollectionAcro +' '+ itsCollectionNumber;
+         if (itsDisplayName === ' ') {
+            itsDisplayName = 'Unidentified';
+         }
+         $('#fossil-name-'+pos).html( itsDisplayName );
+      });
+   }
+
+   function getRelatedFossilPanels( target ) {
+      // fossil-panel operations can be specific to one, or apply to all,
+      // depending on how (by whom) they are called
+      if (target === window) {
+         // general call for all panels
+         return $('.single-fossil-panel');
+      }  else {
+         // modify just this panel
+         return $(target).closest('.single-fossil-panel');
+      }
+   }
+
+   function getFossilPosition( target ) {
+      // get ordinal position (explicit, since some fossils may have been
+      // deleted) for the fossil panel that holds this target
+      return $(target).closest('.single-fossil-panel').find('input[name^=fossil_positions]').val();
+   }
+
 	function updateCollectionAcronymWidgets() {
-		if ($('#existingCollectionAcronym').is(':checked')) {
-			$('#pick-existing-collection-acronym').show();
-			$('#enter-new-collection-acronym').hide();
-		} else {
-			$('#pick-existing-collection-acronym').hide();
-			$('#enter-new-collection-acronym').show();
-		}		
+      // just one panel, or all?
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         if ($panel.find('[id^=existingCollectionAcronym-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-collection-acronym-]').show();
+            $panel.find('[id^=enter-new-collection-acronym-]').hide();
+         } else {
+            $panel.find('[id^=pick-existing-collection-acronym-]').hide();
+            $panel.find('[id^=enter-new-collection-acronym-]').show();
+         }		
+         updateFossilDisplayName(this);
+      });
 	}
 	function updateLocalityWidgets() {
-		if ($('#existingLocality').is(':checked')) {
-			$('#pick-existing-locality').show();
-			$('#enter-new-locality').hide();
-		} else {
-			$('#pick-existing-locality').hide();
-			$('#enter-new-locality').show();
-		}		
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         if ($panel.find('[id^=existingLocality-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-locality-]').show();
+            $panel.find('[id^=enter-new-locality-]').hide();
+         } else {
+            $panel.find('[id^=pick-existing-locality-]').hide();
+            $panel.find('[id^=enter-new-locality-]').show();
+         }		
+      });
 	}
 	function updateFossilPublicationWidgets() {
-		if ($('#existingFossilPublication').is(':checked')) {
-			$('#pick-existing-fossil-pub').show();
-			$('#enter-new-fossil-pub').hide();
-		} else {
-			$('#pick-existing-fossil-pub').hide();
-			$('#enter-new-fossil-pub').show();
-		}		
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         if ($panel.find('[id^=existingFossilPublication-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-fossil-pub-]').show();
+            $panel.find('[id^=enter-new-fossil-pub-]').hide();
+         } else {
+            $panel.find('[id^=pick-existing-fossil-pub-]').hide();
+            $panel.find('[id^=enter-new-fossil-pub-]').show();
+         }		
+      });
 	}
 	function updatePhylogenyPublicationWidgets() {
-		if ($('#existingPhylogenyPublication').is(':checked')) {
-			$('#pick-existing-phylo-pub').show();
-			$('#enter-new-phylo-pub').hide();
-		} else if ($('#repeatFossilPublication').is(':checked')) {
-			$('#pick-existing-phylo-pub').hide();
-			$('#enter-new-phylo-pub').hide();
-		} else {
-			$('#pick-existing-phylo-pub').hide();
-			$('#enter-new-phylo-pub').show();
-		}		
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         if ($panel.find('[id^=existingPhylogenyPublication-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-phylo-pub-]').show();
+            $panel.find('[id^=enter-new-phylo-pub-]').hide();
+         } else if ($panel.find('[id^=repeatFossilPublication-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-phylo-pub-]').hide();
+            $panel.find('[id^=enter-new-phylo-pub-]').hide();
+         } else {
+            $panel.find('[id^=pick-existing-phylo-pub-]').hide();
+            $panel.find('[id^=enter-new-phylo-pub-]').show();
+         }		
+      });
 	}
 	function updateFossilSpeciesWidgets() {
-		if ($('#existingFossilSpecies').is(':checked')) {
-			$('#pick-existing-fossil-species').show();
-			$('#enter-new-fossil-species').hide();
-		} else {
-			$('#pick-existing-fossil-species').hide();
-			$('#enter-new-fossil-species').show();
-		}		
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         if ($panel.find('[id^=existingFossilSpecies-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-fossil-species-]').show();
+            $panel.find('[id^=enter-new-fossil-species-]').hide();
+         } else {
+            $panel.find('[id^=pick-existing-fossil-species-]').hide();
+            $panel.find('[id^=enter-new-fossil-species-]').show();
+         }		
+      });
 	}
+
+   function addFossil() {
+      $('#add-fossil-button').attr('disabled', 'disabled');
+      var $fossilPanels = $('.single-fossil-panel');
+      if ($('#new-panel-loader').length == 0) {
+         // if there's a stale loader, use it!
+         $('#fossil-panels').append('<div id="new-panel-loader">...</div>');
+      }
+      var $loader = $('#new-panel-loader');
+      $loader.load(  // load new panel via AJAX
+         '/protected/single_fossil_panel.php',
+         { 
+            totalFossils: $fossilPanels.length,
+            position: $fossilPanels.length 
+         },
+         function() {
+            $loader.replaceWith($loader.children());
+            updateFossilAccordion('NEW PANEL');
+            // activate fossil-panel behavior
+            updateFossilPanelWidgets();
+
+            $('#add-fossil-button').removeAttr('disabled');
+         }
+      );
+   }
+   function deleteFossil(position) {
+      // remove the doomed panel and header
+      /* NOTE: There's no need to unbind/kill widgets in the doomed panel; 
+       * apparently, $.remove() unbinds simple events *and* jQuery UI widgets
+       */
+      $('#fossil-header-'+ position +', #fossil-panel-'+ position).remove();
+      updateFossilAccordion('COLLAPSE ALL');
+      return false;
+   }
+
+   function updateFossilAccordion( option ) {
+      // re-initialize this accordion, after panels are added/removed
+      var $accordionParent = $('#fossil-panels');
+      var panelCount = $accordionParent.find('.single-fossil-panel').length;
+      // what section (if any) should be opened after refresh?
+      var reopenWithActiveSection = false;
+      switch(option) {
+         case 'NEW PANEL':
+            reopenWithActiveSection = panelCount - 1;
+            break;
+         case 'SAME PANEL':
+            reopenWithActiveSection = $accordionParent.accordion('option', 'active');
+            break;
+         case 'COLLAPSE ALL':
+            reopenWithActiveSection = false;
+            break;
+      }
+      // IF accordion is already present, destroy it
+      if ($accordionParent.hasClass('ui-accordion')) {
+         $accordionParent.accordion('destroy')
+      }
+      $accordionParent.accordion({ 
+			collapsible: true,	   // all panels can be collapsed
+			heightStyle: 'content', // conform to contents of each panel
+         active: reopenWithActiveSection
+      });
+   }
+
+   // utility for QA-testing of multiple fossils
+   function sweepForDuplicateIDs() {
+      var allIDs = new Array();
+      $('*[id]').each(function() {
+         var itsID = $(this).attr('id');
+         allIDs.push(itsID);
+      });
+      var IDcount = allIDs.length;
+      console.log( '>> '+ IDcount +' IDs found');
+
+      var dupesFound = 0;
+      allIDs.sort();
+      var lastID = allIDs[0];
+      for(var i = 1; i < IDcount; i++) {
+         //console.log('... '+ lastID +' == '+ allIDs[i]);
+         if (allIDs[i] === lastID) {
+            console.log('*** DUPE! '+ lastID);
+            dupesFound++;
+         }
+         lastID = allIDs[i];
+      }
+      console.log('>> '+ dupesFound +' duplicate IDs found on this page');
+   }
 </script>
 
 <form action="update_calibration.php" method="post" id="edit-calibration">
@@ -675,370 +879,30 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 </div>
 
 
-<h3>3. Identify the calibrating fossil specimen</h3>
+<h3>3. Describe the fossils used to date this node</h3>
 <div>
+   <p style="position: relative; top: -6px;">
+      <input type="button" id="add-fossil-button" style="float: right; font-size: 0.8em;" value="add fossil" onclick="addFossil(); return false;"/>
+      Add one or more fossils that were used in this node calibration.
+   </p>
+   <div id="fossil-panels">
 <? /* TODO: Do we still need this section? It tries to reconcile non-matching species name (assigned to fossil) or add a new taxon,
       including some interesting metadata (beyond NCBI stuff) about authorship and PaleoDB taxon IDs.
-    */ ?>
-<p><input type="radio" name="newOrExistingFossilSpecies" value="EXISTING" id="existingFossilSpecies" checked="checked"> <label for="existingFossilSpecies">Choose an existing <b>species</b></label></input></p>
-<table id="pick-existing-fossil-species" width="100%" border="0">
-    <tr style="background-color: #eee;">
-      <td align="right" valign="top" width="30%" style="background-color: #eee; color: #888;"><strong>search all existing species...</strong></td>
-      <td align="left" width="70%" style="background-color: #eee;">
-	<!-- <input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value=""> -->
-	  <input type="text" name="AC_FossilSpeciesID-display" id="AC_FossilSpeciesID-display" value="<?= testForProp($fossil_data, 'Species', '') ?>" style="width: 45%;"/>
-	<? // stash the ID of the matching fossil-species record (from table fossiltaxa), to make sure we're updating the same record ?>
-	  <input type="text" name="ExistingFossilSpeciesID" id="AC_FossilSpeciesID" value="<?= testForProp($fossil_species_data, 'TaxonID', 0) ?>" readonly="readonly" style="width: 45%; color: #999; text-align: center;"/>
-      </td>
-    </tr>
-<? /* Fuzzy matching against entered species name...
-    <tr>
-	<td width="70%" align="left" valign="top"><select name="SpeciesID" id="SpeciesID">
-    
-		<?php
-			$query = "SELECT *,MATCH(TaxonName, CommonName) AGAINST ('".$_POST['SpeciesName']."') AS score FROM `fossiltaxa` WHERE MATCH(TaxonName, CommonName) AGAINST ('".$_POST['SpeciesName']."' IN NATURAL LANGUAGE MODE) ORDER BY score DESC";
-			$close_matches=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-			if(mysql_num_rows($close_matches)==0) { echo "<option value=\"New\" id=\"New\">no exact match. choose a species from list or enter new taxon below.</option>"; } 
-			else {
-			while($row=mysql_fetch_assoc($close_matches)) {
-		?>
-            <option value="<?=$row['TaxonID']?>" id="<?=$row['TaxonID']?>" /><i><?=$row['TaxonName']?></i> <?=$row['TaxonAuthor']?> (<?=$row['CommonName']?>)</option>
-			<?php
-				}
-			}
-			?>
-			</select>
-		    </td></tr>
-*/ ?>
-      <tr>
-	<td width="30%" align="right" valign="top"><strong>scientific name</strong></td><td width="70%" align="left" valign="top">
-		<input name="ExistingSpeciesName" type="text" readonly="readonly" value="<?= testForProp($fossil_species_data, 'TaxonName', '') ?>" />
-		<em id="species-matched-from">This name is not editable; instead, enter a new species below.</em>
-	</td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top"><strong>common name</strong></td><td width="70%" align="left" valign="top">
-		<input name="ExistingSpeciesCommonName" type="text" value="<?= testForProp($fossil_species_data, 'CommonName', '') ?>" />
-	</td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top"><strong>author and date</strong></td><td width="70%" align="left" valign="top">
-		<input name="ExistingSpeciesAuthor" type="text" value="<?= testForProp($fossil_species_data, 'TaxonAuthor', '') ?>" />
-		<em id="author-matched-from">&nbsp;</em>
-	</td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top"><strong>PaleoDB taxon number</strong></td><td width="70%" align="left" valign="top">
-		<input name="ExistingSpeciesPBDBTaxonNum" type="text" value="<?= testForProp($fossil_species_data, 'PBDBTaxonNum', '') ?>" />
-	</td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top">&nbsp;</td><td width="70%" align="left" valign="top">
-		<em>Changes above will be reflected in all calibrations of this fossil species!</em>
-	</td>
-      </tr>
-</table>
+    */ 
+   $totalFossils = count($all_fossils);
+   for ($i = 0; $i < $totalFossils; $i++) {
+      $fossil_data = $all_fossils[$i]['fossil_data']; 
+      $fossilIdentifier = testForProp($fossil_data, 'CollectionAcro', '') .' '. testForProp($fossil_data, 'CollectionNumber', '');
+      $isFirstFossil = ($i == 0);
+      $isLastFossil = ($i == ($totalFossils - 1));
 
-<p><input type="radio" name="newOrExistingFossilSpecies" value="NEW" id="newFossilSpecies"> <label for="newFossilSpecies">... <b>or</b> enter a new species into the database</label></input></p>
-<table id="enter-new-fossil-species" class="add-form" width="100%" border="0">
-      <tr>
-	<td width="30%" align="right" valign="top">Species name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesName" type="text" /></td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top">Common name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesCommonName" type="text" /></td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top">Author and date</td><td width="70%" align="left" valign="top"><input name="NewSpeciesAuthor" type="text" /></td>
-      </tr>
-      <tr>
-	<td width="30%" align="right" valign="top">PaleoDB taxon number</td><td width="70%" align="left" valign="top"><input name="NewSpeciesPBDBTaxonNum" type="text" /></td>
-      </tr>
-</table>
-</div>
+      include('single_fossil_panel.php');
+   } ?>
+   </div><!-- END of #fossil-panels (accordion container) -->
+</div><!-- END of main fossils section -->
 
 
-<h3>4. Provide further details about this fossil</h3>
-<div>
-
-<p><input type="radio" name="newOrExistingLocality" value="EXISTING" id="existingLocality" checked="checked"> <label for="existingLocality">Choose an existing <b>locality</b></label></input></p>
-<table id="pick-existing-locality" width="100%" border="0">
-                <tr>
-                  <td width="30%" align="right" valign="top"><strong>locality</strong></td>
-                  <td width="70%"><select name="Locality" id="Locality">
-                	<?php
-			if(mysql_num_rows($locality_list)==0){
-				echo "<option value=\"New\">Add a new formation below</option>";
-			} else {
-				mysql_data_seek($locality_list,0);
-				$currentLocality = testForProp($fossil_data, 'LocalityID', '');
-				while($row=mysql_fetch_assoc($locality_list)) {
-					$thisLocality = $row['LocalityID'];
-					if ($currentLocality == $thisLocality) {
-						echo '<option value="'.$row['LocalityID'].'" selected="selected">'.$row['LocalityName'].', '.$row['Age'].'</option>';
-					} else {
-						echo '<option value="'.$row['LocalityID'].'">'.$row['LocalityName'].', '.$row['Age'].'</option>';
-					}			
-				}
-				//echo "<option value=\"New\">Add new locality on next page</option>";
-			} ?>
-                    </select>
-                </tr>
-</table>
-<p><input type="radio" name="newOrExistingLocality" value="NEW" id="newLocality"> <label for="newLocality">... <b>or</b> enter a new locality into the database</label></input></p>
-<table id="enter-new-locality" class="add-form" width="100%" border="0">
-  <tr>
-    <td width="30%" align="right" valign="top"><b>locality name</b></td>
-    <td width="70%" ><input type="text" name="LocalityName" id="LocalityName"></td>
-  </tr>
-  <tr>
-    <td width="30%" align="right" valign="top"><b>stratum name</b></td>
-    <td width="70%" ><input type="text" name="Stratum" id="Stratum"></td>
-  </tr>
-  <tr>
-  <td align="right" valign="top" width="30%"><strong>PBDB collection num</strong></td>
-  <td align="left" width="70%"><input type="text" name="PBDBNum" id="PBDBNum" ></td>
-  </tr>
-  <tr>
-    <td align="right" valign="top" width="30%"><strong>locality notes</strong></td>
-    <td align="left" width="70%"><textarea name="LocalityNotes" id="LocalityNotes" cols="50" rows="5"></textarea></td>
-  </tr>
-  <tr>
-    <td align="right" valign="top"><strong>country</strong></td>
-    <td><select name="Country" id="Country">
-  	<?php
-  				if(mysql_num_rows($country_list)==0){
-  					echo "no countries available";
-  			} else {
-  					mysql_data_seek($country_list,0);
-  				while($row=mysql_fetch_assoc($country_list)) {
-  					echo "<option value=\"".$row['name']."\">".$row['name']."</option>";
-  					}
-  				}
-  			?>
-      </select>
-  </tr>
-  <tr>
-    <td width="30%" align="right" valign="top"><b>top age of stratum</b></td>
-    <td width="70%" ><input type="text" name="StratumMinAge" id="StratumMinAge"></td>
-  </tr>
-  <tr>
-    <td width="30%" align="right" valign="top"><b>bottom age of stratum</b></td>
-    <td width="70%" ><input type="text" name="StratumMaxAge" id="StratumMaxAge"></td>
-  </tr>
-  <tr>
-    <td align="right" valign="top"><strong>geological age</strong></td>
-    <td><select name="GeolTime" id="GeolTime">
-  	<?php
-	if(mysql_num_rows($geoltime_list)==0){
-	?>
-      <option value="0">No geological time in database</option>
-  	<?php
-	} else {
-		mysql_data_seek($geoltime_list,0);
-		while($row=mysql_fetch_assoc($geoltime_list)) {
-			echo "<option value=\"".$row['GeolTimeID']."\">".$row['Age'].", ".$row['Period'].", ".$row['ShortName']."</option>";
-		}
-
-	}
-	?>
-      </select>
-  </tr>
-</table>
-                
-<hr/>
-
-<p><input type="radio" name="newOrExistingCollectionAcronym" value="EXISTING" id="existingCollectionAcronym" checked="checked"> <label for="existingCollectionAcronym">Choose an existing <b>collection</b></label></input></p>
-<table id="pick-existing-collection-acronym" width="100%" border="0">
-                <tr>
-                  <td width="30%" align="right" valign="top"><strong>collection acronym</strong></td>
-                  <td width="70%"><select name="CollectionAcro" id="CollectionAcro">
-                	<?php
-			if(mysql_num_rows($collectionacro_list)==0){
-			?>
-			    <option value="0">No acronyms in database, add one below.</option>
-                	<?php
-			} else {
-				mysql_data_seek($collectionacro_list,0);
-				$currentCollection = testForProp($fossil_data, 'CollectionAcro', '');
-				while($row=mysql_fetch_assoc($collectionacro_list)) {
-					$thisCollection = $row['Acronym'];
-					if ($currentCollection == $thisCollection) {
-						echo '<option value="'.$row['Acronym'].'" selected="selected">'.$row['Acronym'].', '.$row['CollectionName'].'</option>';
-					} else {
-						echo '<option value="'.$row['Acronym'].'">'.$row['Acronym'].', '.$row['CollectionName'].'</option>';
-					}			
-					//echo "<option value=\"".$row['Acronym']."\">".$row['Acronym'].", ".$row['CollectionName']."</option>";
-				}
-			} ?>
-                    </select>
-                </tr>
-</table>
-<p><input type="radio" name="newOrExistingCollectionAcronym" value="NEW" id="newCollectionAcronym"> <label for="newCollectionAcronym">... <b>or</b> enter a new collection acronym into the database</label></input></p>
-<table id="enter-new-collection-acronym" class="add-form" width="100%" border="0">
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>new acronym</strong></td>
-                  <td align="left" width="70%"><input type="text" name="NewAcro" id="NewAcro" size="5" ></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>new institution</strong></td>
-                  <td align="left" width="70%"><input type="text" name="NewInst" id="NewInst" ></td>
-                </tr>
-</table>
-
-<hr/>
-
-<table width="100%" border="0">
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>collection number</strong></td>
-                  <td align="left" width="70%"><input type="text" name="CollectionNum" id="CollectionNum" value="<?= testForProp($fossil_data, 'CollectionNumber', '') ?>"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>minimum age</strong></td>
-                  <td align="left" width="70%"><input type="text" name="FossilMinAge" id="FossilMinAge" size=3 value="<?= testForProp($fossil_data, 'MinAge', '') ?>"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top"><strong>minimum age type</strong></td>
-                  <td><select name="MinAgeType" id="MinAgeType">
-                	<?php
-			if(mysql_num_rows($agetypes_list)==0){
-			?>
-			    <option value="0">No age types in database</option>
-                	<?php
-			} else {
-				mysql_data_seek($agetypes_list,0);
-				$currentMinAgeType = testForProp($fossil_data, 'MinAgeType', '');
-				while($row=mysql_fetch_assoc($agetypes_list)) {
-					$thisMinAgeType = $row['AgeTypeID'];
-					if ($currentMinAgeType == $thisMinAgeType) {
-						echo '<option value="'.$row['AgeTypeID'].'" selected="selected">'.$row['AgeType'].'</option>';
-					} else {
-						echo '<option value="'.$row['AgeTypeID'].'">'.$row['AgeType'].'</option>';
-					}			
-				}
-			} ?>
-                    </select>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>maximum age</strong></td>
-                  <td align="left" width="70%"><input type="text" name="FossilMaxAge" id="FossilMaxAge" size=3 value="<?= testForProp($fossil_data, 'MaxAge', '') ?>"></td>
-                </tr>
-                 <tr>
-                  <td align="right" valign="top"><strong>maximum age type</strong></td>
-                  <td><select name="MaxAgeType" id="MaxAgeType">
-                	<?php
-			if(mysql_num_rows($agetypes_list)==0){
-			?>
-			    <option value="0">No age types in database</option>
-                	<?php
-			} else {
-				mysql_data_seek($agetypes_list,0);
-				$currentMaxAgeType = testForProp($fossil_data, 'MaxAgeType', '');
-				while($row=mysql_fetch_assoc($agetypes_list)) {
-					$thisMaxAgeType = $row['AgeTypeID'];
-					if ($currentMaxAgeType == $thisMaxAgeType) {
-						echo '<option value="'.$row['AgeTypeID'].'" selected="selected">'.$row['AgeType'].'</option>';
-					} else {
-						echo '<option value="'.$row['AgeTypeID'].'">'.$row['AgeType'].'</option>';
-					}			
-				}
-			} ?>
-                    </select>
-                </tr>
-                
-                 <tr>
-                  <td align="right" valign="top"><strong>phylogenetic justification type</strong></td>
-                  <td><select name="PhyJustType" id="PhyJustType">
-                	<?php
-			if(mysql_num_rows($phyjusttype_list)==0){
-			?>
-			    <option value="0">No justification types in database</option>
-                	<?php
-			} else {
-				mysql_data_seek($phyjusttype_list,0);
-				$currentPhyloJustType = testForProp($fossil_data, 'PhyJustificationType', '');
-				while($row=mysql_fetch_assoc($phyjusttype_list)) {
-					$thisPhyloJustType = $row['PhyloJustID'];
-					if ($currentPhyloJustType == $thisPhyloJustType) {
-						echo '<option value="'.$row['PhyloJustID'].'" selected="selected">'.$row['PhyloJustType'].'</option>';
-					} else {
-						echo '<option value="'.$row['PhyloJustID'].'">'.$row['PhyloJustType'].'</option>';
-					}			
-				}
-			} ?>
-                    </select>
-                </tr>
-                
-                
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>phylogenetic justification</strong></td>
-                  <td align="left" width="70%"><textarea name="PhyJustification" id="PhyJustification" cols="50" rows="5"><?= testForProp($fossil_data, 'PhyJustification', '') ?></textarea></td>
-                </tr>
-</table>
-                
-<hr/>
-
-<p><input type="radio" name="newOrExistingFossilPublication" value="EXISTING" id="existingFossilPublication" checked="checked"> <label for="existingFossilPublication">Choose an existing <b>fossil publication</b></label></input></p>
-<table id="pick-existing-fossil-pub" width="100%" border="0">
-  <tr>
-    <td width="25%" align="right" valign="top"><b>enter partial name</b></td>
-    <td width="75%">
-	  <input type="text" name="AC_FossilPubID-display" id="AC_FossilPubID-display" value="<?= testForProp($fossil_pub_data, 'ShortName', '') ?>" />
-	  <input type="text" name="FossilPub" id="AC_FossilPubID" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
-                    <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
-	  <div id="AC_FossilPubID-more-info" class="text-excerpt"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></p>
-    </td>
-  </tr>
-</table>
-<p><input type="radio" name="newOrExistingFossilPublication" value="NEW" id="newFossilPublication"> <label for="newFossilPublication">... <b>or</b> enter a new publication into the database</label></input></p>
-<table id="enter-new-fossil-pub" class="add-form" width="100%" border="0">
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>short form (author, date)</strong></td>
-                  <td align="left" width="70%"><input type="text" name="FossShortForm" id="FossShortForm" size="10"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>full citation</strong></td>
-                  <td align="left" width="70%"><input type="text" name="FossFullCite" id="FossFullCite" style="width: 95%;"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>doi</strong></td>
-                  <td align="left" width="70%"><input type="text" name="FossDOI" id="FossDOI" size="10"></td>
-                </tr>
-</table>
-                
-<hr/>
-
-<p><input type="radio" name="newOrExistingPhylogenyPublication" value="EXISTING" id="existingPhylogenyPublication" checked="checked"> <label for="existingPhylogenyPublication">Choose an existing <b>phylogeny publication</b></label></input></p>
-<table id="pick-existing-phylo-pub" width="100%" border="0">
-  <tr>
-    <td width="25%" align="right" valign="top"><b>enter partial name</b></td>
-    <td width="75%">
-	  <input type="text" name="AC_PhyloPubID-display" id="AC_PhyloPubID-display" value="<?= testForProp($fossil_pub_data, 'ShortName', '') ?>" />
-	  <input type="text" name="PhyPub" id="AC_PhyloPubID" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
-                    <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
-	  <div id="AC_PhyloPubID-more-info" class="text-excerpt"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></p>
-    </td>
-  </tr>
-</table>
-<p><input type="radio" name="newOrExistingPhylogenyPublication" value="REUSE_FOSSIL_PUB" id="repeatFossilPublication"> <label for="repeatFossilPublication">... <b>or</b> re-use the fossil publication above</label></input></p>
-<p><input type="radio" name="newOrExistingPhylogenyPublication" value="NEW" id="newPhylogenyPublication"> <label for="newPhylogenyPublication">... <b>or</b> enter a new publication into the database</label></input></p>
-<table id="enter-new-phylo-pub" class="add-form" width="100%" border="0">
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>short form (author, date)</strong></td>
-                  <td align="left" width="70%"><input type="text" name="PhyloShortForm" id="PhyloShortForm" size="10"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>full citation</strong></td>
-                  <td align="left" width="70%"><input type="text" name="PhyloFullCite" id="PhyloFullCite" style="width: 95%;"></td>
-                </tr>
-                <tr>
-                  <td align="right" valign="top" width="30%"><strong>doi</strong></td>
-                  <td align="left" width="70%"><input type="text" name="PhyloDOI" id="PhyloDOI" size="10"></td>
-                </tr>
-</table>
-</div>
-
-
-<h3>5. Define tip taxa for the calibrated node</h3>
+<h3>4. Define tip taxa for the calibrated node</h3>
 <!-- NOTE that this also incorporates the old createclade4, which was just validating these taxa -->
 <div>
 

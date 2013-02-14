@@ -74,4 +74,13 @@ function runSQLScript( $relativePathToScript ) {
    execInBackground( "$mysql --host='$host' --user='$dbuser' --password='$dbpass' --database='FossilCalibration' --execute='source $docroot$relativePathToScript'" );
 }
 
+/* Return a desired property from any array-like objects, or a default if not found.
+ * This should generally Do the Right Thing, whether we're working with a new object, 
+ * editing a complete existing object, or one that's partially complete.
+ */
+function testForProp( $data, $property, $default ) {
+	if (!is_array($data)) return $default;
+	return $data[$property];
+}
+
 ?>

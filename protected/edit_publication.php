@@ -43,14 +43,6 @@ if ($addOrEdit == 'EDIT') {
 	mysql_free_result($result);
 }
 
-// Return a desired property from any of the data objects above, or a default if not found.
-// This should generally Do the Right Thing, whether we're add a new object, a complete one, 
-// or one that's partially complete.
-function testForProp( $data, $property, $default ) {
-	if (!is_array($data)) return $default;
-	return $data[$property];
-}
-
 /*
  * Query for controlled lists of misc values
  */

@@ -522,3 +522,19 @@ table.add-form {
 textarea {
 	padding: 3px;
 }
+.single-fossil-panel {
+   border: 2px dashed pink;
+}
+.single-fossil-header {
+   text-align: center; 
+   height: 15px !important;
+   line-height: 1.0em !important;
+   padding-top: 6px !important;
+   padding-bottom: 6px !important;
+}
+.single-fossil-header a {
+   color: #999 !important;
+}
+.single-fossil-header a[href] {
+   color: #333 !important;
+}
