@@ -53,7 +53,12 @@ if ($addOrEdit == 'EDIT') {
 	mysql_free_result($result);
 
 	// retrieve fossil record(s) for this node, if any (gather all fossils!)
-	$query="SELECT * FROM fossils WHERE FossilID = (SELECT FossilID FROM Link_CalibrationFossil WHERE CalibrationID = '".$CalibrationID."' ORDER BY FCLinkID)";
+	$query="SELECT * 
+      FROM Link_CalibrationFossil 
+      JOIN fossils 
+         ON fossils.FossilID = Link_CalibrationFossil.FossilID
+      WHERE Link_CalibrationFossil.CalibrationID = '".$CalibrationID."'
+      ORDER BY FCLinkID";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
    /* Prepare organized storage for any fossils found. We'll gather related
@@ -61,6 +66,11 @@ if ($addOrEdit == 'EDIT') {
     */
    $all_fossils = Array();
    while ($f = mysql_fetch_assoc($result)) {
+/*
+echo "<pre>";
+print_r($f);
+echo "</pre>";
+*/
       $all_fossils[ ] = Array(
          'fossil_data' => $f,
          'fossil_species_data' => null,
@@ -892,6 +902,12 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
    $totalFossils = count($all_fossils);
    for ($i = 0; $i < $totalFossils; $i++) {
       $fossil_data = $all_fossils[$i]['fossil_data']; 
+      $fossil_species_data = $all_fossils[$i]['fossil_species_data'];
+      $locality_data = $all_fossils[$i]['locality_data'];
+      $collection_data = $all_fossils[$i]['collection_data'];
+      $fossil_pub_data = $all_fossils[$i]['fossil_pub_data'];
+      $phylo_pub_data = $all_fossils[$i]['phylo_pub_data'];
+
       $fossilIdentifier = testForProp($fossil_data, 'CollectionAcro', '') .' '. testForProp($fossil_data, 'CollectionNumber', '');
       $isFirstFossil = ($i == 0);
       $isLastFossil = ($i == ($totalFossils - 1));

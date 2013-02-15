@@ -60,6 +60,7 @@
   <div id="fossil-panel-<?= $i ?>" class="single-fossil-panel" style="">
   <!-- add to a single array of all included fossil positions (ordinal positions in page, *NOT* database IDs) -->
   <input type="hidden" name="fossil_positions[]" value="<?= $i ?>" />
+  <input type="hidden" name="fossilCalibrationLinkID-<?= $i ?>" value="<?= testForProp($fossil_data, 'FCLinkID', 'NEW') ?>" />
     <p><input type="radio" name="newOrExistingFossilSpecies-<?= $i ?>" value="EXISTING" id="existingFossilSpecies-<?=$i?>" checked="checked"> <label for="existingFossilSpecies-<?=$i?>">Choose an existing <b>species</b></label></input></p>
     <table id="pick-existing-fossil-species-<?=$i?>" width="100%" border="0">
         <tr style="background-color: #eee;">
@@ -362,7 +363,7 @@
 	      <input type="text" name="AC_FossilPubID-display-<?= $i ?>" id="AC_FossilPubID-display-<?=$i?>" value="<?= testForProp($fossil_pub_data, 'ShortName', '') ?>" />
 	      <input type="text" name="FossilPub-<?= $i ?>" id="AC_FossilPubID-<?=$i?>" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
                         <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
-	      <div id="AC_FossilPubID-more-info-<?=$i?>" class="text-excerpt"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></p>
+	      <div id="AC_FossilPubID-more-info-<?=$i?>" class="text-excerpt"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></div>
         </td>
       </tr>
     </table>
