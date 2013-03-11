@@ -11,6 +11,22 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 ?>
 
+<div id="simple-search-header" 
+     style="">
+	<select style="float: right; margin-top: 3px;">
+		<option>Group by relevance</option>
+		<option>Group by relationship</option>
+		<option selected="selected">Sort by date added</option>
+		<option>Sort by calibrated age</option>
+	</select>
+
+<!--
+	<h3 style="display: inline-block; font-size: 1em; font-family: Helvetica,Arial,sans-serif;">Search</h3>
+-->
+	<input type="text" style="width: 420px;" value="Search by author, clade, publication, species,etc." />
+	<input type="submit" style="" value="Go" />
+</div>
+
 <div class="left-column" style="">
 
     <form id="advanced-search" Xstyle="border: 1px dashed red;">
@@ -18,12 +34,6 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 	<div id="faceted-search">
 
 <!--
-		<div id="simple-search" style="text-align: center; margin: 3px 0 10px;">
-			<input type="submit" style="float: right;" value="Go" />
-			<input type="text" style="width: 80%;" value="Search by author, clade, publication, species,etc." />
-		</div>
--->
-
 		<h3 style="margin-top: 2px;">Recommended views</h3>
 		<div style="text-align: center;">
 			<select>
@@ -33,7 +43,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 				<option>Advanced (using filters below)</option>
 			</select>
 		</div>
-
+-->
 		<h3>Advanced search filters</h3>
 		<dl class="filter-list">
 			<dt class="optional-filter active-filter">By <a class="term" href="#">extant (living) species</a></dt>
@@ -115,7 +125,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
     </form><!-- end of form#advanced-search -->
 </div>
 
-<div class="right-column">
+<div class="right-column" style="margin-top: -37px;">
 <?php require('site-announcement.php'); ?>
 <!-- news
 	<div id="site-news">
@@ -178,13 +188,10 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <div class="center-column" style="">
 
-<select style="float: right; margin-top: 10px; margin-bottom: -30px;">
-	<option>Group by relevance</option>
-	<option>Group by relationship</option>
-	<option selected="selected">Sort by date added</option>
-	<option>Sort by calibrated age</option>
-</select>
+<!--
 <h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>
+-->
+
 <!--
 <div style="text-align: center;">
 	<select style="margin: 3px auto;">

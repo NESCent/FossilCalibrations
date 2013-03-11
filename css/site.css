@@ -66,6 +66,17 @@ h2.results-heading {
 	padding-top: 4px;
 	padding-left: 15px;
 }
+#simple-search-header {
+	clear: both;
+	float: none;
+	width: 665px;
+	background-color: #EBEBEB;
+	text-align: left;
+	line-height: 1.6em;
+	margin-top: 0px -15px 8px -15px;
+	padding: 6px 10px 7px;
+	overflow: visible; /* to avoid margin collapsing */
+}
 .left-column {
 	width: 240px; 
 	margin-top: -1px; 
@@ -141,7 +152,7 @@ h2.results-heading {
 	overflow: hidden;
 }
 .left-column #faceted-search h3 {
-	margin: 14px 0 4px;
+	margin: 2px 0 4px;
 }
 .left-column #faceted-search dl {
 	margin: 0px;
@@ -272,6 +283,7 @@ dl.filter-list dd.active-filter {
 	color: #777;
 }
 .featured-calibrations .search-result:first-child {
+	margin-top: 0;
 	margin-left: 4px;
 }
 .featured-calibrations .search-result:last-child {
@@ -282,6 +294,9 @@ dl.filter-list dd.active-filter {
 .search-result {
 	padding-bottom: 12px;
 	overflow: hidden;
+}
+.search-result:first-child {
+	margin-top: 8px;
 }
 .search-result:last-child {
 	border-bottom: 1px solid #ddd;

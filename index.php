@@ -150,13 +150,13 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			<input id="simple-search-input" type="text" style="width: 80%;" value="Search by author, clade, publication, species,etc." />
 		</div>
 		<p>
-			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a href="#">Advanced search</a> &nbsp;|&nbsp; <a href="#">Example searches</a>
+			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a href="/search.php">Advanced search</a> &nbsp;|&nbsp; <a href="#">Example searches</a>
 		</p>
  </div>
 
 <!--<h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>-->
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">
-<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="/advanced-search.php">Show more recent additions</a>
+<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="/search.php#TODO">Show more recent additions</a>
 Recently added calibrations
 </h3>
 <!--
