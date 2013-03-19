@@ -81,11 +81,6 @@ echo "</pre>";
       );
    }
 	mysql_free_result($result);
-/*
-?><pre><?
-print_r($all_fossils);
-?></pre><?
-*/
 
    for ($i = 0; $i < count($all_fossils); $i++) {
       $fossil_data = $all_fossils[$i]['fossil_data'];
@@ -121,6 +116,12 @@ print_r($all_fossils);
       $all_fossils[$i]['phylo_pub_data'] = mysql_fetch_assoc($result);
       mysql_free_result($result);
    }
+
+/*
+?><pre><?
+print_r($all_fossils);
+?></pre><?
+*/
 
 	// retrieve explicit (directly entered) tip pairs
 	$query="SELECT * 
@@ -158,7 +159,7 @@ $collectionacro_list=mysql_query($query) or die ('Error  in query: '.$query.'|'.
 
 //Retrieve list of fossils
 $query='SELECT FossilID, Species, CollectionAcro, CollectionNumber, LocalityID, LocalityName, Country FROM View_Fossils';
-$fossil_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+//$fossil_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 // TODO: where is this used?
 
 //Retrieve list of localities
@@ -500,17 +501,20 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		updateCollectionAcronymWidgets();
 		updateLocalityWidgets();
 		updateFossilSpeciesWidgets();
+		updateFossilAgeWidgets();
 		updateFossilPublicationWidgets();
 		updatePhylogenyPublicationWidgets();
 
       // bind any associated widgets to maintain this behavior
 		$('[id^=newCollectionAcronym-], [id^=existingCollectionAcronym-]')
          .unbind('click').click(updateCollectionAcronymWidgets);
-		$('[id^=newLocality-], [id^=existingLocality-]')
+		$('[id^=assignedLocality-], [id^=newLocality-], [id^=existingLocality-]')
          .unbind('click').click(updateLocalityWidgets);
-		$('[id^=newFossilSpecies-], [id^=existingFossilSpecies-]')
+		$('[id^=assignedFossilSpecies-], [id^=newFossilSpecies-], [id^=existingFossilSpecies-]')
          .unbind('click').click(updateFossilSpeciesWidgets);
-		$('[id^=newFossilPublication-], [id^=existingFossilPublication-]')
+		$('[id^=assignedFossilMinAge-], [id^=newFossilMinAge-], [id^=assignedFossilMaxAge-], [id^=newFossilMaxAge-]')
+         .unbind('click').click(updateFossilAgeWidgets);
+		$('[id^=assignedFossilPublication-], [id^=newFossilPublication-], [id^=existingFossilPublication-]')
          .unbind('click').click(updateFossilPublicationWidgets);
 		$('[id^=newPhylogenyPublication-], [id^=existingPhylogenyPublication-], [id^=repeatFossilPublication-]')
          .unbind('click').click(updatePhylogenyPublicationWidgets);
@@ -532,11 +536,11 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
          var pos = getFossilPosition( $panel );
          var itsCollectionAcro;
          if ($('#existingCollectionAcronym-'+pos).is(':checked')) {
-            itsCollectionAcro = $('#CollectionAcro-'+pos).val();
+            itsCollectionAcro = $.trim( $('#CollectionAcro-'+pos).val() );
          } else {
-            itsCollectionAcro = $('#NewAcro-'+pos).val();
+            itsCollectionAcro = $.trim( $('#NewAcro-'+pos).val() );
          }
-         var itsCollectionNumber = $('#CollectionNum-'+pos).val();
+         var itsCollectionNumber = $.trim( $('#CollectionNum-'+pos).val() );
          var itsDisplayName = itsCollectionAcro +' '+ itsCollectionNumber;
          if (itsDisplayName === ' ') {
             itsDisplayName = 'Unidentified';
@@ -582,7 +586,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       var $panels = getRelatedFossilPanels(this);
       $panels.each(function() {
          var $panel = $(this);
-         if ($panel.find('[id^=existingLocality-]').is(':checked')) {
+         if ($panel.find('[id^=assignedLocality-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-locality-]').hide();
+            $panel.find('[id^=enter-new-locality-]').hide();
+         } else if ($panel.find('[id^=existingLocality-]').is(':checked')) {
             $panel.find('[id^=pick-existing-locality-]').show();
             $panel.find('[id^=enter-new-locality-]').hide();
          } else {
@@ -595,7 +602,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       var $panels = getRelatedFossilPanels(this);
       $panels.each(function() {
          var $panel = $(this);
-         if ($panel.find('[id^=existingFossilPublication-]').is(':checked')) {
+         if ($panel.find('[id^=assignedFossilPublication-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-fossil-pub-]').hide();
+            $panel.find('[id^=enter-new-fossil-pub-]').hide();
+         } else if ($panel.find('[id^=existingFossilPublication-]').is(':checked')) {
             $panel.find('[id^=pick-existing-fossil-pub-]').show();
             $panel.find('[id^=enter-new-fossil-pub-]').hide();
          } else {
@@ -608,7 +618,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       var $panels = getRelatedFossilPanels(this);
       $panels.each(function() {
          var $panel = $(this);
-         if ($panel.find('[id^=existingPhylogenyPublication-]').is(':checked')) {
+         if ($panel.find('[id^=assignedPhylogenyPublication-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-phylo-pub-]').hide();
+            $panel.find('[id^=enter-new-phylo-pub-]').hide();
+         } else if ($panel.find('[id^=existingPhylogenyPublication-]').is(':checked')) {
             $panel.find('[id^=pick-existing-phylo-pub-]').show();
             $panel.find('[id^=enter-new-phylo-pub-]').hide();
          } else if ($panel.find('[id^=repeatFossilPublication-]').is(':checked')) {
@@ -624,7 +637,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       var $panels = getRelatedFossilPanels(this);
       $panels.each(function() {
          var $panel = $(this);
-         if ($panel.find('[id^=existingFossilSpecies-]').is(':checked')) {
+         if ($panel.find('[id^=assignedFossilSpecies-]').is(':checked')) {
+            $panel.find('[id^=pick-existing-fossil-species-]').hide();
+            $panel.find('[id^=enter-new-fossil-species-]').hide();
+         } else if ($panel.find('[id^=existingFossilSpecies-]').is(':checked')) {
             $panel.find('[id^=pick-existing-fossil-species-]').show();
             $panel.find('[id^=enter-new-fossil-species-]').hide();
          } else {
@@ -633,6 +649,33 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
          }		
       });
 	}
+	function updateFossilAgeWidgets() {
+      var $panels = getRelatedFossilPanels(this);
+      $panels.each(function() {
+         var $panel = $(this);
+         if ($panel.find('[id^=assignedFossilMinAge-]').is(':checked')) {
+            $panel.find('[id^=FossilMinAge-]').attr('disabled', 'disabled');
+            $panel.find('[id^=AssignedMinAge-]').removeAttr('disabled');
+         } else if ($panel.find('[id^=newFossilMinAge-]').is(':checked')) {
+            $panel.find('[id^=AssignedMinAge-]').attr('disabled', 'disabled');
+            $panel.find('[id^=FossilMinAge-]').removeAttr('disabled');
+         }		
+         if ($panel.find('[id^=assignedFossilMaxAge-]').is(':checked')) {
+            $panel.find('[id^=FossilMaxAge-]').attr('disabled', 'disabled');
+            $panel.find('[id^=AssignedMaxAge-]').removeAttr('disabled');
+         } else if ($panel.find('[id^=newFossilMaxAge-]').is(':checked')) {
+            $panel.find('[id^=AssignedMaxAge-]').attr('disabled', 'disabled');
+            $panel.find('[id^=FossilMaxAge-]').removeAttr('disabled');
+         }		
+      });
+	}
+
+   function getNextAvailableFossilPosition() {
+      var pos = $('#next-available-fossil-position').val();
+      pos = parseInt(pos, 10); // force to integer
+      $('#next-available-fossil-position').val(pos +1);  // increment counter
+      return pos;
+   }
 
    function addFossil() {
       $('#add-fossil-button').attr('disabled', 'disabled');
@@ -645,8 +688,13 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       $loader.load(  // load new panel via AJAX
          '/protected/single_fossil_panel.php',
          { 
+            calibrationID: $('#CalibrationID').val(),
             totalFossils: $fossilPanels.length,
-            position: $fossilPanels.length 
+            position: getNextAvailableFossilPosition(), ///$fossilPanels.length 
+            newOrExistingCollection: 'EXISTING',
+            matchCollectionAcro: '',
+            matchCollectionNumber: '',
+            newCollectionInstitution: ''
          },
          function() {
             $loader.replaceWith($loader.children());
@@ -719,9 +767,82 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       }
       console.log('>> '+ dupesFound +' duplicate IDs found on this page');
    }
+
+   function fetchMatchingFossilProperties(clicked) {
+      // AJAX fetch of a matching fossil (if any) and refresh of #fossil-properties panel
+      var $fossilPanels = $('.single-fossil-panel');
+      var $panel = getRelatedFossilPanels(clicked).eq(0);
+      var pos = getFossilPosition( $panel );
+      var newOrExistingCollection;
+      var itsCollectionAcro;
+      var newCollectionInstitution;
+      if ($('#existingCollectionAcronym-'+pos).is(':checked')) {
+         newOrExistingCollection = 'EXISTING';
+         itsCollectionAcro = $.trim( $('#CollectionAcro-'+pos).val() );
+         newCollectionInstitution = 'IGNORE_ME';
+      } else {
+         newOrExistingCollection = 'NEW';
+         itsCollectionAcro = $.trim( $('#NewAcro-'+pos).val() );
+         newCollectionInstitution = $.trim( $('#NewInst-'+pos).val() );
+      }
+      var itsCollectionNumber = $.trim( $('#CollectionNum-'+pos).val() );
+
+      // validate and warn if missing/invalid fossil IDs
+      if ((itsCollectionAcro === '') || (itsCollectionNumber === '')) {
+         alert("Please check for missing collection number or acronym.");
+         return false;
+      }
+
+      // TODO: force to lower-case?
+      var duplicateIdentifierFound = false;
+      var proposedIdentifier = itsCollectionAcro +" "+ itsCollectionNumber;
+      // check all OTHER panels for the same acro+number
+      $fossilPanels.not($panel).each(function() {
+         var testPos = getFossilPosition( $(this) );
+         var testCollectionAcro;
+         if ($('#existingCollectionAcronym-'+testPos).is(':checked')) {
+            testCollectionAcro = $.trim( $('#CollectionAcro-'+testPos).val() );
+         } else {
+            testCollectionAcro = $.trim( $('#NewAcro-'+testPos).val() );
+         }
+         var testCollectionNumber = $.trim( $('#CollectionNum-'+testPos).val() );
+         var testIdentifier = testCollectionAcro +" "+ testCollectionNumber;
+         // if the identifiers match, block this (duplicate) fossil
+         if (testIdentifier === proposedIdentifier) {
+            alert("This fossil is already associated with the calibration.");
+            duplicateIdentifierFound = true;
+            return false;
+         }
+      });
+      if (duplicateIdentifierFound) {
+         return false;
+      }
+
+      // bundle these values and try to fetch a matching fossil
+      var $loader = $('#fossil-panel-'+pos);
+      $loader.load(
+         '/protected/single_fossil_panel.php #fossil-panel-'+ pos, 
+	 // load just PART of the fetched page
+         { 
+            calibrationID: $('#CalibrationID').val(),
+            totalFossils: $fossilPanels.length,
+            position: pos,
+            newOrExistingCollection: newOrExistingCollection,
+            matchCollectionAcro: itsCollectionAcro,
+            matchCollectionNumber: itsCollectionNumber,
+            newCollectionInstitution: newCollectionInstitution
+         },
+         function() {
+            $loader.replaceWith($loader.children());
+            updateFossilAccordion('SAME PANEL');
+            // activate fossil-panel behavior
+            updateFossilPanelWidgets();
+         }
+      );
+   }
 </script>
 
-<form action="update_calibration.php" method="post" id="edit-calibration">
+<form action="update_calibration.php" method="post" id="edit-calibration" autocomplete="off">
 <input type="hidden" name="nonce" value="<?= $nonce; ?>" />
 <input type="hidden" name="addOrEdit" value="<?= $addOrEdit; ?>" />
 <input type="hidden" id="CalibrationID" name="CalibrationID" value="<?= $CalibrationID; ?>" />
@@ -895,12 +1016,12 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       <input type="button" id="add-fossil-button" style="float: right; font-size: 0.8em;" value="add fossil" onclick="addFossil(); return false;"/>
       Add one or more fossils that were used in this node calibration.
    </p>
+<? // stash a client-side tally to generate unique, incrementing fossil positions (ordinal IDs for all related DOM elements)
+   $totalFossils = count($all_fossils); 
+?>
+   <input type="hidden" id="next-available-fossil-position" name="IGNORE_ME" value="<?= $totalFossils ?>" />
    <div id="fossil-panels">
-<? /* TODO: Do we still need this section? It tries to reconcile non-matching species name (assigned to fossil) or add a new taxon,
-      including some interesting metadata (beyond NCBI stuff) about authorship and PaleoDB taxon IDs.
-    */ 
-   $totalFossils = count($all_fossils);
-   for ($i = 0; $i < $totalFossils; $i++) {
+<? for ($i = 0; $i < $totalFossils; $i++) {
       $fossil_data = $all_fossils[$i]['fossil_data']; 
       $fossil_species_data = $all_fossils[$i]['fossil_species_data'];
       $locality_data = $all_fossils[$i]['locality_data'];

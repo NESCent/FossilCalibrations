@@ -15,11 +15,11 @@ $calibration_results= mysql_query($query) or die ('Error  in query: '.$query.'|'
 $calibration_info=mysql_fetch_assoc($calibration_results);
 
 // Get details about fossils associated with this calibration
-$query = 'SELECT * FROM Link_CalibrationFossil L, View_Fossils F, fossiltaxa t WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.FossilID=F.FossilID AND F.Species=t.TaxonName';
+$query = 'SELECT * FROM Link_CalibrationFossil L, View_Fossils F, fossiltaxa t WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.FossilID=F.FossilID AND L.Species=t.TaxonName';
 $fossil_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 // find minimum age of fossils associated with this calibration
-$query = 'SELECT max(FossilMinAge) AS Min FROM Link_CalibrationFossil L, View_Fossils F WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.FossilID=F.FossilID';
+$query = 'SELECT max(L.MinAge) AS Min FROM Link_CalibrationFossil L, View_Fossils F WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.FossilID=F.FossilID';
 $fossil_minage_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $FossMinAge=mysql_fetch_assoc($fossil_minage_results);
 
@@ -86,7 +86,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
 						 	 <?php if($row['PBDBTaxonNum']>0) {?><a href="http://pbdb.org/cgi-bin/bridge.pl?a=checkTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>&is_real_user=1" target="_new"><i><b><?=$row['Species']?></i></a>, <?=$row['TaxonAuthor']?></b><?php } else { ?><i><b><?=$row['Species']?>, <?=$row['TaxonAuthor']?></b></i><?php } ?><br />
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b><?=$row['LocalityName']?>, <?=$row['Country']?></b> <i>Stratum:</i> <b><?=$row['Stratum']?></b><br />
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Geological age:</i> <b><?=$row['Age']?>, <?=$row['Epoch']?>, <?=$row['Period']?>, <?=$row['System']?></b><br />
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Minimum age:</i> <b><?=$row['FossilMinAge']?> mya</b> <i>Maximum age:</i> <b><?=$row['FossilMaxAge']?> mya</b><br />
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Minimum age:</i> <b><?=$row['MinAge']?> mya</b> <i>Maximum age:</i> <b><?=$row['MaxAge']?> mya</b><br />
                              <?php if($row['PBDBCollectionNum']>0) { ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://pbdb.org/cgi-bin/bridge.pl?action=basicCollectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
 									<?php } ?>

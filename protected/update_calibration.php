@@ -56,8 +56,13 @@ if ($_POST['newOrExistingPublication'] == 'NEW') {
  * bundle form values), and add or update each fossil..
  */
 $fossil_positions = $_POST['fossil_positions'];
-$preserveFossilLinkIDs = Array();
+$preserveFossilLinkIDs = Array(-1);  // adding a bogus value to avoid empty-list error in MySQL!
 $newFossilsToLink = Array();
+// stash some ordered values so that we can store them in Link_CalibrationFossil later
+$finalFossilIDs = Array();
+$finalFossilSpeciesNames = Array();
+$finalFossilPhyloPubIDs = Array();
+
 ///print_r($fossil_positions);
 foreach($fossil_positions as $pos) {
 
@@ -68,43 +73,52 @@ foreach($fossil_positions as $pos) {
    // name, but still need to create a matching fossiltaxa record. Check for an
    // existing (matching) record in fossiltaxa first! then whether or not to
    // create or update a record here.
-   if ($_POST["newOrExistingFossilSpecies-$pos"] == 'NEW') {
-      // add species record for this fossil
-      $query="INSERT INTO fossiltaxa SET
-             TaxonName = '". mysql_real_escape_string($_POST["NewSpeciesName-$pos"]) ."'
-            ,CommonName = '". mysql_real_escape_string($_POST["NewSpeciesCommonName-$pos"]) ."'
-            ,TaxonAuthor = '". mysql_real_escape_string($_POST["NewSpeciesAuthor-$pos"]) ."'
-                 ,PBDBTaxonNum = '". mysql_real_escape_string($_POST["NewSpeciesPBDBTaxonNum-$pos"]) ."'";
-      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-      $fossiltaxaID = mysql_insert_id();
-      $fossilSpeciesName = $_POST["NewSpeciesName-$pos"];
-   } else if ($_POST["newOrExistingFossilSpecies-$pos"] == 'EXISTING') {
-      // apply any updates to existing fossiltaxa record (or build one now)
-      $fossiltaxaID = $_POST["ExistingFossilSpeciesID-$pos"];
-         // NOTE that this refers to the ID of any existing _fossiltaxa_ record, regardless of whether
-         // or not this taxon name is known within the system.
-      if ($fossiltaxaID == 'ADD TO FOSSILTAXA') {
-         // create a new fossiltaxa record
-         $query="INSERT INTO fossiltaxa SET
-                TaxonName = '". mysql_real_escape_string($_POST["ExistingSpeciesName-$pos"]) ."'
-               ,CommonName = '". mysql_real_escape_string($_POST["ExistingSpeciesCommonName-$pos"]) ."'
-               ,TaxonAuthor = '". mysql_real_escape_string($_POST["ExistingSpeciesAuthor-$pos"]) ."'
-               ,PBDBTaxonNum = '". mysql_real_escape_string($_POST["ExistingSpeciesPBDBTaxonNum-$pos"]) ."'";
-      } else {
-         // update the existing fossiltaxa record
-         $query="UPDATE fossiltaxa  
-            SET
-                TaxonName = '". mysql_real_escape_string($_POST["ExistingSpeciesName-$pos"]) ."'
-               ,CommonName = '". mysql_real_escape_string($_POST["ExistingSpeciesCommonName-$pos"]) ."'
-               ,TaxonAuthor = '". mysql_real_escape_string($_POST["ExistingSpeciesAuthor-$pos"]) ."'
-               ,PBDBTaxonNum = '". mysql_real_escape_string($_POST["ExistingSpeciesPBDBTaxonNum-$pos"]) ."'
-            WHERE TaxonID = '". mysql_real_escape_string($fossiltaxaID) ."'
-         ";
-      }
-      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-      $fossilSpeciesName = $_POST["ExistingSpeciesName-$pos"];
-   }
 
+
+   switch( $_POST["newOrExistingFossilSpecies-$pos"] ) {
+      case 'ASSIGNED':
+         $fossilLocalityID = $_POST["PreviouslyAssignedSpeciesName-$pos"];
+         break;
+
+      case 'EXISTING':
+         // apply any updates to existing fossiltaxa record (or build one now)
+         $fossiltaxaID = $_POST["ExistingFossilSpeciesID-$pos"];
+            // NOTE that this refers to the ID of any existing _fossiltaxa_ record, regardless of whether
+            // or not this taxon name is known within the system.
+         if ($fossiltaxaID == 'ADD TO FOSSILTAXA') {
+            // create a new fossiltaxa record
+            $query="INSERT INTO fossiltaxa SET
+                   TaxonName = '". mysql_real_escape_string($_POST["ExistingSpeciesName-$pos"]) ."'
+                  ,CommonName = '". mysql_real_escape_string($_POST["ExistingSpeciesCommonName-$pos"]) ."'
+                  ,TaxonAuthor = '". mysql_real_escape_string($_POST["ExistingSpeciesAuthor-$pos"]) ."'
+                  ,PBDBTaxonNum = '". mysql_real_escape_string($_POST["ExistingSpeciesPBDBTaxonNum-$pos"]) ."'";
+         } else {
+            // update the existing fossiltaxa record
+            $query="UPDATE fossiltaxa  
+               SET
+                   TaxonName = '". mysql_real_escape_string($_POST["ExistingSpeciesName-$pos"]) ."'
+                  ,CommonName = '". mysql_real_escape_string($_POST["ExistingSpeciesCommonName-$pos"]) ."'
+                  ,TaxonAuthor = '". mysql_real_escape_string($_POST["ExistingSpeciesAuthor-$pos"]) ."'
+                  ,PBDBTaxonNum = '". mysql_real_escape_string($_POST["ExistingSpeciesPBDBTaxonNum-$pos"]) ."'
+               WHERE TaxonID = '". mysql_real_escape_string($fossiltaxaID) ."'
+            ";
+         }
+         $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+         $fossilSpeciesName = $_POST["ExistingSpeciesName-$pos"];
+         break;
+
+      case 'NEW':
+         // add species record for this fossil
+         $query="INSERT INTO fossiltaxa SET
+                TaxonName = '". mysql_real_escape_string($_POST["NewSpeciesName-$pos"]) ."'
+               ,CommonName = '". mysql_real_escape_string($_POST["NewSpeciesCommonName-$pos"]) ."'
+               ,TaxonAuthor = '". mysql_real_escape_string($_POST["NewSpeciesAuthor-$pos"]) ."'
+                    ,PBDBTaxonNum = '". mysql_real_escape_string($_POST["NewSpeciesPBDBTaxonNum-$pos"]) ."'";
+         $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+         ///$fossiltaxaID = mysql_insert_id();
+         $fossilSpeciesName = $_POST["NewSpeciesName-$pos"];
+         break;
+   }
 
    /* Add or update the fossil collection record?
     */
@@ -121,83 +135,98 @@ foreach($fossil_positions as $pos) {
 
    /* Add or update the fossil locality record?
     */
-   $fossilLocalityID = $_POST["Locality-$pos"];
-   if ($_POST["newOrExistingLocality-$pos"] == 'NEW') {
-      // add locality record for this fossil
-      $query="INSERT INTO localities SET
-             LocalityName = '". mysql_real_escape_string($_POST["LocalityName-$pos"]) ."'
-            ,Stratum = '". mysql_real_escape_string($_POST["Stratum-$pos"]) ."'
-            ,MinAge = '". mysql_real_escape_string($_POST["StratumMinAge-$pos"]) ."'
-            ,MaxAge = '". mysql_real_escape_string($_POST["StratumMaxAge-$pos"]) ."'
-            ,GeolTime = '". mysql_real_escape_string($_POST["GeolTime-$pos"]) ."'
-            ,Country = '". mysql_real_escape_string($_POST["Country-$pos"]) ."'
-            ,LocalityNotes = '". mysql_real_escape_string($_POST["LocalityNotes-$pos"]) ."'
-                 ,PBDBCollectionNum = '". mysql_real_escape_string($_POST["PBDBNum-$pos"]) ."'";  // TODO: use $_POST["CollectionNum-$pos"] instead?
-      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-      $fossilLocalityID = mysql_insert_id();
+   switch( $_POST["newOrExistingLocality-$pos"] ) {
+      case 'ASSIGNED':
+         $fossilLocalityID = $_POST["PreviouslyAssignedLocality-$pos"];
+         break;
+
+      case 'EXISTING':
+         $fossilLocalityID = $_POST["Locality-$pos"];
+         break;
+
+      case 'NEW':
+         // add locality record for this fossil
+         $query="INSERT INTO localities SET
+                LocalityName = '". mysql_real_escape_string($_POST["LocalityName-$pos"]) ."'
+               ,Stratum = '". mysql_real_escape_string($_POST["Stratum-$pos"]) ."'
+               ,MinAge = '". mysql_real_escape_string($_POST["StratumMinAge-$pos"]) ."'
+               ,MaxAge = '". mysql_real_escape_string($_POST["StratumMaxAge-$pos"]) ."'
+               ,GeolTime = '". mysql_real_escape_string($_POST["GeolTime-$pos"]) ."'
+               ,Country = '". mysql_real_escape_string($_POST["Country-$pos"]) ."'
+               ,LocalityNotes = '". mysql_real_escape_string($_POST["LocalityNotes-$pos"]) ."'
+                    ,PBDBCollectionNum = '". mysql_real_escape_string($_POST["PBDBNum-$pos"]) ."'";  // TODO: use $_POST["CollectionNum-$pos"] instead?
+         $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+         $fossilLocalityID = mysql_insert_id();
+         break;
    }
 
    /* Add or update the fossil publication record
     */
-   $fossilPubID = $_POST["FossilPub-$pos"];
-   if ($_POST["newOrExistingFossilPublication-$pos"] == 'NEW') {
-      // add fossil publication record
-      $query="INSERT INTO publications SET
-             ShortName = '". mysql_real_escape_string($_POST["FossShortForm-$pos"]) ."'
-            ,FullReference = '". mysql_real_escape_string($_POST["FossFullCite-$pos"]) ."'
-            ,DOI = '". mysql_real_escape_string($_POST["FossDOI-$pos"]) ."'";
-      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-      $fossilPubID = mysql_insert_id();
+   switch( $_POST["newOrExistingFossilPublication-$pos"] ) {
+      case 'ASSIGNED':
+         $fossilPubID = $_POST["PreviouslyAssignedFossilPub-$pos"];
+         break;
+
+      case 'EXISTING':
+         $fossilPubID = $_POST["FossilPub-$pos"];
+         break;
+
+      case 'NEW':
+         // add fossil publication record
+         $query="INSERT INTO publications SET
+                ShortName = '". mysql_real_escape_string($_POST["FossShortForm-$pos"]) ."'
+               ,FullReference = '". mysql_real_escape_string($_POST["FossFullCite-$pos"]) ."'
+               ,DOI = '". mysql_real_escape_string($_POST["FossDOI-$pos"]) ."'";
+         $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+         $fossilPubID = mysql_insert_id();
+         break;
    }
 
    /* Add or update the phylogeny publication record
     */
-   $phyloPubID = $_POST["PhyPub-$pos"];
-   if ($_POST["newOrExistingPhylogenyPublication-$pos"] == 'REUSE_FOSSIL_PUB') {
-      // special case! allow re-use of the fossil publication here
-      $phyloPubID = $fossilPubID;
-   } else if ($_POST["newOrExistingPhylogenyPublication-$pos"] == 'NEW') {
-      // add phylogeny publication record
-      $query="INSERT INTO publications SET
-             ShortName = '". mysql_real_escape_string($_POST["PhyloShortForm-$pos"]) ."'
-            ,FullReference = '". mysql_real_escape_string($_POST["PhyloFullCite-$pos"]) ."'
-            ,DOI = '". mysql_real_escape_string($_POST["PhyloDOI-$pos"]) ."'";
-      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-      $phyloPubID = mysql_insert_id();
+   switch( $_POST["newOrExistingPhylogenyPublication-$pos"] ) {
+      case 'ASSIGNED':
+         $phyloPubID = $_POST["PreviouslyAssignedPhyloPub-$pos"]; // TODO
+         break;
+
+      case 'REUSE_FOSSIL_PUB':
+         // special case! allow re-use of the fossil publication here
+         $phyloPubID = $fossilPubID;
+         break;
+
+      case 'EXISTING':
+         $phyloPubID = $_POST["PhyPub-$pos"];
+         break;
+
+      case 'NEW':
+         // add phylogeny publication record
+         $query="INSERT INTO publications SET
+                ShortName = '". mysql_real_escape_string($_POST["PhyloShortForm-$pos"]) ."'
+               ,FullReference = '". mysql_real_escape_string($_POST["PhyloFullCite-$pos"]) ."'
+               ,DOI = '". mysql_real_escape_string($_POST["PhyloDOI-$pos"]) ."'";
+         $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+         $phyloPubID = mysql_insert_id();
+         break;
    }
 
-   /* Add or update the fossil record (in table fossils). NOTE that this will update a 
-    * record *only* if it's already linked with this calibration; if there's an un-linked
-    * record for this fossil, we won't find and modify it. (For now, we err on the side of 
-    * redundant data, since so much of this schema involves subjective
-    * judgments. If desired, we can gather multiple takes on the same fossil by
-    * matching on CollectionAcro + CollectionNumber.)
-    */
+   /* Add or update the fossil record (in table fossils). NOTE that this will alter
+    * values that may be shared with other calibrations. Perhaps it needs a warning?
+    */ 
+   $fossilID = $_POST["fossilID-$pos"];
    $fossilCalibrationLinkID = $_POST["fossilCalibrationLinkID-$pos"];
    if (is_numeric($fossilCalibrationLinkID)) {
       $preserveFossilLinkIDs[] = $fossilCalibrationLinkID;
    }
    $query="SELECT * FROM fossils 
-      WHERE FossilID = 
-         (SELECT FossilID 
-            FROM Link_CalibrationFossil 
-            WHERE FCLinkID = '". mysql_real_escape_string($fossilCalibrationLinkID) ."')";
+      WHERE FossilID = '". mysql_real_escape_string($fossilID) ."'";
    $fossil_result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
    // list all new OR updated values (NOTE that we store the fossil species by its scientific name, not an ID!)
    // TODO: use $_POST['PBDBNum'] instead of $_POST['CollectionNum'] below?
    $newValues = "
-          Species = '". mysql_real_escape_string($fossilSpeciesName) ."'
-         ,CollectionAcro = '". mysql_real_escape_string($fossilCollectionAcronym) ."'
+          CollectionAcro = '". mysql_real_escape_string($fossilCollectionAcronym) ."'
          ,CollectionNumber = '". mysql_real_escape_string($_POST["CollectionNum-$pos"]) ."' 
          ,LocalityID = '". mysql_real_escape_string($fossilLocalityID) ."'
          ,FossilPub = '". mysql_real_escape_string($fossilPubID) ."'
-         ,MinAge = '". mysql_real_escape_string($_POST["FossilMinAge-$pos"]) ."'
-         ,MinAgeType = '". mysql_real_escape_string($_POST["MinAgeType-$pos"]) ."'
-         ,MaxAge = '". mysql_real_escape_string($_POST["FossilMaxAge-$pos"]) ."'
-         ,MaxAgeType = '". mysql_real_escape_string($_POST["MaxAgeType-$pos"]) ."'
-         ,PhyJustificationType = '". mysql_real_escape_string($_POST["PhyJustType-$pos"]) ."'
-         ,PhyJustification = '". mysql_real_escape_string($_POST["PhyJustification-$pos"]) ."'
-         ,PhyloPub = '". mysql_real_escape_string($phyloPubID) ."'
    ";
    if (mysql_num_rows($fossil_result)==0) {
       // add a new fossil record, and (later, after we have a known-good calibration ID) a link entry to this calibration
@@ -212,15 +241,36 @@ foreach($fossil_positions as $pos) {
    } else {
       // update the existing fossil record
       $fossil_data = mysql_fetch_assoc($fossil_result);
-      $fossilID = $fossil_data['FossilID'];
       $query="UPDATE fossils 
          SET $newValues
          WHERE FossilID = '". mysql_real_escape_string($fossilID) ."'
       ";
       $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+   
+      // Is the existing fossil already linked to this calibration?
+      $query="SELECT * FROM Link_CalibrationFossil 
+	      WHERE
+	         CalibrationID = '". mysql_real_escape_string($_POST['CalibrationID']) ."'
+              AND 
+                 FossilID = '". mysql_real_escape_string($fossilID) ."'";
+      $link_result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+      if (mysql_num_rows($link_result)==0) {
+         // fossil is NOT linked yet... store its ID for later linking
+         $newFossilsToLink[] = $fossilID;
+      } else {
+         // fossil is already linked (eg, deleted then re-added in the UI!)... preserve this link!
+	 $row=mysql_fetch_assoc($link_result);
+         $preserveFossilLinkIDs[] = $row['FCLinkID'];
+      }
+      mysql_free_result($link_result);
+
    }
    mysql_free_result($fossil_result);
 
+   // stash final values for later
+   $finalFossilIDs[$pos] = $fossilID;
+   $finalFossilSpeciesNames[$pos] = $fossilSpeciesName;
+   $finalFossilPhyloPubIDs[$pos] = $phyloPubID;
 }
 
 /* Add or update the main calibration record
@@ -268,7 +318,33 @@ foreach($newFossilsToLink as $addFossilID) {
 		";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 }
-	
+
+/* All fossils are now properly linked, so we can update all the "subjective" fossil
+ * properties (which can vary by calibration) in Link_CalibrationFossil.
+ */
+foreach($fossil_positions as $pos) {
+   // fetch its "subjective" values and store in the link record
+   $fossilID = $finalFossilIDs[$pos];
+   $newValues = "
+          Species = '". mysql_real_escape_string($finalFossilSpeciesNames[$pos]) ."'
+         ,MinAge = '". mysql_real_escape_string($_POST["FossilMinAge-$pos"]) ."'
+         ,MinAgeType = '". mysql_real_escape_string($_POST["MinAgeType-$pos"]) ."'
+         ,MaxAge = '". mysql_real_escape_string($_POST["FossilMaxAge-$pos"]) ."'
+         ,MaxAgeType = '". mysql_real_escape_string($_POST["MaxAgeType-$pos"]) ."'
+         ,PhyJustificationType = '". mysql_real_escape_string($_POST["PhyJustType-$pos"]) ."'
+         ,PhyJustification = '". mysql_real_escape_string($_POST["PhyJustification-$pos"]) ."'
+         ,PhyloPub = '". mysql_real_escape_string($finalFossilPhyloPubIDs[$pos]) ."'
+   ";
+   $query="UPDATE Link_CalibrationFossil 
+      SET $newValues
+   WHERE
+      CalibrationID = '". mysql_real_escape_string($calibrationID) ."'
+   AND 
+      FossilID = '". mysql_real_escape_string($fossilID) ."'
+   ";
+   $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+}
+
 
 /*
  * Add or update tip taxa for this node
