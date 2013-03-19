@@ -80,6 +80,7 @@ function runSQLScript( $relativePathToScript ) {
  */
 function testForProp( $data, $property, $default ) {
 	if (!is_array($data)) return $default;
+	if (!array_key_exists($property, $data)) return $default;
 	return $data[$property];
 }
 
