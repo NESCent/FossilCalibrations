@@ -1039,12 +1039,12 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 </div><!-- END of main fossils section -->
 
 
-<h3>4. Define tip taxa for the calibrated node</h3>
+<h3>4. Locate this calibration within the NCBI tree</h3>
 <!-- NOTE that this also incorporates the old createclade4, which was just validating these taxa -->
 <div>
 
 <p>
-Place the target node by including or excluding taxa below. Include taxa to indicate MRCA (<i>A+B+...</i>), and exclude taxa to define a stem (<i>A-C</i> or <i>A+B-C</i>) or override the NCBI taxonomy. You can <b>preview the resulting tree</b> to see detailed results below.
+To support tip-taxa searches, place the calibrated node by including or excluding taxa below. Include taxa to indicate MRCA (<i>A+B+...</i>), and exclude taxa to define a stem (<i>A-C</i> or <i>A+B-C</i>) or override the NCBI taxonomy. You can <b>preview the resulting tree</b> to see detailed results below.
 </p>
 
 <table id="tip-taxa-panel" width="100%" border="0">
@@ -1056,18 +1056,20 @@ Place the target node by including or excluding taxa below. Include taxa to indi
       <td valign="top">
 
 	<table style="margin:0 auto;" id="tip-taxa-panel" border="0" width="80%">
-	    <tbody>
-
 <?php // list any A-side taxa found (if none, just prompt with +/- buttons)
 { ?>
-	    <tr>
-	      <td align="right" valign="top"><strong style="font-size: 1.5em;">+</strong></td>
-	      <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
+            <tr>
+              <td align="right" valign="top">
+                <select>
+                  <option selected="selected">+</option>
+                  <option>&ndash;</option>
+                </select>
+              </td>
+              <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
 
-	      <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
-	    </tr>
+              <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
+            </tr>
 <? } ?>
-
 	    <tr>
 	      <td colspan="3" style="text-align: center; padding: 10px 0;">
 		<input value="include &lt;+&gt; taxon" id="includeTaxon_A" name="includeTaxon_A" type="button">
@@ -1077,24 +1079,32 @@ Place the target node by including or excluding taxa below. Include taxa to indi
 		<input value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_A" name="excludeTaxon_A" type="button">
 	      </td>
 	    </tr>
-	</tbody>
 	</table>
 
       </td>
       <td valign="top">
 
 	<table style="margin:0 auto;" id="tip-taxa-panel" border="0" width="80%">
-	    <tbody>
 <?php // list any B-side taxa found (if none, just prompt with +/- buttons)
 { ?>
 	    <tr>
-	      <td align="right" valign="top"><strong style="font-size: 1.5em;">+</strong></td>
+              <td align="right" valign="top">
+                <select>
+                  <option selected="selected">+</option>
+                  <option>&ndash;</option>
+                </select>
+              </td>
 	      <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
 
 	      <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
 	    </tr>
 	    <tr>
-	      <td align="right" valign="top"><strong>—</strong></td>
+              <td align="right" valign="top">
+                <select>
+                  <option>+</option>
+                  <option selected="selected">&ndash;</option>
+                </select>
+              </td>
 		  <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair6TaxonA" id="Pair6TaxonA" value="Felis bieti" type="text"></td>
 
 	      <td><input class="deleteTipTaxaPair" style="" value="delete" type="button"></td>
@@ -1109,7 +1119,6 @@ Place the target node by including or excluding taxa below. Include taxa to indi
 		<input value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_B" name="excludeTaxon_B" type="button">
 	      </td>
 	    </tr>
-	</tbody>
 	</table>
 
       </td>
