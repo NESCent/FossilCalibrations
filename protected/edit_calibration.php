@@ -1044,52 +1044,134 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 <div>
 
 <p>
-Enter pairs of taxa whose last common ancestor was the node being
-calibrated. You may enter tip taxa as extant species or any other class,
-e.g., genera or families. If you choose genera (or other higher-level taxa),
-searches on species within those taxa will also point to this common ancestor.  
+Place the target node by including or excluding taxa below. Include taxa to indicate MRCA (<i>A+B+...</i>), and exclude taxa to define a stem (<i>A-C</i> or <i>A+B-C</i>) or override the NCBI taxonomy. You can <b>preview the resulting tree</b> to see detailed results below.
 </p>
+
 <table id="tip-taxa-panel" width="100%" border="0">
-<!--
     <tr>
-      <td align="right" valign="top">Specify taxa by species </td>
-      <td><input type="radio" name="EntryType" value="species" id="EntryType_0" checked="checked" /> or genus? <input type="radio" name="EntryType" value="genus" id="EntryType_1" /></td>
+      <td style="background-color: #eee;" width="50%">&nbsp; <b>Side A</b></td>
+      <td style="background-color: #eee;" width="50%">&nbsp; <b>Side B</b></td>
     </tr>
--->
-    <tr>
-      <td width="10%" align="right" valign="top">&nbsp;</td>
-      <td width="40%" style="background-color: #eee;">&nbsp; <b>Side A</b></td>
-      <td width="40%" style="background-color: #eee;">&nbsp; <b>Side B</b></td>
-      <td width="10%">&nbsp;</td>
+    <tr class="tip-taxa-pair">
+      <td valign="top">
+
+	<table style="margin:0 auto;" id="tip-taxa-panel" border="0" width="80%">
+	    <tbody>
+
+<?php // list any A-side taxa found (if none, just prompt with +/- buttons)
+{ ?>
+	    <tr>
+	      <td align="right" valign="top"><strong style="font-size: 1.5em;">+</strong></td>
+	      <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
+
+	      <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
+	    </tr>
+<? } ?>
+
+	    <tr>
+	      <td colspan="3" style="text-align: center; padding: 10px 0;">
+		<input value="include &lt;+&gt; taxon" id="includeTaxon_A" name="includeTaxon_A" type="button">
+		 &nbsp;
+		 &nbsp;
+		 &nbsp;
+		<input value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_A" name="excludeTaxon_A" type="button">
+	      </td>
+	    </tr>
+	</tbody>
+	</table>
+
+      </td>
+      <td valign="top">
+
+	<table style="margin:0 auto;" id="tip-taxa-panel" border="0" width="80%">
+	    <tbody>
+<?php // list any B-side taxa found (if none, just prompt with +/- buttons)
+{ ?>
+	    <tr>
+	      <td align="right" valign="top"><strong style="font-size: 1.5em;">+</strong></td>
+	      <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
+
+	      <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
+	    </tr>
+	    <tr>
+	      <td align="right" valign="top"><strong>—</strong></td>
+		  <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair6TaxonA" id="Pair6TaxonA" value="Felis bieti" type="text"></td>
+
+	      <td><input class="deleteTipTaxaPair" style="" value="delete" type="button"></td>
+	    </tr>
+<? } ?>
+	    <tr>
+	      <td colspan="3" style="text-align: center; padding: 10px 0;">
+		<input value="include &lt;+&gt; taxon" id="includeTaxon_B" name="includeTaxon_B" type="button">
+		 &nbsp;
+		 &nbsp;
+		 &nbsp;
+		<input value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_B" name="excludeTaxon_B" type="button">
+	      </td>
+	    </tr>
+	</tbody>
+	</table>
+
+      </td>
     </tr>
 <?php
+/*
    $NumTipPairs = count($tip_pair_data);
    if ($NumTipPairs == 0) { 
       // add one empty pair to start things off ?>
     <tr class="tip-taxa-pair">
-      <td align="right" valign="top"><strong>Tip pair <span class="nth-pair">1</span></strong></td>
       <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair1TaxonA" id="Pair1TaxonA" value=""></td>
       <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair1TaxonB" id="Pair1TaxonB" value=""></td>
-      <td><input type="button" class="deleteTipTaxaPair" style="display: none;" value="delete" /></td>
     </tr>
 <? } else { 
       for ($i = 1; $i <= $NumTipPairs; $i++) {
 	   $index = $i - 1; ?>
        <tr class="tip-taxa-pair">
-         <td align="right" valign="top"><strong>Tip pair <span class="nth-pair"><?=$i?></span></strong></td>
          <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonA" id="Pair<?=$i?>TaxonA" value="<?= $tip_pair_data[$index]['TaxonA'] ?>"></td>
          <td><input style="width: 98%;" type="text" class="select-tip-taxa" name="Pair<?=$i?>TaxonB" id="Pair<?=$i?>TaxonB" value="<?= $tip_pair_data[$index]['TaxonB'] ?>"></td>
-         <td><input type="button" class="deleteTipTaxaPair" style="<?= ($i == 1) ? 'display: none;' : '' ?>" value="delete" /></td>
        </tr>
    <? }
-   } ?>
-    <tr>
-      <td>&nbsp;</td>
-      <td colspan="3" style="">
-	<input type="button" name="AddTipTaxaPair" id="AddTipTaxaPair" value="add tip-taxon pair" />
-      </td>
-    </tr>
+   } 
+*/ ?>
+
+<!-- TODO: remove all references to AddTipTaxaPair, related controls -->
+<!--
+-->
 </table>
+
+<div style="background-color: #eee; border: 1px solid silver; padding: 4px 6px; margin-top: 12px;" width="100%" id="preview-tree"> 
+	<div style="" id="preview-tree-legend"> 
+		<span style="float: right; font-size: 0.8em; background-color: #ddd; padding: 2px 4px;"> 
+		    <span style="color: #555;">Legend:</span> 
+		    <i>pinned node (to NCBI)</i> 
+		    &nbsp;&bullet;&nbsp; 
+		    un-pinned node &nbsp;
+		    &nbsp;&bullet;&nbsp; 
+		    <i><b>pinned target</b></i> 
+		    &nbsp;&bull;&nbsp; 
+		    <b>un-pinned target</b> 
+		</span> 
+		<button style="position: relative; top: -0.9em;">Preview tree for this calibration</button> 
+	</div> 
+
+	<!-- TODO: Build this display on-the-fly, (re)generate via AJAX -->
+	<i>Carnivora</i> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; <b>ur-cat</b> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Caniformia</i> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Felidae</i> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Eupleridae</i> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Herpestidae</i> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Nandiniidae</i> 
+	<br> 
+	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Viverridae</i> 
+</div><!-- END of #preview-tree -->
+
 </div><!-- END of final step -->
 
 </div><!-- END of div#edit-steps -->
