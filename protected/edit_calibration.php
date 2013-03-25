@@ -35,7 +35,9 @@ $locality_data = null;
 $collection_data = null;
 $fossil_pub_data = null;
 $phylo_pub_data = null;
-$tip_pair_data = null;
+//$tip_pair_data = null;
+$side_A_hint_data = null;
+$side_B_hint_data = null;
 
 if ($addOrEdit == 'EDIT') {
 	// retrieve the main calibration record (or die trying)
@@ -123,6 +125,7 @@ print_r($all_fossils);
 ?></pre><?
 */
 
+/*
 	// retrieve explicit (directly entered) tip pairs
 	$query="SELECT * 
 		FROM Link_CalibrationPair 
@@ -133,6 +136,31 @@ print_r($all_fossils);
 	$tip_pair_data = array();
 	while($row=mysql_fetch_assoc($result)) {
 		$tip_pair_data[] = $row;
+	}
+	mysql_free_result($result);
+*/
+
+	// retrieve node-definition hints for side A
+	$query="SELECT * 
+		FROM node_definitions
+		WHERE calibration_id = '". $CalibrationID ."' AND definition_side = 'A'
+		ORDER BY display_order";
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$side_A_hint_data = array();
+	while($row=mysql_fetch_assoc($result)) {
+		$side_A_hint_data[] = $row;
+	}
+	mysql_free_result($result);
+
+	// retrieve node-definition hints for side B
+	$query="SELECT * 
+		FROM node_definitions
+		WHERE calibration_id = '". $CalibrationID ."' AND definition_side = 'B'
+		ORDER BY display_order";
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$side_B_hint_data = array();
+	while($row=mysql_fetch_assoc($result)) {
+		$side_B_hint_data[] = $row;
 	}
 	mysql_free_result($result);
 }
@@ -249,56 +277,19 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
       // fossil is added
       initFossilAutocompleteWidgets();
 
-		initTipTaxaWidgets();
-
-
 		// init widget groups
 		$('#newPublication, #existingPublication').unbind('click').click(updatePublicationWidgets);
 		updatePublicationWidgets();
 
       updateFossilPanelWidgets();
 
-		$('input.deleteTipTaxaPair').unbind('click').click(function() {
-			var $itsRow = $(this).closest('tr');
-			// de-activate the autocomplete for its widgets
-			$itsRow.find('.select-tip-taxa').autocomplete('destroy');
-			// remove the entire row
-			$itsRow.remove();
-			// TODO: re-number the remaining rows?
-			var nthPosition = 1;
-			$('#tip-taxa-panel tr.tip-taxa-pair').each(function() {
-				var $testRow = $(this);
-				$testRow.find('.nth-pair').text( nthPosition );
-				$testRow.find('input:text[name$=A]').attr('name', 'Pair'+nthPosition+'TaxonA').attr('id', 'Pair'+nthPosition+'TaxonA');;
-				$testRow.find('input:text[name$=B]').attr('name', 'Pair'+nthPosition+'TaxonB').attr('id', 'Pair'+nthPosition+'TaxonB');;
-				nthPosition++;
-			});
-		});
-		$('#AddTipTaxaPair').unbind('click').click(function() {
-			var $itsRow = $(this).closest('tr');
-			var $prevRow = $itsRow.prev('tr'); // should always be a valid pair
-			// restore default markup for previous row (we'll fix this below)
-			$prevRow.find('.select-tip-taxa').autocomplete('destroy');
-			$itsRow.before($prevRow.clone(true));
-			var $newRow = $itsRow.prev('tr');
-			// clear the new row's inputs and show its delete button
-			$newRow.find('input:text').val('');
-			$newRow.find('.deleteTipTaxaPair').show();
-			// update its visible counter and widget names/IDs
-			var $itsCounter = $newRow.find('.nth-pair');
-			var position = parseInt($itsCounter.text()) + 1;
-			$itsCounter.text( position );
-			$newRow.find('input:text[name$=A]').attr('name', 'Pair'+position+'TaxonA').attr('id', 'Pair'+position+'TaxonA');;
-			$newRow.find('input:text[name$=B]').attr('name', 'Pair'+position+'TaxonB').attr('id', 'Pair'+position+'TaxonB');;
-			// init autocomplete behavior (and fix previous row)
-			$prevRow.find('.select-tip-taxa').autocomplete(tipTaxaSettings);
-			$newRow.find('.select-tip-taxa').autocomplete(tipTaxaSettings);
-		});
+		initTipTaxaWidgets();
+
 
 	});
 
-	// shared autocomplete settings for tip-taxa widgets
-	tipTaxaSettings = {
+	// shared autocomplete settings for node-definition "hint taxa" widgets
+	hintTaxonSettings = {
 		source: '/autocomplete_species.php',
 		autoSelect: true,  // recognizes typed-in values if they match an item
 		autoFocus: true,
@@ -308,20 +299,127 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		change: function(event, ui) {
 			console.log("CHANGED TO ITEM > "+ ui.item);
 			if (!ui.item) {
-				// widget was blurred with invalid value; clear any 
-				// stale values from the UI!
+				// widget was blurred with invalid value; clear ALL 
+				// related (stale) values from the UI!
 				$(this).val('');
-			}
+				$(this).parent().find('[id^=hintNodeSource_], [id^=hintNodeID_]').val('');
+                // TODO: clear corresponding node source/ID?
+			} else {
+                console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
+                /* do we ever need this?
+                var $selector = $(this); // SELECT element
+                updateHintTaxonValues($selector, ui);
+                */
+            }
 		},
 		select: function(event, ui) {
-			console.log("CHOSEN > "+ ui.item.value);
-			// TODO: any follow-up action, a la tagging UI?
+			console.log("CHOSEN ITEM > "+ ui.item);
+			console.log("...ITS VALUE > "+ ui.item.value);
+            // AJAX fetch of corresponding node source/ID?
+            var $selector = $(this); // SELECT element
+            updateHintTaxonValues($selector, ui);
 		},
 		minChars: 3
 	};
+    function updateHintTaxonValues( $widget, ui ) {
+        // TODO: AJAX fetch of corresponding node source/ID?
+        var sideAorB = ($widget.closest('table').attr('id') === 'node-definition-side-A') ? 'A' : 'B';
+        var position = $widget.closest('tr').find('[name^=hintDisplayOrder_]').val();
+        var $nodeInfo = $widget.closest('td').find('.matching-node-info');
+        $nodeInfo.find('input').css('background-color','#ff9');
+        $nodeInfo.find('input').val('?');  // clear its identifier fields
+        $nodeInfo.load(
+             '/protected/fetch_matching_hint_node.php',
+             { 
+
+                side: sideAorB,
+                position: position,
+                matched_name: ui.item.value
+             },
+             function() {
+                // probably nothing else to do
+                $nodeInfo.css('border', 'none');
+             }
+        );
+    }
 
 	function initTipTaxaWidgets() {
-		$('#tip-taxa-panel .select-tip-taxa').autocomplete(tipTaxaSettings);
+		$('input.deleteDefinitionHint').unbind('click').click(function() {
+			var $itsRow = $(this).closest('tr');
+			// de-activate the autocomplete for its widgets
+			$itsRow.find('.select-hint-taxon').autocomplete('destroy');
+			// remove the entire row
+			$itsRow.remove();
+			// re-number the remaining rows in THIS SIDE of node definition
+			var $hintsForItsSide = $(this).closest('table').find('tr.definition-hint');
+			var nthPosition = 1;
+			$hintsForItsSide.each(function() {
+				var $testRow = $(this);
+                // update all numbered IDs on this row
+                var $child, oldID, newID;
+
+                $child = $testRow.find('[id^=hintDisplayOrder_]');
+                oldID = $child.attr('id');
+                newID = oldID.replace(/\d+/, nthPosition);
+                $child.attr('id', newID);
+                // also set this value directly
+                $child.val( nthPosition );
+
+                $child = $testRow.find('[id^=hintName_]');
+                oldID = $child.attr('id');
+                newID = oldID.replace(/\d+/, nthPosition);
+                $child.attr('id', newID);
+
+                $child = $testRow.find('[id^=hintNodeSource_]');
+                oldID = $child.attr('id');
+                newID = oldID.replace(/\d+/, nthPosition);
+                $child.attr('id', newID);
+
+                $child = $testRow.find('[id^=hintNodeID_]');
+                oldID = $child.attr('id');
+                newID = oldID.replace(/\d+/, nthPosition);
+                $child.attr('id', newID);
+
+				nthPosition++;
+			});
+		});
+		$('.addDefinitionHint').unbind('click').click(function() {
+            // which side are we on? how many hints are there now?
+			var $itsRow = $(this).closest('tr');
+            var $itsTable = $(this).closest('table');
+            var sideAorB = ($itsTable.attr('id') === 'node-definition-side-A') ? 'A' : 'B';
+			var $hintsForItsSide = $itsTable.find('tr.definition-hint');
+            var howManyHints = $hintsForItsSide.length;
+            var position = howManyHints + 1;
+            // build a new row from our hidden template (replacing tokens with real values)
+            // Be careful to get the row, and not some intermediate elements like TBODY.
+            var template = $('#definition_hint_template tr:eq(0)').parent().html();
+            var newRowMarkup = template
+                .replace(/_SIDE_/g, sideAorB)
+                .replace(/_DISPLAY_ORDER_/g, position)
+                .replace(/_POS_/g, position)
+                .replace(/_MATCHING_NAME_/g, '')
+                .replace(/_SOURCE_TREE_/g, '')
+                .replace(/_SOURCE_NODE_ID_/g, '');
+
+            $itsRow.before(newRowMarkup);
+			var $newRow = $itsRow.prev('tr'); // should now be a valid row
+            if ($(this).is('[id^=excludeTaxon]')) {
+                $newRow.find('select[name^=hintOperator_]').val('-');
+            } else {
+                $newRow.find('select[name^=hintOperator_]').val('+');
+            }
+
+			// init autocomplete behavior, rebind other hint widgets?
+            initTipTaxaWidgets();
+		});
+
+        try {
+            $('#tip-taxa-panel .select-hint-taxon').autocomplete('destroy');
+        } catch(e) {
+            // no problem, this is just the first time adding this behavior
+        }
+		$('#tip-taxa-panel .select-hint-taxon').autocomplete(hintTaxonSettings);
 	}
 
    function initFossilAutocompleteWidgets() {
@@ -352,7 +450,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			},
 			select: function(event, ui) {
 				///console.log("CHOSEN > "+ ui.item.FullReference);
-            var pos = getFossilPosition( event.target );
+                var pos = getFossilPosition( event.target );
 				$('#AC_FossilPubID-display-'+pos).val(ui.item.label);
 				$('#AC_FossilPubID-'+pos).val(ui.item.value);
 				$('#AC_FossilPubID-more-info-'+pos).html(ui.item.FullReference);
@@ -435,7 +533,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			},
 			select: function(event, ui) {
 				///console.log("CHOSEN > "+ ui.item.FullReference);
-            var pos = getFossilPosition( event.target );
+                var pos = getFossilPosition( event.target );
 				$('#AC_FossilSpeciesID-display-'+pos).val(ui.item.label);
 				// fetch and display taxon metadata below
 				$.ajax( '/fetch_taxon_properties.php', {
@@ -1055,71 +1153,46 @@ To support tip-taxa searches, place the calibrated node by including or excludin
     <tr class="tip-taxa-pair">
       <td valign="top">
 
-	<table style="margin:0 auto;" id="tip-taxa-panel" border="0" width="80%">
+        <table id="node-definition-side-A" style="margin:0 auto;" border="0" width="95%">
 <?php // list any A-side taxa found (if none, just prompt with +/- buttons)
-{ ?>
+$hintPos = 0;
+foreach ($side_A_hint_data as $hint)
+{ 
+    $hintPos++;
+    node_definition_hint_row( 'A', $hint, $hintPos );
+} ?>
             <tr>
-              <td align="right" valign="top">
-                <select>
-                  <option selected="selected">+</option>
-                  <option>&ndash;</option>
-                </select>
+              <td colspan="3" style="text-align: center; padding: 10px 0;">
+            <input class="addDefinitionHint" value="include &lt;+&gt; taxon" id="includeTaxon_A" name="IGNORE_ME" type="button">
+             &nbsp;
+             &nbsp;
+             &nbsp;
+            <input class="addDefinitionHint" value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_A" name="IGNORE_ME" type="button">
               </td>
-              <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
-
-              <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
             </tr>
-<? } ?>
-	    <tr>
-	      <td colspan="3" style="text-align: center; padding: 10px 0;">
-		<input value="include &lt;+&gt; taxon" id="includeTaxon_A" name="includeTaxon_A" type="button">
-		 &nbsp;
-		 &nbsp;
-		 &nbsp;
-		<input value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_A" name="excludeTaxon_A" type="button">
-	      </td>
-	    </tr>
-	</table>
+        </table>
 
       </td>
       <td valign="top">
 
-	<table style="margin:0 auto;" id="tip-taxa-panel" border="0" width="80%">
+        <table id="node-definition-side-B" style="margin:0 auto;" border="0" width="95%">
 <?php // list any B-side taxa found (if none, just prompt with +/- buttons)
-{ ?>
-	    <tr>
-              <td align="right" valign="top">
-                <select>
-                  <option selected="selected">+</option>
-                  <option>&ndash;</option>
-                </select>
+$hintPos = 0;
+foreach ($side_B_hint_data as $hint)
+{
+    $hintPos++;
+    node_definition_hint_row( 'B', $hint, $hintPos );
+} ?>
+            <tr>
+              <td colspan="3" style="text-align: center; padding: 10px 0;">
+            <input class="addDefinitionHint" value="include &lt;+&gt; taxon" id="includeTaxon_B" name="IGNORE_ME" type="button">
+             &nbsp;
+             &nbsp;
+             &nbsp;
+            <input class="addDefinitionHint" value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_B" name="IGNORE_ME" type="button">
               </td>
-	      <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair1TaxonA" id="Pair1TaxonA" value="Felis bieti" type="text"></td>
-
-	      <td><input class="deleteTipTaxaPair" style="display: none;" value="delete" type="button"></td>
-	    </tr>
-	    <tr>
-              <td align="right" valign="top">
-                <select>
-                  <option>+</option>
-                  <option selected="selected">&ndash;</option>
-                </select>
-              </td>
-		  <td><input autocomplete="off" style="width: 98%;" class="select-tip-taxa ui-autocomplete-input" name="Pair6TaxonA" id="Pair6TaxonA" value="Felis bieti" type="text"></td>
-
-	      <td><input class="deleteTipTaxaPair" style="" value="delete" type="button"></td>
-	    </tr>
-<? } ?>
-	    <tr>
-	      <td colspan="3" style="text-align: center; padding: 10px 0;">
-		<input value="include &lt;+&gt; taxon" id="includeTaxon_B" name="includeTaxon_B" type="button">
-		 &nbsp;
-		 &nbsp;
-		 &nbsp;
-		<input value="exclude &lt;&ndash;&gt; taxon" id="excludeTaxon_B" name="excludeTaxon_B" type="button">
-	      </td>
-	    </tr>
-	</table>
+            </tr>
+        </table>
 
       </td>
     </tr>
@@ -1143,9 +1216,6 @@ To support tip-taxa searches, place the calibrated node by including or excludin
    } 
 */ ?>
 
-<!-- TODO: remove all references to AddTipTaxaPair, related controls -->
-<!--
--->
 </table>
 
 <div style="background-color: #eee; border: 1px solid silver; padding: 4px 6px; margin-top: 12px;" width="100%" id="preview-tree"> 
@@ -1160,7 +1230,7 @@ To support tip-taxa searches, place the calibrated node by including or excludin
 		    &nbsp;&bull;&nbsp; 
 		    <b>un-pinned target</b> 
 		</span> 
-		<button style="position: relative; top: -0.9em;">Preview tree for this calibration</button> 
+		<button style="position: relative; top: -0.9em;" onclick="alert('Coming soon...'); return false;">Preview tree for this calibration</button> 
 	</div> 
 
 	<!-- TODO: Build this display on-the-fly, (re)generate via AJAX -->
@@ -1194,9 +1264,55 @@ To support tip-taxa searches, place the calibrated node by including or excludin
 
 </form><!-- END of form#edit-calibration -->
 
-
 <?php 
+
+function node_definition_hint_row( $side, $hint, $hintPos ) {
+    // generate markup for a single hint (taxon)
+    ?>
+        <tr class="definition-hint">
+          <td align="right" valign="top">
+            <input type="hidden" name="hintDisplayOrder_<?=$side?>[]" id="hintDisplayOrder_<?=$side?>_<?= $hintPos ?>" value="<?= $hintPos ?>" />
+            <select name="hintOperator_<?=$side?>[]">
+              <option value="+" <?= ($hint['operator'] == '+') ? 'selected="selected"' : '' ?> >+</option>
+              <option value="-" <?= ($hint['operator'] == '-') ? 'selected="selected"' : '' ?> >&ndash;</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" autocomplete="off" style="width: 60%;" class="select-hint-taxon ui-autocomplete-input" 
+                   name="hintName_<?=$side?>[]" id="hintName_<?=$side?>_<?= $hintPos ?>" value="<?= $hint['matching_name'] ?>" />
+
+            <span class="matching-node-info">
+                <input type="text" readonly="readonly" style="width: 15%; color: #999; text-align: center;" 
+                       name="hintNodeSource_<?=$side?>[]" id="hintNodeSource_<?=$side?>_<?= $hintPos ?>" value="<?= $hint['source_tree'] ?>" />
+
+                <input type="text" readonly="readonly" style="width: 15%; color: #999; text-align: center;" 
+                       name="hintNodeID_<?=$side?>[]" id="hintNodeID_<?=$side?>_<?= $hintPos ?>" value="<?= $hint['source_node_id'] ?>" />
+            </span>
+          </td>
+          <td><input class="deleteDefinitionHint" value="delete" type="button"></td>
+        </tr>
+    <?
+}
+
+// add a template for new hints (added from client-side UI)
+?>
+<table id="definition_hint_template" style="display: none; border: 1px dashed red;">
+<?= node_definition_hint_row( 
+    '_SIDE_', 
+    Array(
+         'display_order' => '_DISPLAY_ORDER_',
+         'operator' => '_OPERATOR_',
+         'matching_name' => '_MATCHING_NAME_',
+         'source_tree' => '_SOURCE_TREE_',
+         'source_node_id' => '_SOURCE_NODE_ID_'
+    ), 
+    '_POS_');
+?>
+</table>
+<?
+
 //open and print page footer template
 require('../footer.php');
+
 ?>
 
