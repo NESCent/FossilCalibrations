@@ -347,37 +347,87 @@ foreach($fossil_positions as $pos) {
 
 
 /*
- * Add or update tip taxa for this node
+ * Add or update node definition for this calibration
  */
 
-// clobber all existing pair-calibration links for this calibration (leave defined tips in place)
-$query="DELETE FROM Link_CalibrationPair WHERE 
-        CalibrationID = '". mysql_real_escape_string($calibrationID) ."'";
+
+/* TODO: remove all code relating to explicit tip-taxa pairs; replace with
+ * node-definition hints (explicitly entered) and a resulting FCD tree
+ * (calculatled from these hints)
+ */
+
+// clobber all existing node-definition hints for this calibration
+$query="DELETE FROM node_definitions WHERE 
+        calibration_id = '". mysql_real_escape_string($calibrationID) ."'";
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
-// process any pair variables found
-$nthPair = 1;
-while (isset($_POST["Pair{$nthPair}TaxonA"])) {
-	$taxonA = $_POST["Pair{$nthPair}TaxonA"];
-	$taxonB = $_POST["Pair{$nthPair}TaxonB"];
-	// SKIP any pair with missing/empty names??
-	if (!empty($taxonA) && !empty($taxonB)) {
-		$query= 'SELECT * FROM Link_Tips WHERE (TaxonA=\''.$taxonA.'\' AND TaxonB=\''.$taxonB.'\') OR (TaxonA=\''.$taxonB.'\' && TaxonB=\''.$taxonA.'\')';
-		$pair_result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-		if( mysql_num_rows($pair_result)==0 ) {
-			// add this new pair and assign to the current calibration
-			$query= 'INSERT INTO Link_Tips (TaxonA,TaxonB) VALUES (\''.mysql_real_escape_string($taxonA).'\', \''.mysql_real_escape_string($taxonB).'\')';
-			$newpairs=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-			$pairID=mysql_insert_id();
-		} else {
-			// this pair already exists, probably entered with another calibration
-			$row=mysql_fetch_assoc($pair_result);
-			$pairID=$row['PairID'];
-		}
-		$query='INSERT INTO Link_CalibrationPair (CalibrationID,TipPairsID) VALUES (\''.mysql_real_escape_string($calibrationID).'\',\''.$pairID.'\')';
-		$newcladepair=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+// save new node-definition hints for each side in turn
+foreach (Array('A', 'B') as $side) {
+    // skip this side if no values were submitted
+    if (isset($_POST["hintName_$side"])) {
+	$hintNames = $_POST["hintName_$side"];
+	$hintNodeIDs = $_POST["hintNodeID_$side"];
+	$hintNodeSources = $_POST["hintNodeSource_$side"];
+	$hintOperators = $_POST["hintOperator_$side"];
+	$hintDisplayOrders = $_POST["hintDisplayOrder_$side"];
+
+	// assemble values for each row, making all values safe for MySQL
+	$rowValues = Array();
+	$hintCount = count($hintNames);
+	for ($i = 0; $i < $hintCount; $i++) {
+		$rowValues[] = "('". 
+			$calibrationID ."','". 
+			$side ."','". 
+			mysql_real_escape_string($hintNames[$i]) ."','". 
+			mysql_real_escape_string($hintNodeSources[$i])."','". 
+			mysql_real_escape_string($hintNodeIDs[$i]) ."','". 
+			mysql_real_escape_string($hintOperators[$i]) ."','". 
+			mysql_real_escape_string($hintDisplayOrders[$i]) ."')";
 	}
-	$nthPair++;
+
+	$query="INSERT INTO node_definitions 
+			(calibration_id, definition_side, matching_name, source_tree, source_node_id, operator, display_order)
+		VALUES ". implode(",", $rowValues);
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+    }
+}
+
+// clobber any existing calculated tree for this calibration
+// TODO
+
+// re-calculate tree based on the updated node definition (hints)
+// NOTE: this should be done through a stored procedure, to support AJAX preview!
+// TODO
+
+// store the resulting tree, pinned to NCBI or other FCD nodes as needed
+
+
+
+/* process any pair variables found (TODO: review this old stuff, to clean out unused tables/columns) */
+if (false) {
+	$nthPair = 1;
+	while (isset($_POST["Pair{$nthPair}TaxonA"])) {
+		$taxonA = $_POST["Pair{$nthPair}TaxonA"];
+		$taxonB = $_POST["Pair{$nthPair}TaxonB"];
+		// SKIP any pair with missing/empty names??
+		if (!empty($taxonA) && !empty($taxonB)) {
+			$query= 'SELECT * FROM Link_Tips WHERE (TaxonA=\''.$taxonA.'\' AND TaxonB=\''.$taxonB.'\') OR (TaxonA=\''.$taxonB.'\' && TaxonB=\''.$taxonA.'\')';
+			$pair_result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+			if( mysql_num_rows($pair_result)==0 ) {
+				// add this new pair and assign to the current calibration
+				$query= 'INSERT INTO Link_Tips (TaxonA,TaxonB) VALUES (\''.mysql_real_escape_string($taxonA).'\', \''.mysql_real_escape_string($taxonB).'\')';
+				$newpairs=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+				$pairID=mysql_insert_id();
+			} else {
+				// this pair already exists, probably entered with another calibration
+				$row=mysql_fetch_assoc($pair_result);
+				$pairID=$row['PairID'];
+			}
+			$query='INSERT INTO Link_CalibrationPair (CalibrationID,TipPairsID) VALUES (\''.mysql_real_escape_string($calibrationID).'\',\''.$pairID.'\')';
+			$newcladepair=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+		}
+		$nthPair++;
+	}
 }
 
 // NOTE that we're careful to return to a new calibration with its new assigned ID
