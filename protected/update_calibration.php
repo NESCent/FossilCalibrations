@@ -375,6 +375,13 @@ foreach (Array('A', 'B') as $side) {
 	$rowValues = Array();
 	$hintCount = count($hintNames);
 	for ($i = 0; $i < $hintCount; $i++) {
+		// check for vital node information before saving
+		if ((trim($hintNames[$i]) == "") || 
+		    (trim($hintNodeSources[$i]) == "") || 
+		    (trim($hintNodeIDs[$i]) == "")) { 
+			// SKIP this hint, it's incomplete
+			continue;
+		}
 		$rowValues[] = "('". 
 			$calibrationID ."','". 
 			$side ."','". 
@@ -385,10 +392,14 @@ foreach (Array('A', 'B') as $side) {
 			mysql_real_escape_string($hintDisplayOrders[$i]) ."')";
 	}
 
-	$query="INSERT INTO node_definitions 
-			(calibration_id, definition_side, matching_name, source_tree, source_node_id, operator, display_order)
-		VALUES ". implode(",", $rowValues);
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	// make sure we have at least one valid row (hint) to save for this side
+	if (count($rowValues) > 0) {
+		$query="INSERT INTO node_definitions 
+				(calibration_id, definition_side, matching_name, source_tree, source_node_id, operator, display_order)
+			VALUES ". implode(",", $rowValues);
+		$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	}
+
     }
 }
 
