@@ -451,12 +451,17 @@ BEGIN
 
 --
 -- TODO TODO TODO TODO TODO TODO 
+-- Let's try again, using a simpler recursive approach to deal with quirky overrides of the NCBI tree.
 --
 
 -- DECLARE any local vars here
 
 
--- order hint-taxa by depth (from root to extant species)
+-- resolve any duplicate nodes to a single hint, INCLUDED (+) if *any* hint says so
+-- (this resolves any "stem group" style definitions*, while maximizing discoverability)
+
+
+-- order hints by by taxon depth (from root to extant species)
 
 
 -- build the empty tree-description table
@@ -468,36 +473,188 @@ BEGIN
 -- IF there are no EXCLUDED (-) taxa, we're done! ELSE continue
 
 
--- for each EXCLUDED (-) taxon in the hints...
-	-- ? is this node currently within a clade in this tree description?
-	-- IF NO, ignore this hint and move to the next hint
-	-- ? is this node directly included in the tree description?
-	-- IF YES, remove it and move to to the next hint
-	-- STILL HERE? prune this node from the tree by 
-		-- removing the nearest INCLUDED ancestor node 
-		-- add each of its siblings (unless they're explicitly EXCLUDED)
-		-- add the most efficient "aunts and uncles" (unless they're explicitly EXCLUDED)
+-- ?? Walk A and B sides separately? or all together? if separate, what happens
+-- ?? if they touch overlapping parts of the NCBI tree?
 
--- for each INCLUDED (+) taxon in the hints...
-	-- ? is this node currently within a clade in this tree description?
-	-- IF YES, ignore this hint and move to the next hint
-	-- ? is this node directly excluded in the tree description?
-	-- IF YES, restore it and move to to the next hint
-	-- STILL HERE? explicitly include this node in the tree
 
+-- walk the ordered hints, from root to leaves, and for each taxon...
+
+	-- IF it's INCLUDED (+)...
+
+		-- ? is this node already directly included in the tree description?
+		--   (eg, as a side effect of excluding another nearby)
+
+		-- IF YES, ignore this hint and move to the next hint
+
+		-- ? is this node already within a clade in this tree description?
+
+		-- IF YES, ignore this hint and move to the next hint
+
+		-- STILL HERE? explicitly include this node in the tree description
+
+	-- ELSE it's EXCLUDED (-)...
+
+		-- ? is this node currently within a clade in this tree description?
+
+		-- IF NO, ignore this hint and move to the next hint
+
+					-- ? is this node already directly included in the tree description?
+					--   (eg, as a side effect of excluding another nearby)
+
+					-- IF YES, remove it and move to to the next hint
+
+					-- STILL HERE? prune this node from the tree by 
+
+						-- removing the nearest INCLUDED ancestor node 
+
+						-- add each of the pruned descendant's siblings (unless they're explicitly EXCLUDED)
+
+						-- add the fewest required intemediate "aunts and uncles" (unless they're explicitly EXCLUDED)
+						-- TODO: work this out, if pruned node is 2+ levels away from the removed ancestor!
+
+		-- STILL HERE? prune this node via a recursive walk toward the root node....
+			-- is this node explicitly included? remove it and return
+			-- else it's implicitly included (in an included clade), so
+				-- remove this node
+				-- add its siblings, IF they're not explicitly excluded in our hints
+				-- recurse to parent node...
+
+-- ?? *A/B resolution? recognition of stem-group definition for precise inclusion of the calibrated node?
 
 END #
 
 DELIMITER ;
 
 
-/* 
- * Here's a typical query session, usable from the mysql command-line
+/**********************************************************
  *
- * NOTE that in all cases, we can create a temporary table by passing its
- * (desired) name to a stored procedure. These can be disposed of explicitly,
- * or they'll disappear when we close the database session.
- */ 
+ *  Low-level helpers for the tree-definition procedures
+ *
+ **********************************************************/
+
+
+/*
+ * isExplicitlyIncludedInTreeDescription( hintNodeSource, hintNodeID, hintTableName, treeDescriptionTableName )
+ */
+
+DROP PROCEDURE IF EXISTS xxxxx;
+
+DELIMITER #
+
+CREATE PROCEDURE xxxxx (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8), IN hintTableName VARCHAR(80), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+	-- TODO
+
+END #
+
+DELIMITER ;
+
+
+/*
+ * isImplicitlyIncludedInTreeDescription( hintNodeSource, hintNodeID, hintTableName, treeDescriptionTableName )
+ */
+
+DROP PROCEDURE IF EXISTS xxxxx;
+
+DELIMITER #
+
+CREATE PROCEDURE xxxxx (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8), IN hintTableName VARCHAR(80), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+	-- TODO
+
+END #
+
+DELIMITER ;
+
+
+/*
+ * addNodeToTreeDescription( hintNodeSource, hintNodeID, hintTableName, treeDescriptionTableName )
+ */
+
+DROP PROCEDURE IF EXISTS xxxxx;
+
+DELIMITER #
+
+CREATE PROCEDURE xxxxx (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8), IN hintTableName VARCHAR(80), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+	-- TODO
+
+END #
+
+DELIMITER ;
+
+
+/*
+ * removeNodeFromTreeDescription( hintNodeSource, hintNodeID, hintTableName, treeDescriptionTableName )
+ *
+ * This is straightforward removal of a row.
+ */
+
+DROP PROCEDURE IF EXISTS xxxxx;
+
+DELIMITER #
+
+CREATE PROCEDURE xxxxx (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8), IN hintTableName VARCHAR(80), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+	-- TODO
+
+END #
+
+DELIMITER ;
+
+
+/*
+ * excludeNodeFromTreeDescription( hintNodeSource, hintNodeID, hintTableName, treeDescriptionTableName )
+ *
+ * This is thorough exclusion of a node, incl. adding/removing others as needed.
+ */
+
+DROP PROCEDURE IF EXISTS xxxxx;
+
+DELIMITER #
+
+CREATE PROCEDURE xxxxx (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8), IN hintTableName VARCHAR(80), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+	-- TODO
+
+END #
+
+DELIMITER ;
+
+
+/*
+ * updateTreeFromDefinition (CalibrationID, treeDescriptionTableName)
+ *
+ * When a calibration is saved, this will build and add/replace its tree in the database.
+ */
+
+DROP PROCEDURE IF EXISTS updateTreeFromDefinition;
+
+DELIMITER #
+
+CREATE PROCEDURE updateTreeFromDefinition (IN calibrationID INT(11), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+	-- TODO
+
+END #
+
+DELIMITER ;
+
+
+
+/*******************************************************************************
+ *  Here's a typical query session, usable from the mysql command-line
+ *
+ *  NOTE that in all cases, we can create a temporary table by passing its
+ *  (desired) name to a stored procedure. These can be disposed of explicitly,
+ *  or they'll disappear when we close the database session.
+ *******************************************************************************/
 
 -- normally we'd get these from user input, of course
 SET @nodeA_id = 9606;	-- Homo sapiens
