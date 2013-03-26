@@ -540,7 +540,7 @@ if(mysql_num_rows($geoltime_list)==0){
 
 						<table width="100%" border="0">
 						<tr>
-						<td align="right" valign="top" width="30%"><strong>minimum age</strong></td>
+						<td align="right" valign="top" width="30%"><strong>minimum age (mya)</strong></td>
 						<td align="left" width="70%">
 						<? if ($showPreviouslyAssignedValues) { ?>
 							<input type="radio" name="newOrExistingFossilMinAge-<?= $i ?>" value="ASSIGNED" id="assignedFossilMinAge-<?=$i?>" checked="checked" /> 
@@ -581,7 +581,7 @@ if(mysql_num_rows($geoltime_list)==0){
 </select>
 </tr>
 <tr>
-<td align="right" valign="top" width="30%"><strong>maximum age</strong></td>
+<td align="right" valign="top" width="30%"><strong>maximum age (mya)</strong></td>
 <td align="left" width="70%">
 <? if ($showPreviouslyAssignedValues) { ?>
 	<input type="radio" name="newOrExistingFossilMaxAge-<?= $i ?>" value="ASSIGNED" id="assignedFossilMaxAge-<?=$i?>" checked="checked" /> 
