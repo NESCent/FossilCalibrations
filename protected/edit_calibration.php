@@ -1155,12 +1155,14 @@ To support tip-taxa searches, place the calibrated node by including or excludin
 
         <table id="node-definition-side-A" style="margin:0 auto;" border="0" width="95%">
 <?php // list any A-side taxa found (if none, just prompt with +/- buttons)
-$hintPos = 0;
-foreach ($side_A_hint_data as $hint)
-{ 
-    $hintPos++;
-    node_definition_hint_row( 'A', $hint, $hintPos );
-} ?>
+if ($side_A_hint_data) {
+	$hintPos = 0;
+	foreach ($side_A_hint_data as $hint)
+	{ 
+	    $hintPos++;
+	    node_definition_hint_row( 'A', $hint, $hintPos );
+	} 
+}?>
             <tr>
               <td colspan="3" style="text-align: center; padding: 10px 0;">
             <input class="addDefinitionHint" value="include &lt;+&gt; taxon" id="includeTaxon_A" name="IGNORE_ME" type="button">
@@ -1177,11 +1179,13 @@ foreach ($side_A_hint_data as $hint)
 
         <table id="node-definition-side-B" style="margin:0 auto;" border="0" width="95%">
 <?php // list any B-side taxa found (if none, just prompt with +/- buttons)
-$hintPos = 0;
-foreach ($side_B_hint_data as $hint)
-{
-    $hintPos++;
-    node_definition_hint_row( 'B', $hint, $hintPos );
+if ($side_B_hint_data) {
+	$hintPos = 0;
+	foreach ($side_B_hint_data as $hint)
+	{
+	    $hintPos++;
+	    node_definition_hint_row( 'B', $hint, $hintPos );
+	}
 } ?>
             <tr>
               <td colspan="3" style="text-align: center; padding: 10px 0;">
