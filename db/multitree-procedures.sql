@@ -414,6 +414,82 @@ DELIMITER ;
 
 
 
+/*
+ * buildTreeFromNodeDefinition( hintTableName, treeDescriptionTableName )
+ *
+ * This takes a table of hints, using the schema for `node_definition`:
+ *   calibration_id
+ *   definition_side	-- A or B, as used in cladistic definitions
+ *   matching_name	-- not used here?
+ *   source_tree	-- source ('NCBI','FCD') for this hint's node
+ *   source_node_id	-- for this hint's node
+ *   operator		-- determines effect on the calculated tree
+ *   display_order	-- not used here
+ *
+ * ... and builds a new "tree description" table, suitable for either
+ * 	* building a "preview" of the resulting table, or
+ *	* generating and saving data to `FCD_nodes` and `node_identity`
+ * This tree description table includes a row for each node in the new tree:
+ *   unique_name	-- stored in new tree, displayed in preview
+ *   entered_name  	-- include (in parentheses?) in preview
+ *   depth		-- mainly used in preview
+ *   source_tree	-- as above?
+ *   source_node_id	-- as above?
+ *   parent_node_id 	-- from source tree?
+ *   is_pinned_node	-- or are all of them pinned?
+ *   is_public_node	-- ?
+ *   calibration_id     -- ?
+ *   is_explicit	-- directly entered in hints, vs. implicitly calculated
+ */
+
+DROP PROCEDURE IF EXISTS buildTreeFromNodeDefinition;
+
+DELIMITER #
+
+CREATE PROCEDURE buildTreeFromNodeDefinition (IN hintTableName VARCHAR(80), IN treeDescriptionTableName VARCHAR(80))
+BEGIN
+
+--
+-- TODO TODO TODO TODO TODO TODO 
+--
+
+-- DECLARE any local vars here
+
+
+-- order hint-taxa by depth (from root to extant species)
+
+
+-- build the empty tree-description table
+
+
+-- reckon MRCA of all INCLUDED (+) taxa on *both* sides; add this first node to the tree description
+
+
+-- IF there are no EXCLUDED (-) taxa, we're done! ELSE continue
+
+
+-- for each EXCLUDED (-) taxon in the hints...
+	-- ? is this node currently within a clade in this tree description?
+	-- IF NO, ignore this hint and move to the next hint
+	-- ? is this node directly included in the tree description?
+	-- IF YES, remove it and move to to the next hint
+	-- STILL HERE? prune this node from the tree by 
+		-- removing the nearest INCLUDED ancestor node 
+		-- add each of its siblings (unless they're explicitly EXCLUDED)
+		-- add the most efficient "aunts and uncles" (unless they're explicitly EXCLUDED)
+
+-- for each INCLUDED (+) taxon in the hints...
+	-- ? is this node currently within a clade in this tree description?
+	-- IF YES, ignore this hint and move to the next hint
+	-- ? is this node directly excluded in the tree description?
+	-- IF YES, restore it and move to to the next hint
+	-- STILL HERE? explicitly include this node in the tree
+
+
+END #
+
+DELIMITER ;
+
 
 /* 
  * Here's a typical query session, usable from the mysql command-line
