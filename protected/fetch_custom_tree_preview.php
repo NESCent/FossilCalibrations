@@ -96,20 +96,24 @@
    while($row=mysqli_fetch_assoc($result)) {
       $hints_data[] = $row;
    }
+/*
    foreach( $hints_data as $row ) {
 ?>
 <pre><?= print_r($row) ?></pre>
 <?
    }
+*/
    mysqli_free_result($result);
 
    ///$query='CALL getFullNodeInfo( "preview_hints", "preview_tree_definition" )';
    $query='CALL buildTreeDescriptionFromNodeDefinition( "preview_hints", "preview_tree_definition" )';
-   $result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+   $result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
    while(mysqli_more_results($mysqli)) {
-	mysqli_next_result($mysqli); // wait for this to finish
+	/*?><?= mysqli_next_result($mysqli) ? '.' : '!' ?><?*/
+	//mysqli_next_result($mysqli) or die ('Error in next result: '.$query.'|'. mysqli_error($mysqli)); // wait for this to finish
+	mysqli_next_result($mysqli);
+	mysqli_store_result($mysqli);
    }
-   mysqli_free_result($result);
 
    $query='SELECT * FROM preview_tree_definition';
    $result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
@@ -119,9 +123,14 @@
    }
    mysqli_free_result($result);
 
+  ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
+
    foreach( $included_taxa_data as $row ) {
-?>
-<b><?= $row['uniquename'] ?></b>
-<?
+	/* ?><pre><?= print_r($row) ?></pre><? */
+	?><i><?= $row['unique_name'] ?></i><?
+	if ($row['entered_name'] && ($row['entered_name'] != $row['unique_name'])) { 
+	    ?>&nbsp; (entered as '<?= $row['entered_name'] ?>')<?
+	}
+	?><br/><?
    }
 ?>
