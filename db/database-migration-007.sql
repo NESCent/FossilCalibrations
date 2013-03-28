@@ -29,6 +29,7 @@ CREATE TABLE node_definitions (
  * Add a single set of rules to test. This points to the most recent common
  * ancestor (MRCA) of humans and carnivores (but not cats, presumably a
  * renegade taxonomist).
+ */
 
 INSERT INTO node_definitions VALUES (
   103,
@@ -58,5 +59,4 @@ INSERT INTO node_definitions VALUES (
   2
 );
 
- */
 

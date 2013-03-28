@@ -942,6 +942,23 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
          }
       );
    }
+
+   function fetchCustomTreePreview() {
+	var $loader = $('#preview-tree-loader');
+	var strData = $('#CalibrationID, [name^=hintOperator_], [name^=hintName_], [name^=hintNodeSource_], [name^=hintNodeID_], [name^=hintDisplayOrder_]').serialize();
+	$loader.css('background-color', '#ffc;');
+	// we can't use $.load(), since we might be POSTing a lot of serialized data
+	$.ajax({
+             url: '/protected/fetch_custom_tree_preview.php',
+	     type: 'POST',
+	     data: strData,
+             success: function(response) {
+                // probably nothing else to do
+		$loader.html( response );
+		$loader.css('background-color', '');
+             }
+	});
+   }
 </script>
 
 <form action="update_calibration.php" method="post" id="edit-calibration" autocomplete="off">
@@ -1238,25 +1255,31 @@ if ($side_B_hint_data) {
 		    &nbsp;&bull;&nbsp; 
 		    <b>un-pinned target</b> 
 		</span> 
-		<button style="position: relative; top: -0.9em;" onclick="alert('Coming soon...'); return false;">Preview tree for this calibration</button> 
+		<button style="position: relative; top: -0.9em;" onclick="fetchCustomTreePreview(); return false;">Preview tree for this calibration</button> 
 	</div> 
 
-	<!-- TODO: Build this display on-the-fly, (re)generate via AJAX -->
-	<i>Carnivora</i> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; <b>ur-cat</b> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Caniformia</i> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Felidae</i> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Eupleridae</i> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Herpestidae</i> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Nandiniidae</i> 
-	<br> 
-	 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Viverridae</i> 
+	<div id="preview-tree-loader">
+		<p style="text-align: center; color: #999;">
+			Click the 'Preview tree' button above to see which NCBI taxa will return this calibration in a tip-taxa search.
+		</p>
+<!--
+		<i>Carnivora</i> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; <b>ur-cat</b> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Caniformia</i> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Felidae</i> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Eupleridae</i> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Herpestidae</i> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Nandiniidae</i> 
+		<br> 
+		 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i>Viverridae</i> 
+-->
+	</div>
 </div><!-- END of #preview-tree -->
 
 </div><!-- END of final step -->
