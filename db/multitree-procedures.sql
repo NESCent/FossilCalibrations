@@ -812,9 +812,9 @@ BEGIN
 
 -- EXAMPLE: addNodeToTreeDescription( 'NCBI', MRCA_id );
 -- TODO: revisit all the values here... which are needed? where can we get all this information?
--- TODO: handle nodes that ARE or AREN'T in the hints table (incl. entered_name, etc)
--- TODO: use getFullNodeInfo to populate this?
--- TODO: carry depth somehow, so we can properly build a tree (and show nested preview)!
+-- handles nodes that ARE or AREN'T in the hints table (incl. entered_name, etc)
+-- uses getFullNodeInfo to populate this?
+-- TODO: capture NCBI depth, so we can properly build a tree (and show nested preview)!
 
 DROP TEMPORARY TABLE IF EXISTS v_node_ids;
 -- fake this out with required properties..
@@ -896,14 +896,11 @@ BEGIN
     SET no_more_rows = TRUE;
 
   -- prune this node via a recursive walk toward the root node....
-  SELECT CONCAT("PRUNING NOW... node ID = ", hintNodeID);
+  SELECT hintNodeID as "PRUNING NODE...";
 
     -- is this node explicitly included? remove it and return
     IF isExplicitlyIncludedInTreeDescription (hintNodeSource, hintNodeID) THEN
-        SELECT hintNodeID AS "removing EXPLICITLY included node...";
-SELECT * FROM tdesc;
         CALL removeNodeFromTreeDescription (hintNodeSource, hintNodeID);
-SELECT * FROM tdesc;
 
     ELSE 
 	-- it's implicitly included (in an included clade), so...
@@ -911,11 +908,7 @@ SELECT * FROM tdesc;
 
         -- SET the_parent_node_id := (SELECT MIN(parent_node_id) FROM tdesc WHERE source_tree = hintNodeSource AND source_node_id = hintNodeID);
         SET the_parent_node_id := (SELECT MIN(parenttaxonid) FROM NCBI_nodes WHERE taxonid = hintNodeID);
-
-        SELECT hintNodeID AS "removing IMPLICITLY included node...";
-SELECT * FROM tdesc;
         CALL removeNodeFromTreeDescription (hintNodeSource, hintNodeID);
-SELECT * FROM tdesc;
 
 	-- add its siblings, IF they're not explicitly excluded in our hints
         OPEN sibling_cursor;
