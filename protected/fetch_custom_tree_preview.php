@@ -123,19 +123,22 @@
    }
    mysqli_free_result($result);
 
-  if (count($included_taxa_data) == 0) {
-	  ?><p style="color: #999;">This calibration will not match any NCBI taxa. Please include (+) more taxa above.</p><?
-  } else {
-	  ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
-  }
+   if (count($included_taxa_data) == 0) {
+	   ?><p style="color: #999;">This calibration will not match any NCBI taxa. Please include (+) more taxa above.</p><?
+   } else {
+	   ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
+   }
 
-
+   $indent = 12; // how many pixels per depth level in NCBI
+ 
    foreach( $included_taxa_data as $row ) {
-	/* ?><pre><?= print_r($row) ?></pre><? */
-	?><i><?= $row['unique_name'] ?></i><?
-	if ($row['entered_name'] && ($row['entered_name'] != $row['unique_name'])) { 
-	    ?>&nbsp; (entered as '<?= $row['entered_name'] ?>')<?
-	}
-	?><br/><?
+      /*
+      ?><pre><?= print_r($row) ?></pre><? 
+      */
+      ?><i style="padding-left: <?= $row['depth'] * $indent ?>px;"><?= $row['unique_name'] ?></i><?
+      if ($row['entered_name'] && ($row['entered_name'] != $row['unique_name'])) { 
+          ?>&nbsp; (entered as '<?= $row['entered_name'] ?>')<?
+      }
+      ?><br/><?
    }
 ?>

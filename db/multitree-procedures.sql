@@ -454,6 +454,7 @@ BEGIN
 DECLARE oldRecursionDepth INT;
 DECLARE the_hint_source_tree VARCHAR(20);
 DECLARE the_hint_node_id MEDIUMINT(8) UNSIGNED;
+DECLARE the_hint_node_depth INT;
 DECLARE the_hint_operator ENUM('+','-');
 DECLARE MRCA_id MEDIUMINT(8) UNSIGNED DEFAULT NULL;
 
@@ -461,7 +462,7 @@ DECLARE MRCA_id MEDIUMINT(8) UNSIGNED DEFAULT NULL;
 DECLARE no_more_rows INT DEFAULT FALSE;
 
 -- a cursor to fetch these fields
-DECLARE hint_cursor CURSOR FOR SELECT source_tree, source_node_id, operator FROM hints ORDER BY NCBI_depth;
+DECLARE hint_cursor CURSOR FOR SELECT source_tree, source_node_id, NCBI_depth, operator FROM hints ORDER BY NCBI_depth;
 
 DECLARE CONTINUE HANDLER FOR NOT FOUND 
   SET no_more_rows = TRUE;
@@ -494,7 +495,7 @@ SET @sql = CONCAT('CREATE TEMPORARY TABLE hints ENGINE=memory AS (
 		 source_tree,
 		 source_node_id,
 		 MIN(operator) AS operator,
-		 999 AS NCBI_depth
+		 0 AS NCBI_depth
 	FROM ', hintTableName ,'
 	GROUP BY source_tree, source_node_id
 );');
@@ -508,7 +509,7 @@ DEALLOCATE PREPARE cmd;
 OPEN hint_cursor;
 
   the_loop: LOOP
-    FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_operator;
+    FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_node_depth, the_hint_operator;
 
     IF no_more_rows THEN 
       LEAVE the_loop;
@@ -516,10 +517,11 @@ OPEN hint_cursor;
 
     -- reckon its depth by counting ancestors, and save to scratch hints
     CALL getAllAncestors( the_hint_node_id, "v_path", the_hint_source_tree );
-    -- SELECT * FROM v_path;
+
     UPDATE hints
       SET NCBI_depth = (SELECT COUNT(*) FROM v_path)
       WHERE source_tree = the_hint_source_tree AND source_node_id = the_hint_node_id;
+
   END LOOP;
 
 CLOSE hint_cursor;
@@ -554,7 +556,7 @@ OPEN hint_cursor;
 
   -- this time nodes should be properly sorted by the depths assigned above
   the_loop: LOOP
-    FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_operator;
+    FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_node_depth, the_hint_operator;
 
     IF no_more_rows THEN 
       LEAVE the_loop;
@@ -590,7 +592,7 @@ IF ISNULL(MRCA_id) THEN
     SELECT "NO MRCA FOUND, finishing early";
 ELSE
     -- add the deepest MRCA as the first entry in our tree definition
-    CALL addNodeToTreeDescription( 'NCBI', MRCA_id ); -- , hintTableName, treeDescriptionTableName )
+    CALL addNodeToTreeDescription( 'NCBI', MRCA_id, NULL );
     
     -- IF there are no EXCLUDED (-) taxa, we're done! ELSE continue
     IF (SELECT COUNT(*) FROM hints WHERE operator = '-') = 0 THEN
@@ -606,7 +608,7 @@ ELSE
         OPEN hint_cursor;
         
           the_loop: LOOP
-            FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_operator;
+            FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_node_depth, the_hint_operator;
         
             IF no_more_rows THEN 
               LEAVE the_loop;
@@ -630,7 +632,7 @@ ELSE
                 END IF;
            
 	        -- STILL HERE? explicitly include this node in the tree description
-                CALL addNodeToTreeDescription (the_hint_source_tree, the_hint_node_id);
+                CALL addNodeToTreeDescription (the_hint_source_tree, the_hint_node_id, the_hint_node_depth);
            
             -- ELSE it's EXCLUDED (-)...
             ELSE
@@ -798,7 +800,7 @@ DELIMITER ;
 
 
 /*
- * addNodeToTreeDescription( hintNodeSource, hintNodeID )
+ * addNodeToTreeDescription( hintNodeSource, hintNodeID, NCBIDepth )
  * 
  * ASSUMES we're using the temporary tables `hints` and `tdesc`
  */
@@ -807,21 +809,27 @@ DROP PROCEDURE IF EXISTS addNodeToTreeDescription;
 
 DELIMITER #
 
-CREATE PROCEDURE addNodeToTreeDescription (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8))
+CREATE PROCEDURE addNodeToTreeDescription (IN hintNodeSource VARCHAR(20), IN hintNodeID MEDIUMINT(8), IN hintNodeDepth INT)
 BEGIN
 
 -- EXAMPLE: addNodeToTreeDescription( 'NCBI', MRCA_id );
--- TODO: revisit all the values here... which are needed? where can we get all this information?
 -- handles nodes that ARE or AREN'T in the hints table (incl. entered_name, etc)
 -- uses getFullNodeInfo to populate this?
--- TODO: capture NCBI depth, so we can properly build a tree (and show nested preview)!
+-- captures NCBI depth, so we can properly build a tree (and show nested preview)!
+-- TODO: revisit all the final values here... Is all this needed? Where can we get all this information?
+
+-- reckon hintNodeDepth, if not provided
+IF ISNULL(hintNodeDepth) THEN
+    CALL getAllAncestors( hintNodeID, "v_path", hintNodeSource );
+    SET hintNodeDepth = (SELECT COUNT(*) FROM v_path);
+END IF;
 
 DROP TEMPORARY TABLE IF EXISTS v_node_ids;
 -- fake this out with required properties..
 CREATE TEMPORARY TABLE v_node_ids ENGINE=memory AS (SELECT 
 	hintNodeID as node_id, 
 	NULL as parent_node_id, 
-	0 AS depth
+	hintNodeDepth AS depth
 );
 
 CALL getFullNodeInfo( "v_node_ids", "v_node_info" );
@@ -921,7 +929,7 @@ BEGIN
             END IF;
 		
             IF NOT the_sibling_node_id IN (SELECT source_node_id FROM hints WHERE source_tree = hintNodeSource AND operator = '-') THEN
-              CALL addNodeToTreeDescription(hintNodeSource, the_sibling_node_id);
+              CALL addNodeToTreeDescription(hintNodeSource, the_sibling_node_id, NULL);
             END IF;
 
           END LOOP;
