@@ -123,7 +123,12 @@
    }
    mysqli_free_result($result);
 
-  ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
+  if (count($included_taxa_data) == 0) {
+	  ?><p style="color: #999;">This calibration will not match any NCBI taxa. Please include (+) more taxa above.</p><?
+  } else {
+	  ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
+  }
+
 
    foreach( $included_taxa_data as $row ) {
 	/* ?><pre><?= print_r($row) ?></pre><? */
