@@ -946,7 +946,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
    function fetchCustomTreePreview() {
 	var $loader = $('#preview-tree-loader');
 	var strData = $('#CalibrationID, [name^=hintOperator_], [name^=hintName_], [name^=hintNodeSource_], [name^=hintNodeID_], [name^=hintDisplayOrder_]').serialize();
-	$loader.css('background-color', '#ffc;');
+	$loader.css('background-color', '#ffc;').html('<p style="color: #999; text-align: center;">... <i>building list</i> ...</p>');
 	// we can't use $.load(), since we might be POSTing a lot of serialized data
 	$.ajax({
              url: '/protected/fetch_custom_tree_preview.php',
@@ -1163,7 +1163,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 <div>
 
 <p>
-To support tip-taxa searches, place the calibrated node by including or excluding taxa below. Include taxa to indicate MRCA (<i>A+B+...</i>), and exclude taxa to define a stem (<i>A-C</i> or <i>A+B-C</i>) or override the NCBI taxonomy. You can <b>preview the resulting tree</b> to see detailed results below.
+To support tip-taxa searches, place the calibrated node by including or excluding taxa below. Include taxa to indicate MRCA (<i>A+B+...</i>), and exclude taxa to define a stem (<i>A-C</i> or <i>A+B-C</i>) or override the NCBI taxonomy. You can <b>preview the resulting tip taxa</b> to see detailed results below.
 </p>
 
 <table id="tip-taxa-panel" width="100%" border="0">
@@ -1244,7 +1244,8 @@ if ($side_B_hint_data) {
 </table>
 
 <div style="background-color: #eee; border: 1px solid silver; padding: 4px 6px; margin-top: 12px;" width="100%" id="preview-tree"> 
-	<div style="" id="preview-tree-legend"> 
+	<div style="margin-bottom: -1em;" id="preview-tree-legend"> 
+<!-- This is moot, as all listed taxa are directly pinned to NCBI taxonomy.
 		<span style="float: right; font-size: 0.8em; background-color: #ddd; padding: 2px 4px;"> 
 		    <span style="color: #555;">Legend:</span> 
 		    <i>pinned node (to NCBI)</i> 
@@ -1255,12 +1256,13 @@ if ($side_B_hint_data) {
 		    &nbsp;&bull;&nbsp; 
 		    <b>un-pinned target</b> 
 		</span> 
-		<button style="position: relative; top: -0.9em;" onclick="fetchCustomTreePreview(); return false;">Preview tree for this calibration</button> 
+-->
+		<button style="position: relative; top: -0.9em;" onclick="fetchCustomTreePreview(); return false;">Preview tip taxa for this calibration</button> 
 	</div> 
 
 	<div id="preview-tree-loader">
 		<p style="text-align: center; color: #999;">
-			Click the 'Preview tree' button above to see which NCBI taxa will return this calibration in a tip-taxa search.
+			Click the 'Preview tip taxa' button above to see which NCBI taxa will return this calibration in a tip-taxa search.
 		</p>
 <!--
 		<i>Carnivora</i> 

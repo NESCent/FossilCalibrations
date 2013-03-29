@@ -129,13 +129,26 @@
 	   ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
    }
 
-   $indent = 12; // how many pixels per depth level in NCBI
+   // "normalize" indentation to reflect the min and max depths in our list
+   $minDepth = 999;
+   $maxDepth = 0;
+   foreach( $included_taxa_data as $row ) {
+	$testDepth = $row['depth'];	
+	$minDepth = min($testDepth, $minDepth);
+	$maxDepth = max($testDepth, $maxDepth);
+   }
+   function treeDepthToIndent( $depth ) {
+        global $minDepth;
+	// convert a nominal depth to CSS indentation in px
+	///return (($depth - $minDepth) * 20).'px';
+	return ($depth * 15).'px';
+   }
  
    foreach( $included_taxa_data as $row ) {
       /*
       ?><pre><?= print_r($row) ?></pre><? 
       */
-      ?><i style="padding-left: <?= $row['depth'] * $indent ?>px;"><?= $row['unique_name'] ?></i><?
+      ?><i style="padding-left: <?= treeDepthToIndent($row['depth']) ?>;"><?= $row['unique_name'] ?></i><?
       if ($row['entered_name'] && ($row['entered_name'] != $row['unique_name'])) { 
           ?>&nbsp; (entered as '<?= $row['entered_name'] ?>')<?
       }
