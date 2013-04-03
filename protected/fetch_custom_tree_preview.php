@@ -154,4 +154,17 @@
       }
       ?><br/><?
    }
+
+
+/*** TEMPORARY test of custom-tree-generation logic   TODO: remove this! ***/
+
+   $query='CALL updateTreeFromDefinition( '.$calibrationID.', "preview_tree_definition" )';
+   $result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+   while(mysqli_more_results($mysqli)) {
+	/*?><?= mysqli_next_result($mysqli) ? '.' : '!' ?><?*/
+	//mysqli_next_result($mysqli) or die ('Error in next result: '.$query.'|'. mysqli_error($mysqli)); // wait for this to finish
+	mysqli_next_result($mysqli);
+	mysqli_store_result($mysqli);
+   }
+?><p><i style="color: #999;">Custom tree regen completed &mdash; <?= time() ?></i></p><?
 ?>

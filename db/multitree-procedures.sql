@@ -960,11 +960,132 @@ DROP PROCEDURE IF EXISTS updateTreeFromDefinition;
 
 DELIMITER #
 
+-- Use the named "tree definition" table (an existing temp table)
+-- to build and save a custom tree for this calibration.
 CREATE PROCEDURE updateTreeFromDefinition (IN calibrationID INT(11), IN treeDescriptionTableName VARCHAR(80))
 BEGIN
 
-	-- TODO
+  -- DECLARE any local vars here
+  
+  DECLARE desc_node_unique_name VARCHAR(80);
+  DECLARE desc_node_entered_name VARCHAR(80);
+  DECLARE desc_node_source_tree VARCHAR(20);
+  DECLARE desc_node_source_node_id INT(11);
+  
+  -- a flag terminates the loop when no more records are found
+  DECLARE no_more_rows INT DEFAULT FALSE;
 
+  -- a cursor to fetch from the tree-description table
+  DECLARE desc_cursor CURSOR FOR 
+    SELECT unique_name, entered_name, source_tree, source_node_id 
+    FROM tdesc2 ORDER BY depth;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND 
+    SET no_more_rows = TRUE;
+  
+  DROP TEMPORARY TABLE IF EXISTS tdesc2;
+  
+  SET @sql = CONCAT('CREATE TEMPORARY TABLE tdesc2 ENGINE=memory AS (SELECT * FROM ', treeDescriptionTableName ,');');
+  SELECT @sql as "";
+  PREPARE cmd FROM @sql;
+  EXECUTE cmd;
+  DEALLOCATE PREPARE cmd;
+
+  -- clear any existing data for this calibration's custom tree
+  SET @oldTreeID = (SELECT tree_id FROM FCD_trees WHERE calibration_id = calibrationID);
+  -- clear pinned nodes (pinned from this tree to any other)
+  DELETE FROM pinned_nodes WHERE calibration_id = calibrationID;
+  -- clear names assigned (only) to its nodes
+  DELETE FROM FCD_names WHERE node_id IN (SELECT node_id FROM FCD_nodes WHERE tree_id = @oldTreeID);
+  -- clear nodes assigned to its tree
+  DELETE FROM FCD_nodes WHERE tree_id = @oldTreeID;
+  -- clear tree assigned to this calibration
+  DELETE FROM FCD_trees WHERE tree_id = @oldTreeID;
+  
+  -- Create a new tree for this calibration
+  INSERT INTO FCD_trees
+  SET
+     -- tree_id  -- AUTO_INCREMENT
+     root_node_id = NULL
+    ,calibration_id = calibrationID
+    ,comments = CONCAT('tree for FCD-', calibrationID)
+    ,is_public_tree = false 
+      -- TODO: set this based on PublicationStatus of related publication?
+  ;
+  SET @treeID = LAST_INSERT_ID();
+  
+  -- Create a single, custom FCD node to represent the calibrated node.
+  -- (NOTE that for now, this will not be pinned to an NCBI taxon)
+  INSERT INTO FCD_nodes
+  SET
+     parent_node_id = NULL
+    ,comments = CONCAT('calibrated (root) node for FCD-', @treeID)
+    ,tree_id = @treeID
+  ;
+  SET @rootNodeID = LAST_INSERT_ID();
+  
+  -- assign this root node to the new tree
+  UPDATE FCD_trees
+  SET
+     root_node_id = @rootNodeID
+  WHERE
+    tree_id = @treeID
+  ;
+  
+  -- TODO: assign a name for the root node? may not be needed
+  
+  -- For each entry specified in the node-definition table...
+  SET no_more_rows = FALSE;
+  OPEN desc_cursor;
+
+    the_loop: LOOP
+
+      FETCH desc_cursor 
+        INTO desc_node_unique_name, desc_node_entered_name, desc_node_source_tree, desc_node_source_node_id;
+  
+      IF no_more_rows THEN 
+        LEAVE the_loop;
+      END IF;
+  
+      -- add a custom FCD node, whose parent is the calibrated node
+      INSERT INTO FCD_nodes
+      SET
+         parent_node_id = @rootNodeID
+        ,comments = CONCAT('pinned node in FCD-', @treeID)
+        ,tree_id = @treeID
+      ;
+      SET @pinnedNodeID = LAST_INSERT_ID();
+
+      -- TODO: assign names to these nodes? 
+      INSERT INTO FCD_names
+      SET
+        node_id = @pinnedNodeID
+       ,name = IFNULL( desc_node_entered_name, IFNULL( desc_node_unique_name, 'untitled') )
+       ,uniquename = desc_node_unique_name
+       ,class = ''
+      ;
+
+      -- pin it to the corresponding NCBI taxon
+      INSERT INTO pinned_nodes
+      SET
+        target_tree = desc_node_source_tree  -- pinning a new node to one on this tree
+       ,target_node_id = desc_node_source_node_id     -- pinning TO this existing node (Homo)
+       ,pinned_tree = CONCAT('FCD-', @treeID)    -- TODO: standardize tree IDs?
+       ,pinned_node_id = @pinnedNodeID
+       ,calibration_id = calibrationID
+       ,comments = CONCAT('pinned node from tree FCD-', @treeID)
+       ,is_public_node = 0  -- refers to the pinned (newly submitted) node
+      ;
+      
+    END LOOP;
+  CLOSE desc_cursor;
+  
+  -- notify the site-status table that the multitree is stale
+  UPDATE site_status
+  SET needs_autocomplete_build = true, needs_multitree_build = true;
+
+  -- clean up, just in case
+  DROP TEMPORARY TABLE IF EXISTS tdesc2;
 END #
 
 DELIMITER ;
@@ -1054,6 +1175,21 @@ SELECT * FROM testHints;
 CALL buildTreeDescriptionFromNodeDefinition( "testHints", "testTreeDef" );
 SELECT * FROM testTreeDef;
 
+system echo "=========================== CUSTOM TREE GENERATION ==========================="
+
+CALL updateTreeFromDefinition (@calibrationID, "testTreeDef");
+
+system echo "........................... FCD_trees ..........................."
+SELECT * FROM FCD_trees WHERE calibration_id = @calibrationID;
+system echo "........................... FCD_nodes ..........................."
+SELECT * FROM FCD_nodes WHERE tree_id = 
+  (SELECT tree_id FROM FCD_trees WHERE calibration_id = @calibrationID);
+system echo "........................... FCD_names ..........................."
+SELECT * FROM FCD_names WHERE node_id IN 
+  (SELECT node_id FROM FCD_nodes WHERE tree_id = 
+    (SELECT tree_id FROM FCD_trees WHERE calibration_id = @calibrationID));
+system echo "........................... pinned_nodes ..........................."
+SELECT * FROM pinned_nodes WHERE calibration_id = @calibrationID;
 
 system echo "=========================== DONE ==========================="
 
