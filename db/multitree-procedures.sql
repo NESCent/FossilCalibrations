@@ -1082,7 +1082,12 @@ BEGIN
   
   -- notify the site-status table that the multitree is stale
   UPDATE site_status
-  SET needs_autocomplete_build = true, needs_multitree_build = true;
+  SET 
+     needs_autocomplete_build = true
+    ,needs_multitree_build = true
+    ,autocomplete_status = 'Needs update'
+    ,multitree_status = 'Needs update'
+  ;
 
   -- clean up, just in case
   DROP TEMPORARY TABLE IF EXISTS tdesc2;
