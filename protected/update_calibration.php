@@ -403,16 +403,6 @@ foreach (Array('A', 'B') as $side) {
     }
 }
 
-// clobber any existing calculated tree for this calibration
-// TODO
-
-// re-calculate tree based on the updated node definition (hints)
-// NOTE: this should be done through a stored procedure, to support AJAX preview!
-// TODO
-
-// store the resulting tree, pinned to NCBI or other FCD nodes as needed
-
-
 
 /* process any pair variables found (TODO: review this old stuff, to clean out unused tables/columns) */
 if (false) {
@@ -440,6 +430,40 @@ if (false) {
 		$nthPair++;
 	}
 }
+
+
+/* Custom tree (re)generation */
+
+// NOTE that to use stored procedures and functions in MySQL, the newer mysqli API is recommended.
+///mysql_select_db('FossilCalibration') or die ('Unable to select database!');
+$mysqli = new mysqli($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password'], 'FossilCalibration');
+
+// describe this calibration's new tree, based on the updated node definition (hints)
+// NOTE: this should be done through a stored procedure, to support AJAX preview!
+$query="DROP TEMPORARY TABLE IF EXISTS updateHints";
+$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+
+$query='CREATE TEMPORARY TABLE updateHints ENGINE=memory AS 
+    (SELECT * FROM node_definitions WHERE calibration_id = '.$calibrationID.')';
+$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+
+$query='CALL buildTreeDescriptionFromNodeDefinition( "updateHints", "updateTreeDef" )';
+$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+while(mysqli_more_results($mysqli)) {
+	mysqli_next_result($mysqli);
+	mysqli_store_result($mysqli);
+}
+
+// store the resulting tree, pinned to NCBI or other FCD nodes as needed
+$query='CALL updateTreeFromDefinition( '.$calibrationID.', "updateTreeDef" )';
+$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+while(mysqli_more_results($mysqli)) {
+	mysqli_next_result($mysqli);
+	mysqli_store_result($mysqli);
+}
+
+
+
 
 // NOTE that we're careful to return to a new calibration with its new assigned ID
 ///echo '<a href="/protected/edit_calibration.php?id='. $calibrationID .'">return to editor</a><br/><br/>';
