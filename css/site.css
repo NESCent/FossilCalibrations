@@ -176,7 +176,7 @@ dl.filter-list dt.optional-filter.blocked-filter {
 dl.filter-list .blocked-explanation {
 	display: none;
 	font-size: 0.9em;
-	line-height: 1.1em;
+	line-height: 1.2em;
 	font-style: italic;
 	color: #882222;
 	padding: 0 4px 5px 4px;
@@ -580,3 +580,12 @@ textarea {
 .placeholder {
     color: #999;
 }
+.search-details {
+	display: none; 
+	background-color: #ffd; 
+	overflow: hidden; 
+	padding: 0 5px; 
+	font-size: 50%;
+}
+
+

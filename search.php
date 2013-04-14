@@ -222,7 +222,7 @@ $nonce = md5('salt'.microtime());
 </div>
 
 <div class="center-column" style="">
-<div id="search-results" style="border: 1px dashed pink;">
+<div id="search-results" Xstyle="border: 1px dashed pink;">
 
 <? // use query built above to search and display results
 include('fetch-search-results.php'); 

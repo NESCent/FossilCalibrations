@@ -44,48 +44,48 @@ if (!isset($search) || ($search == null)) {
 
     // apply submitted ($_GET) variables, if found
     if (isset($_GET['SimpleSearch'])) {
-    	$search['SimpleSearch'] = $_GET['SimpleSearch'];
+    	$search['SimpleSearch'] = trim($_GET['SimpleSearch']);
 	if (isset($_GET['TaxonA'])) {
-	    $search['FilterByTipTaxa']['TaxonA'] = $_GET['TaxonA'];
+	    $search['FilterByTipTaxa']['TaxonA'] = trim($_GET['TaxonA']);
 	}
 	if (isset($_GET['TaxonB'])) {
-	    $search['FilterByTipTaxa']['TaxonB'] = $_GET['TaxonB'];
+	    $search['FilterByTipTaxa']['TaxonB'] = trim($_GET['TaxonB']);
 	}
 	if (isset($_GET['FilterByClade'])) {
-	    $search['FilterByClade'] = $_GET['FilterByClade'];
+	    $search['FilterByClade'] = trim($_GET['FilterByClade']);
 	}
 	if (isset($_GET['MinAge'])) {
-	    $search['FilterByAge']['MinAge'] = $_GET['MinAge'];
+	    $search['FilterByAge']['MinAge'] = trim($_GET['MinAge']);
 	}
 	if (isset($_GET['MaxAge'])) {
-	    $search['FilterByAge']['MaxAge'] = $_GET['MaxAge'];
+	    $search['FilterByAge']['MaxAge'] = trim($_GET['MaxAge']);
 	}
 	if (isset($_GET['FilterByGeologicalTime'])) {
-	    $search['FilterByGeologicalTime'] = $_GET['FilterByGeologicalTime'];
+	    $search['FilterByGeologicalTime'] = trim($_GET['FilterByGeologicalTime']);
 	}
 	if (isset($_GET['HiddenFilters'])) {
-	    $search['HiddenFilters'] = $_GET['HiddenFilters'];
+	    $search['HiddenFilters'] = $_GET['HiddenFilters']; // should be an Array
 	} else {
 	    $search['HiddenFilters'] = Array();
 	}
 	if (isset($_GET['BlockedFilters'])) {
-	    $search['BlockedFilters'] = $_GET['BlockedFilters'];
+	    $search['BlockedFilters'] = $_GET['BlockedFilters']; // should be an Array
 	} else {
 	    $search['BlockedFilters'] = Array();
 	}
 	if (isset($_GET['SortResultsBy'])) {
-	    $search['SortResultsBy'] = $_GET['SortResultsBy'];
+	    $search['SortResultsBy'] = trim($_GET['SortResultsBy']);
 	}
 	if (isset($_GET['ResponseType'])) {
-	    $search['ResponseType'] = $_GET['ResponseType'];
+	    $search['ResponseType'] = trim($_GET['ResponseType']);
 	}
     }
 
     // add diagnostic info to page
     ?>
-    <a href="#" onclick="$('#search-details').toggle();" style="color: #c33; background-color: #ffd; padding: 2px 4px;; font-size: 8px; position: absolute; left: 0; top: 0;">show search object</a>
+    <a href="#" onclick="$('.search-details').toggle();" style="color: #c33; background-color: #ffd; padding: 2px 4px;; font-size: 8px; position: absolute; left: 0; top: 0;">show/hide search details</a>
 
-    <div id="search-details" style="display: none; background-color: #ffd; overflow: hidden; padding: 0 5px; font-size: 50%;">
+    <div class="search-details" style="">
 	<pre id="request-details" style="color: #c33; width: 48%; float: left;">======== GET (form) values ========
 <? print_r($_GET); ?>
 	</pre>
