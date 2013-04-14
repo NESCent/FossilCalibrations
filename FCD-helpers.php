@@ -84,4 +84,97 @@ function testForProp( $data, $property, $default ) {
 	return $data[$property];
 }
 
+/* High-level functions for search and data reporting
+ */
+function nameToMultitreeID( $taxonName ) {
+	// check list of names against this query
+	// show un-published names only to logged-in admins/reviewers
+	// 
+	// TODO: Handle ambiguous names and homonyms? should we be taking IDs in to start with?
+	global $mysqli;
+
+	$query="SELECT taxonid, 'NCBI' AS source
+		FROM NCBI_names
+		WHERE name LIKE '". mysql_real_escape_string($taxonName) ."'
+	    LIMIT 1;";
+	$match_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	$node_data = mysqli_fetch_assoc($match_list);
+
+	if (!$node_data) {
+	    // fall back to FCD names *if* no NCBI node was found
+	    $query="SELECT taxonid, 'FCD' AS source
+		FROM FCD_names
+		WHERE name LIKE '". mysql_real_escape_string($taxonName) ."'".
+		// non-admin users should only see *Published* publication names
+		((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? "" :  
+		    " AND is_public_name = 1"
+		)
+		." LIMIT 1;";
+	    $match_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	    $node_data = mysqli_fetch_assoc($match_list);
+	}
+
+	if (!$node_data) return null;
+
+	// call stored *function* to retrieve the multitree ID
+	$query="SELECT getMultitreeNodeID( '". $node_data['source'] ."', '". $node_data['taxonid'] ."' )";
+	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+
+	while(mysqli_more_results($mysqli)) {
+		mysqli_next_result($mysqli);
+		$result = mysqli_store_result($mysqli);
+	}
+	$row = mysqli_fetch_row($result);
+	return $row[0];
+}
+
+function getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B ) {
+	global $mysqli;
+
+	$query="CALL getMostRecentCommonAncestor( '". mysql_real_escape_string($multitree_id_A) ."', '". mysql_real_escape_string($multitree_id_B) ."', 'temp_MRCA', 'ALL TREES' );";
+	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+	while(mysqli_more_results($mysqli)) {
+		mysqli_next_result($mysqli);
+		$result = mysqli_store_result($mysqli);
+	}
+
+	// this should have populated a temporary table
+	$query="SELECT * FROM temp_MRCA;";
+	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+	while(mysqli_more_results($mysqli)) {
+		mysqli_next_result($mysqli);
+		$result = mysqli_store_result($mysqli);
+	}
+	$mrca_data = mysqli_fetch_assoc($result);
+	return $mrca_data['node_id'];
+}
+
+function getAllMultitreeAncestors( $multitree_node_id ) {
+	global $mysqli;
+	$ancestorIDs = Array();
+
+	$query="CALL getAllAncestors ( '". mysql_real_escape_string($multitree_node_id) ."', 'temp_ancestors', 'ALL TREES' );";
+	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+	while(mysqli_more_results($mysqli)) {
+		mysqli_next_result($mysqli);
+		$result = mysqli_store_result($mysqli);
+	}
+
+	// this should have populated a temporary table
+	$query="SELECT * FROM temp_ancestors;";
+	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+	while(mysqli_more_results($mysqli)) {
+		mysqli_next_result($mysqli);
+		$result = mysqli_store_result($mysqli);
+	}
+	while($row=mysqli_fetch_assoc($result)) {
+		/*
+		?><h3><?= print_r($row) ?></h3><?
+		*/
+		$ancestorIDs[] = $row['node_id'];
+	}
+
+	return $ancestorIDs;
+}
+
 ?>
