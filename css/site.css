@@ -567,3 +567,8 @@ textarea {
 .single-fossil-header a[href] {
    color: #333 !important;
 }
+
+/* emulate HTML5 placeholder style for older browsers (triggered by complete-placeholder JS plugin) */
+.placeholder {
+    color: #999;
+}
