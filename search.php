@@ -272,7 +272,11 @@ function blockFilter(filterName) {
 	$('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').removeAttr('disabled');
 }
 function unblockFilter(filterName) {
-	$('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').attr('disabled', 'disabled');
+	var $flagField = $('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']');
+	$flagField.attr('disabled', 'disabled');
+	// hide its blocking explanation, if visible
+	var $blockMsg = $flagField.nextAll('div.blocked-explanation');
+	$blockMsg.hide();
 }
 function activateFilter(filterName) {
 	$('input:hidden[name^=HiddenFilters][value=FilterBy'+ filterName +']').attr('disabled', 'disabled');
@@ -349,7 +353,9 @@ $(document).ready(function() {
 		var $filterBody = $filterHeader.next('dd');
 		var filterName = $filterHeader.find('input:hidden:eq(0)').val().split('FilterBy')[1];
 		if (filterIsBlocked(filterName)) { 
-			return false;  // clicking a locked filter does nothing
+			// clicking a locked filter should just show/hide its explanation
+			$filterHeader.find('.blocked-explanation').toggle();
+			return false;  
 		}
 		if (filterIsHidden(filterName)) {
 			activateFilter(filterName);
@@ -380,6 +386,7 @@ $(document).ready(function() {
 				// related (stale) values from the UI!
 				$(this).val('');
 				$(this).parent().find('[id^=hintNodeSource_], [id^=hintNodeID_]').val('');
+				updateFilterList('ENFORCE FILTER RULES');
 			} else {
 				console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
 				/* do we ever need this?

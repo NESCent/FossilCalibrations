@@ -181,9 +181,6 @@ dl.filter-list .blocked-explanation {
 	color: #882222;
 	padding: 0 4px 5px 4px;
 }
-dl.filter-list dt.optional-filter.blocked-filter .blocked-explanation {
-	display: block;
-}
 
 dl.filter-list dd {
 	display: none;
@@ -191,6 +188,10 @@ dl.filter-list dd {
 dl.filter-list dd.active-filter {
 	display: block;
 }
+dl.filter-list dd.blocked-filter {
+	display: none !important;
+}
+
 .left-column #faceted-search dt,
 .left-column #faceted-search div.faceted-search-tail {
 	padding-top: 0.3em; 
