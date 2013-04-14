@@ -92,9 +92,9 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 </table>
 			</dd>
 
-			<dt class="optional-filter disabled-filter">By <a class="term" href="#">geological time</a>
+			<dt class="optional-filter blocked-filter">By <a class="term" href="#">geological time</a>
 			</dt>
-			<dd class="disabled-explanation">
+			<dd class="blocked-explanation">
 				This is incompatible with the <strong>age</strong> filter above. 
 				Remove that filter to use this one.
 			</dd>

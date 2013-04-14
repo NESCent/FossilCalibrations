@@ -9,27 +9,35 @@ require('header.php');
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
+// build search object from GET vars or other inputs (eg, a saved-query ID)
+$search = null;
+include('build-search-query.php'); 
+
+// add a timestamp to the form, so we're sure it will refresh properly
+$nonce = md5('salt'.microtime());
 ?>
+
+<form id="advanced-search" Xstyle="border: 1px dashed green;" autocomplete="off">
+<input type="hidden" name="nonce" value="<?= $nonce ?>" />
 
 <div id="simple-search-header" 
      style="">
-	<select style="float: right; margin-top: 3px;">
-		<option>Group by relevance</option>
-		<option>Group by relationship</option>
-		<option selected="selected">Sort by date added</option>
-		<option>Sort by calibrated age</option>
+	<select name="SortResultsBy" id="SortResultsBy" style="float: right; margin-top: 3px;">
+		<option value="RELEVANCE_DESC" 		<?= ($search['SortResultsBy'] == 'RELEVANCE_DESC') ? 'selected="selected"' : '' ?> >Group by relevance</option>
+		<option value="RELATIONSHIP" 		<?= ($search['SortResultsBy'] == 'RELATIONSHIP') ? 'selected="selected"' : '' ?> >Group by relationship</option>
+		<option value="DATE_ADDED_DESC" 	<?= ($search['SortResultsBy'] == 'DATE_ADDED_DESC') ? 'selected="selected"' : '' ?> >Sort by date added</option>
+		<option value="CALIBRATED_AGE_ASC" 	<?= ($search['SortResultsBy'] == 'CALIBRATED_AGE_ASC') ? 'selected="selected"' : '' ?> >Sort by calibrated age</option>
 	</select>
 
 <!--
 	<h3 style="display: inline-block; font-size: 1em; font-family: Helvetica,Arial,sans-serif;">Search</h3>
 -->
-	<input type="text" style="width: 420px;" value="Search by author, clade, publication, species,etc." />
-	<input type="submit" style="" value="Go" />
+	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px;" placeholder="Search by author, clade, publication, species,etc." value="<?= $search['SimpleSearch'] ?>"/>
+	<input type="submit" style="" value="Update" />
 </div>
 
 <div class="left-column" style="">
 
-    <form id="advanced-search" Xstyle="border: 1px dashed red;">
 	<!-- faceted search tools -->
 	<div id="faceted-search">
 
@@ -46,16 +54,24 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 -->
 		<h3>Advanced search filters</h3>
 		<dl class="filter-list">
-			<dt class="optional-filter active-filter">By <a class="term" href="#">extant (living) species</a></dt>
-			<dd class="active-filter">
+			<dt class="optional-filter">
+				By <a class="term" href="#">extant (living) species</a>
+				<input name="HiddenFilters[]" type="hidden" value="FilterByTipTaxa" <?= in_array('FilterByTipTaxa', $search['HiddenFilters']) ? '' : 'disabled="disabled"' ?> />
+				<input name="BlockedFilters[]" type="hidden" value="FilterByTipTaxa" <?= in_array('FilterByTipTaxa', $search['BlockedFilters']) ? '' : 'disabled="disabled"' ?> />
+				<div class="blocked-explanation">
+					This is incompatible with the <strong>clade</strong> filter below. 
+					Clear or hide that filter to use this one.
+				</div>
+			</dt>
+			<dd>
 <table width="100%" border="0" align="left">
   <tr>
     <td style="width: 60px; text-align: right;">Species&nbsp;A&nbsp;</td>
-    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 92%;"></td>
+    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 92%;" placeholder="Proper or common name" value="<?= $search['FilterByTipTaxa']['TaxonA'] ?>"></td>
   </tr>
   <tr>
     <td style="text-align: right;">Species&nbsp;B&nbsp;</td>
-    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 92%;"> </td>
+    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 92%;" placeholder="Proper or common name" value="<?= $search['FilterByTipTaxa']['TaxonB'] ?>"> </td>
   </tr>
   <tr>
     <td style="text-align: right; position: relative; top: -4px; font-size: 0.8em;">(optional)</td>
@@ -64,12 +80,20 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 </table>
 			</dd>
 
-			<dt class="optional-filter">By any <a class="term" href="#">clade</a></dt>
+			<dt class="optional-filter">
+				By any <a class="term" href="#">clade</a>
+				<input name="HiddenFilters[]" type="hidden" value="FilterByClade" <?= in_array('FilterByClade', $search['HiddenFilters']) ? '' : 'disabled="disabled"' ?> />
+				<input name="BlockedFilters[]" type="hidden" value="FilterByClade" <?= in_array('FilterByClade', $search['BlockedFilters']) ? '' : 'disabled="disabled"' ?> />
+				<div class="blocked-explanation">
+					This is incompatible with the <strong>tip taxa</strong> filter above. 
+					Clear or hide that filter to use this one.
+				</div>
+			</dt>
 			<dd>
 <table width="100%" border="0" align="left">
   <tr>
     <td style="width: 60px; text-align: right;">Clade&nbsp;</td>
-    <td><input type="text" name="Clade" id="Clade" style="width: 92%;"></td>
+    <td><input type="text" name="FilterByClade" id="FilterByClade" style="width: 92%;" placeholder="Proper or common name" value="<?= $search['FilterByClade'] ?>"></td>
 <!--
     <td>
 	<input type="submit" name="Submit1" id="Submit1" value="Show all within clade"
@@ -80,50 +104,60 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 </table>
 			</dd>
 
-			<dt class="optional-filter active-filter">By age (in <a class="term" href="#">Ma</a>)</dt>
-			<dd class="active-filter">
+			<dt class="optional-filter">
+				By age (in <a class="term" href="#">Ma</a>)
+				<input name="HiddenFilters[]" type="hidden" value="FilterByAge" <?= in_array('FilterByAge', $search['HiddenFilters']) ? '' : 'disabled="disabled"' ?> />
+				<input name="BlockedFilters[]" type="hidden" value="FilterByAge" <?= in_array('FilterByAge', $search['BlockedFilters']) ? '' : 'disabled="disabled"' ?> />
+				<div class="blocked-explanation">
+					This is incompatible with the <strong>geological time</strong> filter below. 
+					Clear or hide that filter to use this one.
+				</div>
+			</dt>
+			<dd>
 <table width="100%" border="0" align="left">
   <tr>
-    <td style="width: 145px; text-align: right;">Minimum (youngest)&nbsp;</td>
-    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 80%;"></td>
+    <td style="width: 140px; text-align: right;">Minimum (youngest)&nbsp;</td>
+    <td><input type="text" name="MinAge" id="MinAge" style="width: 50%;" value="<?= $search['FilterByAge']['MinAge'] ?>">&nbsp;Ma&nbsp;</td>
   </tr>
   <tr>
     <td style="text-align: right;">Maximum (oldest)&nbsp;</td>
-    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 80%;"> </td>
+    <td><input type="text" name="MaxAge" id="MaxAge" style="width: 50%;" value="<?= $search['FilterByAge']['MaxAge'] ?>">&nbsp;Ma&nbsp;</td>
   </tr>
 </table>
 			</dd>
 
-			<dt class="optional-filter disabled-filter">By <a class="term" href="#">geological time</a>
+			<dt class="optional-filter">
+				By <a class="term" href="#">geological time</a>
+				<input name="HiddenFilters[]" type="hidden" value="FilterByGeologicalTime" <?= in_array('FilterByGeologicalTime', $search['HiddenFilters']) ? '' : 'disabled="disabled"' ?> />
+				<input name="BlockedFilters[]" type="hidden" value="FilterByGeologicalTime" <?= in_array('FilterByGeologicalTime', $search['BlockedFilters']) ? '' : 'disabled="disabled"' ?> />
+				<div class="blocked-explanation">
+					This is incompatible with the <strong>age</strong> filter above. 
+					Clear or hide that filter to use this one.
+				</div>
 			</dt>
-			<dd class="disabled-explanation">
-				This is incompatible with the <strong>age</strong> filter above. 
-				Remove that filter to use this one.
-			</dd>
 			<dd style="margin-left:8px;">
 <div style="text-align: center; margin: 4px 0 2px; padding-right: 12px;">
-<select name="Age" id="Age">
-	<option value="">Choose any period</option>
-	<option value="Modern">Modern, Quaternary, GSA 1999</option>
-	<option value="Calabrian">Calabrian, Quaternary, GSA 1999</option>
-	<option value="Zanclean">Zanclean, Neogene, GSA 1999</option>
-	<option value="Tortonian">Tortonian, Neogene, GSA 1999</option>
-	<option value="Serravallian">Serravallian, Neogene, GSA 1999</option>
-	<option value="Bartonian">Bartonian, Paleogene, GSA 1999</option>
-	<option value="Bartonian">Bartonian, Paleogene, GSA 1999</option>
-	<option value="Danian">Danian, Paleogene, GSA 1999</option>		     
+<select name="FilterByGeologicalTime" id="FilterByGeologicalTime">
+	<!-- TODO: Build this list on-the-fly from live 'geoltime' table? (Is 30 values too many for a drop-down? maybe autocomplete?) -->
+	<option value="" 		<?= ($search['FilterByGeologicalTime'] == '') ? 'selected="selected"' : '' ?> >Choose any period</option>
+	<option value="Modern" 		<?= ($search['FilterByGeologicalTime'] == 'Modern') ? 'selected="selected"' : '' ?> >Modern, Quaternary, GSA 1999</option>
+	<option value="Calabrian" 	<?= ($search['FilterByGeologicalTime'] == 'Calabrian') ? 'selected="selected"' : '' ?> >Calabrian, Quaternary, GSA 1999</option>
+	<option value="Zanclean" 	<?= ($search['FilterByGeologicalTime'] == 'Zanclean') ? 'selected="selected"' : '' ?> >Zanclean, Neogene, GSA 1999</option>
+	<option value="Tortonian" 	<?= ($search['FilterByGeologicalTime'] == 'Tortonian') ? 'selected="selected"' : '' ?> >Tortonian, Neogene, GSA 1999</option>
+	<option value="Serravallian" 	<?= ($search['FilterByGeologicalTime'] == 'Serravallian') ? 'selected="selected"' : '' ?> >Serravallian, Neogene, GSA 1999</option>
+	<option value="Bartonian" 	<?= ($search['FilterByGeologicalTime'] == 'Bartonian') ? 'selected="selected"' : '' ?> >Bartonian, Paleogene, GSA 1999</option>
+	<option value="Danian" 		<?= ($search['FilterByGeologicalTime'] == 'Danian') ? 'selected="selected"' : '' ?> >Danian, Paleogene, GSA 1999</option>		     
 </select>
 </div>
 			</dd>
-			<dt style="height: 0px;">&nbsp;</dt>
 <!--
-			<dd><input type="submit" value="Update"/></dd>
+			<dt style="height: 0px;">&nbsp;</dt>
 -->
 		</dl>
-		<div style="text-align: center; margin: 4px;"><input type="submit" value="Update Results"/></div>
+		<div class="faceted-search-tail"><input type="submit" value="Update Results"/></div>
 	</div>
-    </form><!-- end of form#advanced-search -->
 </div>
+</form><!-- end of form#advanced-search -->
 
 <div class="right-column" style="margin-top: -37px;">
 <?php require('site-announcement.php'); ?>
@@ -187,163 +221,188 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 </div>
 
 <div class="center-column" style="">
+<div id="search-results" style="border: 1px dashed pink;">
 
-<!--
-<h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>
--->
+<? // use query built above to search and display results
+include('fetch-search-results.php'); 
+?>
 
-<!--
-<div style="text-align: center;">
-	<select style="margin: 3px auto;">
-		<option>Group by relevance</option>
-		<option>Group by phylogenetic relationship</option>
-		<option selected="selected">Sort by date added (newest first)</option>
-		<option>Sort by date added (oldest first)</option>
-	</select>
-</div>
--->
-
-<div class="search-result">
-	<table class="qualifiers" border="0">
-		<tr>
-			<td width="24">
-			&nbsp;
-			</td>
-			<td width="*">
-			&nbsp;
-			</td>
-			<td width="100">
-			&nbsp;
-			</td>
-			<td width="120">
-			Added Jan 3, 2013
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Archosauria</span>
-		<span class="citation">&ndash; from Imis, R. 2012.</span>
-	</a>
-	<br/>
-	<div class="optional-thumbnail"><img src="images/archosauria.jpeg" /></div>
-	<div class="details">
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
-	</div>
-</div>
-
-<div class="search-result">
-	<table class="qualifiers" border="0">
-		<tr>
-			<td width="24">
-			&nbsp;
-			</td>
-			<td width="*">
-			&nbsp;
-			</td>
-			<td width="100">
-			&nbsp;
-			</td>
-			<td width="120">
-			Added Dec 28, 2012
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Salviniales</span>
-		<span class="citation">&ndash; from Hermsen, E. &amp; Gandolfo, A. 2011.</span>
-	</a>
-	<br/>
-	<!--<div class="optional-thumbnail">{image}</div>-->
-	<div class="details">
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
-	</div>
-</div>
-
-<div class="search-result">
-	<table class="qualifiers" border="0">
-		<tr>
-			<td width="24">
-			&nbsp;
-			</td>
-			<td width="*">
-			&nbsp;
-			</td>
-			<td width="100">
-			&nbsp;
-			</td>
-			<td width="120">
-			Added Dec 23, 2012
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Carnivora</span>
-		<span class="citation">&ndash; from Polly, P.D. 2010.</span>
-	</a>
-	<br/>
-	<!--<div class="optional-thumbnail">{image}</div>-->
-	<div class="details">
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result.
-		Here are some fascinating details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
-	</div>
-</div>
-
-<div class="search-result">
-	<table class="qualifiers" border="0">
-		<tr>
-			<td width="24">
-			\/
-			</td>
-			<td width="*">
-			99% match
-			</td>
-			<td width="100">
-			9&ndash;12 Ma
-			</td>
-			<td width="120">
-			Added Dec 9, 2012
-			</td>
-		</tr>
-	</table>
-	<a class="calibration-link">
-		<span class="name">Insecta</span>
-		<span class="citation">&ndash; Ware, J. 2011.</span>
-	</a>
-	<br/>
-	<div class="optional-thumbnail"><img src="images/insecta.jpeg" /></div>
-	<div class="details">
-		Here are some details about the calibration in this result.
-		Here are some details about the calibration in this result.
-		Here are some details about the calibration in this result.
-		Here are some details about the calibration in this result.
-		Here are some details about the calibration in this result...
-		&nbsp;
-		<a class="more" href="#">more</a>
-	</div>
-</div>
-<div style="text-align: right; border-top: 1px solid #ddd; font-size: 0.9em; padding-top: 2px;">
-	<a href="#">Show more results like this</a>
-</div>
+</div><!-- END of #search-results -->
 
 </div><!-- END OF center-column -->
 <!--<div style="background-color: #fcc; color: #fff; clear: both;">test</div>-->
+
+<script type="text/javascript">
+
+// check status of filters, using hidden "flag" fields for each
+function filterIsHidden(filterName) {
+	if ($('input:hidden[name^=HiddenFilters][value=FilterBy'+ filterName +']').is('[disabled]')) {
+		return false;
+	} else {
+		return true;
+	}
+}
+function filterIsBlocked(filterName) {
+	if ($('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').is('[disabled]')) {
+		return false;
+	} else {
+		return true;
+	}
+}
+function filterIsActive(filterName) {
+	return !(filterIsHidden(filterName) || filterIsBlocked(filterName));
+}
+
+function filterHasNonEmptyValues(filterName) {
+	var $flagField = $('input:hidden[value=FilterBy'+ filterName +']');
+	var $filterBody = $flagField.closest('dt').next('dd');
+	var valuesFound = false;
+	$filterBody.find('input, select').each(function() {
+		if ($(this).val() != '') {
+			valuesFound = true;;
+		}
+	});
+	return valuesFound;
+}
+
+function hideFilter(filterName) {
+	$('input:hidden[name^=HiddenFilters][value=FilterBy'+ filterName +']').removeAttr('disabled');
+}
+function blockFilter(filterName) {
+	$('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').removeAttr('disabled');
+}
+function unblockFilter(filterName) {
+	$('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').attr('disabled', 'disabled');
+}
+function activateFilter(filterName) {
+	$('input:hidden[name^=HiddenFilters][value=FilterBy'+ filterName +']').attr('disabled', 'disabled');
+	$('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').attr('disabled', 'disabled');
+}
+
+function updateFilterList(option) {
+	var $filterArea = $('.filter-list');
+
+	// possibly block some filters, based on what's in others?
+	if (option === 'ENFORCE FILTER RULES') {
+		// active tip-taxon filter blocks clade
+		if (filterIsActive('TipTaxa') && filterHasNonEmptyValues('TipTaxa')) {
+			blockFilter('Clade');
+		} else {
+			unblockFilter('Clade');
+		}
+
+		// active clade filter blocks tip taxa
+		if (filterIsActive('Clade') && filterHasNonEmptyValues('Clade')) {
+			blockFilter('TipTaxa');
+		} else {
+			unblockFilter('TipTaxa');
+		}
+
+		// active min/max-age filter blocks geological time
+		if (filterIsActive('Age') && filterHasNonEmptyValues('Age')) {
+			blockFilter('GeologicalTime');
+		} else {
+			unblockFilter('GeologicalTime');
+		}
+
+		// active geological-time filter blocks min/max-age
+		if (filterIsActive('GeologicalTime') && filterHasNonEmptyValues('GeologicalTime')) {
+			blockFilter('Age');
+		} else {
+			unblockFilter('Age');
+		}
+	}
+
+	// set initial filter state based on HiddenForm, BlockedForm values
+	$filterArea.find('dt.optional-filter').each(function() {
+		var $filterHeader = $(this);
+		var $filterBody = $filterHeader.next('dd');
+		// extract filter short name from value of a hidden flag field (FilterByAge => Age)
+		var filterName = $filterHeader.find('input:hidden:eq(0)').val().split('FilterBy')[1];
+
+		//if ($filterHeader.find('input[name^=BlockedFilter]').is('[disabled]')) {
+		if (filterIsBlocked(filterName)) {
+			$filterHeader.addClass('blocked-filter');
+			$filterBody.addClass('blocked-filter');
+		} else {
+			$filterHeader.removeClass('blocked-filter');
+			$filterBody.removeClass('blocked-filter');
+
+			if (filterIsHidden(filterName)) {
+				$filterHeader.removeClass('active-filter');
+				$filterBody.removeClass('active-filter');
+			} else {
+				$filterHeader.addClass('active-filter');
+				$filterBody.addClass('active-filter');
+			}
+		}
+	});
+}
+
+$(document).ready(function() {
+	updateFilterList();
+
+	// bind expanding/collapsing advanced search filters
+	var $filterArea = $('.filter-list');
+	$filterArea.find('dt.optional-filter').unbind('click').click(function() {
+		var $filterHeader = $(this);
+		var $filterBody = $filterHeader.next('dd');
+		var filterName = $filterHeader.find('input:hidden:eq(0)').val().split('FilterBy')[1];
+		if (filterIsBlocked(filterName)) { 
+			return false;  // clicking a locked filter does nothing
+		}
+		if (filterIsHidden(filterName)) {
+			activateFilter(filterName);
+		} else {
+			hideFilter(filterName);
+		}
+		updateFilterList('ENFORCE FILTER RULES');
+	});
+
+	// bind individual search filters in all filters
+	$filterArea.find('input:text, select').unbind('click keyup change').bind('click keyup change', function() {
+		console.log('TEST');
+		updateFilterList('ENFORCE FILTER RULES');
+	});
+
+	// shared autocomplete settings for all taxon widgets
+	taxonPickerSettings = {
+		source: '/autocomplete_species.php',
+		autoSelect: true,  // recognizes typed-in values if they match an item
+		autoFocus: true,
+		delay: 20,
+		minLength: 3,
+		// ASSUMES simplest case (value = label)
+		change: function(event, ui) {
+			console.log("CHANGED TO ITEM > "+ ui.item);
+			if (!ui.item) {
+				// widget was blurred with invalid value; clear ALL 
+				// related (stale) values from the UI!
+				$(this).val('');
+				$(this).parent().find('[id^=hintNodeSource_], [id^=hintNodeID_]').val('');
+			} else {
+				console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
+				/* do we ever need this?
+				var $selector = $(this); // SELECT element
+				updateHintTaxonValues($selector, ui);
+				*/
+			}
+		},
+		select: function(event, ui) {
+			console.log("CHOSEN ITEM > "+ ui.item);
+			console.log("...ITS VALUE > "+ ui.item.value);
+			/* AJAX fetch of corresponding node source/ID?
+			var $selector = $(this); // SELECT element
+			updateHintTaxonValues($selector, ui);
+			*/
+		},
+		minChars: 3
+	};
+
+	$('input[name=TaxonA], input[name=TaxonB], input[name=FilterByClade]').autocomplete(taxonPickerSettings);
+});
+
+</script>
 <?php 
 //open and print page footer template
 require('footer.php');
