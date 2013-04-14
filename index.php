@@ -2,6 +2,7 @@
 // open and load site variables
 require('Site.conf');
 
+$skipHeaderSearch = true;
 // open and print header template
 require('header.php');
 
@@ -62,8 +63,6 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 		});
 	});
 </script>
-
-<div style="position: absolute; top: 0; right: 0; width: 50%; height: 40px; background-color: #27292B;">&nbsp;</div>
 
 <div class="right-column">
 <?php require('site-announcement.php'); ?>

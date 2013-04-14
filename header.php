@@ -32,11 +32,20 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 <body>
 <div id="header">
     <div id="inner-header">
+	<? if (isset($skipHeaderSearch) && $skipHeaderSearch)
+	   { ?>
+	<div id="skip-header-search">
+		[For a basic text search, use the topmost field below]
+	</div>
+	<? } else { 
+		// TODO: add basic search form here ?>
         <div id="simple-search" style="">
 	    <!--<input type="submit" class="search-button" style="" value="Search" />-->
 	    <input type="image" class="search-button" style="" value="Search" src="/images/search-button.png" />
 	    <input type="text" class="search-field" style="" value="Search by author, clade, publication, species, etc." />
         </div>
+	<? } ?>
+
 	<?php // rotate header logo, randomly for now
  		$logoOptions = Array('dark', 'light', 'bw');
 		// $logo = $logoOptions[ rand(0,2) ];

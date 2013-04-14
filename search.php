@@ -2,6 +2,7 @@
 // open and load site variables
 require('Site.conf');
 
+$skipHeaderSearch = true;
 // open and print header template
 require('header.php');
 

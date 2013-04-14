@@ -475,10 +475,18 @@ ul#top-menu li {
 	display: inline-block;
 	margin-left: 20px;
 }
+#skip-header-search,
 ul#top-menu a, ul#top-menu a:visited {
 	font-family: Helvetica, Arial, sans-serif;
 	color: #979797;
 	text-decoration: none;
+}
+#skip-header-search {
+	float: right;
+	color: #27292B;
+}
+#skip-header-search:hover {
+	color: #979797;
 }
 ul#top-menu a:hover {
 	color: #4c92b1;
