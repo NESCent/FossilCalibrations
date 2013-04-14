@@ -37,7 +37,9 @@ if (!isset($search) || ($search == null)) {
 	    // to preserve values that were entered, then hidden 
 	'BlockedFilters' => Array(),
 	    // to preserve values that were entered, but blocked by rules
-	'SortResultsBy' => 'DATE_ADDED_DESC'
+	'SortResultsBy' => 'DATE_ADDED_DESC',
+	'ResponseType' => 'HTML'
+ 	    // support JSON response, others?
     ); 
 
     // apply submitted ($_GET) variables, if found
@@ -73,6 +75,9 @@ if (!isset($search) || ($search == null)) {
 	}
 	if (isset($_GET['SortResultsBy'])) {
 	    $search['SortResultsBy'] = $_GET['SortResultsBy'];
+	}
+	if (isset($_GET['ResponseType'])) {
+	    $search['ResponseType'] = $_GET['ResponseType'];
 	}
     }
 

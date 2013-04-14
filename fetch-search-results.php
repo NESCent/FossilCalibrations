@@ -16,20 +16,28 @@ function isNullOrEmptyString($str){
     return (!isset($str) || ($str == null) || trim($str)==='');
 }
 
-// prepare containers for 
-$results = array('foo');
-$responseType = 'HTML'; // HTML | JSON | ?
+$responseType = $search['ResponseType']; // HTML | JSON | ??
 
-// TODO: check for a valid (non-empty) search, else return empty list + message
-/*
-if (!isset($_POST["TODO"])) {
-	echo "{'ERROR': 'empty search!'}";
-	return;
-}
-*/
+/* TODO: page or limit results, eg, 
+ *	$search['ResultsRange'] = "1-10"
+ *	$search['ResultsRange'] = "21-40"
+ */
+
+$results = array('foo'); // TODO: start empty and fill from MySQL
 
 // connect to mySQL server and select the Fossil Calibration database (using newer 'msqli' interface)
 $mysqli = new mysqli($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password'], 'FossilCalibration');
+
+
+
+
+// apply each included search type in turn, then weigh/consolidate its results?
+
+// top-level logic here for now, possibly into stored procedure later..
+
+
+
+
 
 // return these results in the requested format
 if ($responseType == 'JSON') {
