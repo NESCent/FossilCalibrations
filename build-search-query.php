@@ -83,7 +83,7 @@ if (!isset($search) || ($search == null)) {
 
     // add diagnostic info to page
     ?>
-    <a href="#" onclick="$('.search-details').toggle();" style="color: #c33; background-color: #ffd; padding: 2px 4px;; font-size: 8px; position: absolute; left: 0; top: 0;">show/hide search details</a>
+    <a href="#" onclick="$('.search-details').toggle();" style="color: #c33; background-color: #ffd; padding: 2px 4px;; font-size: 10px; position: absolute; left: 0; top: 0;">show/hide search details</a>
 
     <div class="search-details" style="">
 	<pre id="request-details" style="color: #c33; width: 48%; float: left;">======== GET (form) values ========

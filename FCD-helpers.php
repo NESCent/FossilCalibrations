@@ -169,12 +169,73 @@ function getAllMultitreeAncestors( $multitree_node_id ) {
 	}
 	while($row=mysqli_fetch_assoc($result)) {
 		/*
-		?><h3><?= print_r($row) ?></h3><?
+		?><h3><? print_r($row) ?></h3><?
 		*/
 		$ancestorIDs[] = $row['node_id'];
 	}
 
 	return $ancestorIDs;
+}
+
+function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers ) {
+	// check these multitree IDs for associated calibrations; if found, 
+	// add calibration data to the existing array with the qualifier(s) provided
+	global $mysqli;
+	$targetNodeIDs = Array();
+	$calibrationIDs = Array();
+
+	// TODO: GUARD against visitors seeing unpublished calibrations!
+
+	// test for any UN-pinned FCD nodes; for now, this is a valid test for calibration target nodes!
+	$query="SELECT * FROM node_identity WHERE (source_tree != 'NCBI') AND (is_pinned_node = 0) AND multitree_node_id IN (". implode(",", $multitreeIDs) .");";
+	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+	while (mysqli_more_results($mysqli)) {
+		mysqli_next_result($mysqli);
+		mysqli_store_result($mysqli);
+	}
+/* ?><h3><? print_r($result) ?></h3><? */
+	while ($row=mysqli_fetch_assoc($result)) {
+?><div class="search-details">CALIBRATION: <? print_r($row) ?></div><?
+		$targetNodeIDs[] = $row['source_node_id'];
+	}
+
+	if (count($targetNodeIDs) > 0) {
+		// now fetch the associated calibration for each target node
+
+/* SIMPLER QUERY, in case we want to postpone the heavy one below
+		$query="SELECT DISTINCT * FROM calibrations 
+			WHERE CalibrationID IN 
+			    (SELECT calibration_id FROM FCD_trees WHERE tree_id IN
+				(SELECT tree_id FROM FCD_nodes WHERE node_id IN (". implode(",", $targetNodeIDs) .")));";
+*/
+
+		$query="SELECT DISTINCT C . *, img.image, img.caption AS image_caption
+			FROM (
+				SELECT CF.CalibrationID, V . *
+				FROM View_Fossils V
+				JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
+			) AS J
+			JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
+			LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+			WHERE C.CalibrationID IN 
+			    (SELECT calibration_id FROM FCD_trees WHERE tree_id IN
+				(SELECT tree_id FROM FCD_nodes WHERE node_id IN (". implode(",", $targetNodeIDs) .")));
+		       ";
+		$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
+		while (mysqli_more_results($mysqli)) {
+			mysqli_next_result($mysqli);
+			mysqli_store_result($mysqli);
+		}
+		while($row=mysqli_fetch_assoc($result)) {
+			foreach($qualifiers as $qName => $qValue) {
+				$row[$qName] = $qValue;
+			}
+			/* ?><h3><? print_r($row) ?></h3><? */
+			$existingArray[] = $row;
+		}
+	}
+
+	return;
 }
 
 ?>

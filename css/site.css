@@ -584,8 +584,9 @@ textarea {
 	display: none; 
 	background-color: #ffd; 
 	overflow: hidden; 
-	padding: 0 5px; 
-	font-size: 50%;
+	padding: 5px; 
+	font-size: 10px;
+	margin-bottom: 8px;
 }
 
 
