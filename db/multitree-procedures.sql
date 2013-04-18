@@ -159,6 +159,14 @@ WHILE NOT v_done DO
 	INNER JOIN tmp ON p.node_id = tmp.parent_node_id AND tmp.depth = v_depth AND tmp.node_id != p.node_id;
 	-- final check is for "self-parenting" nodes like NCBI root
 
+    -- apply our tree filter here, if any (prune any nodes from the "wrong" trees)
+    IF treeFilter != 'ALL TREES' THEN
+      -- filters out any node that IS listed in node_identity, but that DOESN'T have a source node in the named tree
+      DELETE FROM hier WHERE 
+        (SELECT COUNT(*) FROM node_identity WHERE multitree_node_id = hier.node_id) > 0 AND
+        (SELECT COUNT(*) FROM node_identity WHERE multitree_node_id = hier.node_id AND source_tree = treeFilter) = 0;
+    END IF;
+
     -- SELECT * FROM hier; -- WHERE depth = v_depth;
 
     -- SELECT taxonid as "multiple IDs?" FROM hier WHERE depth = v_depth;
@@ -274,13 +282,17 @@ DELIMITER ;
  *
  * Translates any node ID (reckoned from its source tree) to its corresponding
  * node ID in the current multitree.
+ *
+ * NOTE that passing in a negative (pinned) multitree ID should still work,
+ * echoing back the same multitree ID. This is why arg p_source_node_id is a
+ * SIGNED integer!
  */
 
 DROP FUNCTION IF EXISTS getMultitreeNodeID;
 
 DELIMITER #
 
-CREATE FUNCTION getMultitreeNodeID (p_source_tree VARCHAR(20), p_source_node_id MEDIUMINT(8) UNSIGNED)
+CREATE FUNCTION getMultitreeNodeID (p_source_tree VARCHAR(20), p_source_node_id MEDIUMINT(8))
 RETURNS MEDIUMINT(8)
 NOT DETERMINISTIC
 BEGIN
@@ -572,7 +584,13 @@ OPEN hint_cursor;
 
 	-- ELSE test against the current MRCA and keep going deeper...
 	SELECT the_hint_node_id AS "testing MRCA against this node:";
-        CALL getMostRecentCommonAncestor( MRCA_id, the_hint_node_id, "mostRecentCommonAncestor_ids", 'NCBI' );
+	-- convert both IDs to multitree IDs first
+	SET @multitreeID_A = getMultitreeNodeID( 'NCBI', MRCA_id  );
+	SET @multitreeID_B = getMultitreeNodeID( 'NCBI', the_hint_node_id  );
+        CALL getMostRecentCommonAncestor( @multitreeID_A, @multitreeID_B, "mostRecentCommonAncestor_ids", 'NCBI' );
+	-- SELECT * FROM mostRecentCommonAncestor_ids;
+
+	-- TODO: Convert MRCA_id *back* to source ID from multitree ID!?
 	SET MRCA_id = (SELECT node_id FROM mostRecentCommonAncestor_ids);
 	SELECT MRCA_id AS "deeper MRCA_id?";
 
@@ -772,7 +790,8 @@ BEGIN
   -- Test against the clade of all taxa currently in the tree-definition table
   -- Rather than fetching entire clades, let's just fetch the ancestors of the
   -- test node and compare them to the INCLUDEd nodes in the tree definition.
-  CALL getAllAncestors( hintNodeID, "v_ancestors", 'NCBI' );
+  SET @multitreeID = getMultitreeNodeID( 'NCBI', hintNodeID  );
+  CALL getAllAncestors( @multitreeID, "v_ancestors", 'NCBI' );
 
   -- SELECT * FROM v_ancestors;
 
@@ -820,7 +839,8 @@ BEGIN
 
 -- reckon hintNodeDepth, if not provided
 IF ISNULL(hintNodeDepth) THEN
-    CALL getAllAncestors( hintNodeID, "v_path", hintNodeSource );
+    SET @multitreeID = getMultitreeNodeID( hintNodeSource, hintNodeID  );
+    CALL getAllAncestors( @multitreeID, "v_path", hintNodeSource );
     SET hintNodeDepth = (SELECT COUNT(*) FROM v_path);
 END IF;
 
@@ -1171,7 +1191,7 @@ SELECT * FROM mostRecentCommonAncestor_info;
 
 system echo "=========================== TREE DEFINITION ==========================="
 
-SET @calibrationID = 104;
+SET @calibrationID = 106;
 DROP TEMPORARY TABLE IF EXISTS testHints;
 CREATE TEMPORARY TABLE testHints ENGINE=memory AS (SELECT * FROM node_definitions WHERE calibration_id = @calibrationID);
 

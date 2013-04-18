@@ -124,9 +124,9 @@
    mysqli_free_result($result);
 
    if (count($included_taxa_data) == 0) {
-	   ?><p style="color: #999;">This calibration will not match any NCBI taxa. Please include (+) more taxa above.</p><?
+	   ?><p style="color: #999;">This calibration will not match a tip-taxa search on any NCBI taxa. Please include (+) more taxa above.</p><?
    } else {
-	   ?><p style="color: #999;">This calibration will match for searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
+	   ?><p style="color: #999;">This calibration will match tip-taxa searches within any of these <?= count($included_taxa_data) ?> NCBI taxa:</p><?
    }
 
    // "normalize" indentation to reflect the min and max depths in our list
