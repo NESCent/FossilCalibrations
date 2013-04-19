@@ -537,6 +537,7 @@ OPEN hint_cursor;
   END LOOP;
 
 CLOSE hint_cursor;
+SET no_more_rows = FALSE;
 
 
 -- INSERT INTO hints VALUES (103, 'B', 'test name', 'NCBI', 999, '+', 3);
@@ -587,6 +588,8 @@ OPEN hint_cursor;
 	-- convert both IDs to multitree IDs first
 	SET @multitreeID_A = getMultitreeNodeID( 'NCBI', MRCA_id  );
 	SET @multitreeID_B = getMultitreeNodeID( 'NCBI', the_hint_node_id  );
+	SET no_more_rows = FALSE; -- RESET this flag... somehow calls to getMultitreeNodeID() flip it to TRUE
+
         CALL getMostRecentCommonAncestor( @multitreeID_A, @multitreeID_B, "mostRecentCommonAncestor_ids", 'NCBI' );
 	-- SELECT * FROM mostRecentCommonAncestor_ids;
 
@@ -599,10 +602,11 @@ OPEN hint_cursor;
     ELSE
 	SELECT the_hint_node_id AS "skipping this hint...";
     END IF;
-    
+
   END LOOP;
 
 CLOSE hint_cursor;
+SET no_more_rows = FALSE;
 
 
 IF ISNULL(MRCA_id) THEN
@@ -670,6 +674,7 @@ ELSE
           END LOOP;
         
         CLOSE hint_cursor;
+        SET no_more_rows = FALSE;
         
     END IF;
 END IF;
@@ -791,6 +796,7 @@ BEGIN
   -- Rather than fetching entire clades, let's just fetch the ancestors of the
   -- test node and compare them to the INCLUDEd nodes in the tree definition.
   SET @multitreeID = getMultitreeNodeID( 'NCBI', hintNodeID  );
+  SET no_more_rows = FALSE; -- RESET this flag... somehow calls to getMultitreeNodeID() flip it to TRUE
   CALL getAllAncestors( @multitreeID, "v_ancestors", 'NCBI' );
 
   -- SELECT * FROM v_ancestors;
@@ -812,6 +818,7 @@ BEGIN
     END LOOP;
   
   CLOSE def_cursor;
+  SET no_more_rows = FALSE;
 
 END #
 
@@ -955,6 +962,7 @@ BEGIN
           END LOOP;
         
         CLOSE sibling_cursor;
+        SET no_more_rows = FALSE;
 
         -- SELECT the_parent_node_id AS "testing parent node for possible recursion...";
 
@@ -1099,6 +1107,7 @@ BEGIN
       
     END LOOP;
   CLOSE desc_cursor;
+  SET no_more_rows = FALSE;
   
   -- notify the site-status table that the multitree is stale
   UPDATE site_status
@@ -1191,7 +1200,7 @@ SELECT * FROM mostRecentCommonAncestor_info;
 
 system echo "=========================== TREE DEFINITION ==========================="
 
-SET @calibrationID = 106;
+SET @calibrationID = 104;  /* 106 */
 DROP TEMPORARY TABLE IF EXISTS testHints;
 CREATE TEMPORARY TABLE testHints ENGINE=memory AS (SELECT * FROM node_definitions WHERE calibration_id = @calibrationID);
 
