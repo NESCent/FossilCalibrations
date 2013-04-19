@@ -161,10 +161,19 @@ WHILE NOT v_done DO
 
     -- apply our tree filter here, if any (prune any nodes from the "wrong" trees)
     IF treeFilter != 'ALL TREES' THEN
-      -- filters out any node that IS listed in node_identity, but that DOESN'T have a source node in the named tree
+      -- filters out any path with a node (parent or child) that IS listed in node_identity, but that DOESN'T have a source node in the named tree
+      -- 
+      -- TODO: Add different treatment if filter is *not* 'ALL TREES' or 'NCBI'? In these cases, we might need to filter out the 
+      -- bulk of NCBI nodes, since (for efficiency's sake) they *aren't* listed in node_identity
+
       DELETE FROM hier WHERE 
         (SELECT COUNT(*) FROM node_identity WHERE multitree_node_id = hier.node_id) > 0 AND
         (SELECT COUNT(*) FROM node_identity WHERE multitree_node_id = hier.node_id AND source_tree = treeFilter) = 0;
+
+      DELETE FROM hier WHERE 
+        (SELECT COUNT(*) FROM node_identity WHERE multitree_node_id = hier.parent_node_id) > 0 AND
+        (SELECT COUNT(*) FROM node_identity WHERE multitree_node_id = hier.parent_node_id AND source_tree = treeFilter) = 0;
+
     END IF;
 
     -- SELECT * FROM hier; -- WHERE depth = v_depth;
@@ -465,7 +474,7 @@ BEGIN
 
 DECLARE oldRecursionDepth INT;
 DECLARE the_hint_source_tree VARCHAR(20);
-DECLARE the_hint_node_id MEDIUMINT(8) UNSIGNED;
+DECLARE the_hint_node_id MEDIUMINT(8) UNSIGNED;  -- NOTE that this is a positive ID from its *source* tree (not multitree)
 DECLARE the_hint_node_depth INT;
 DECLARE the_hint_operator ENUM('+','-');
 DECLARE MRCA_id MEDIUMINT(8) UNSIGNED DEFAULT NULL;
@@ -527,7 +536,7 @@ OPEN hint_cursor;
       LEAVE the_loop;
     END IF;
 
-    -- reckon its depth by counting ancestors, and save to scratch hints
+    -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     CALL getAllAncestors( the_hint_node_id, "v_path", the_hint_source_tree );
 
     UPDATE hints
@@ -540,10 +549,6 @@ CLOSE hint_cursor;
 SET no_more_rows = FALSE;
 
 
--- INSERT INTO hints VALUES (103, 'B', 'test name', 'NCBI', 999, '+', 3);
-SELECT * FROM hints;
-
-
 -- build the empty tree-description table
 
 CREATE TEMPORARY TABLE tdesc (
@@ -551,8 +556,8 @@ CREATE TEMPORARY TABLE tdesc (
 	entered_name VARCHAR(80),
 	depth SMALLINT DEFAULT 0,
 	source_tree VARCHAR(20),
-	source_node_id INT(11),
-	parent_node_id INT(11),
+	source_node_id INT(11),  -- source node ID, *not* multitree ID
+	parent_node_id INT(11),  -- source node ID (always in pending FCD-## tree, ie the new calibrated node?)
 	is_pinned_node TINYINT(1) UNSIGNED,
 	is_public_node TINYINT(1) UNSIGNED,
 	calibration_id INT(11),
@@ -591,14 +596,14 @@ OPEN hint_cursor;
 	SET no_more_rows = FALSE; -- RESET this flag... somehow calls to getMultitreeNodeID() flip it to TRUE
 
         CALL getMostRecentCommonAncestor( @multitreeID_A, @multitreeID_B, "mostRecentCommonAncestor_ids", 'NCBI' );
-	-- SELECT * FROM mostRecentCommonAncestor_ids;
-
-	-- TODO: Convert MRCA_id *back* to source ID from multitree ID!?
-	SET MRCA_id = (SELECT node_id FROM mostRecentCommonAncestor_ids);
-	SELECT MRCA_id AS "deeper MRCA_id?";
 
 	CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "deeper_MRCA_info" );
-	SELECT * FROM deeper_MRCA_info;
+	-- IMPORTANT: we use this info to remap deeper MRCA ID back to source ID!
+	
+	-- TODO: Convert MRCA_id *back* to source ID from multitree ID!?
+	SET MRCA_id = (SELECT source_node_id FROM deeper_MRCA_info WHERE source_tree = 'NCBI');
+	SELECT MRCA_id AS "deeper MRCA_id?";
+
     ELSE
 	SELECT the_hint_node_id AS "skipping this hint...";
     END IF;
@@ -718,6 +723,7 @@ DELIMITER ;
  * isExplicitlyIncludedInTreeDescription(hintNodeSource, hintNodeID)
  * 
  * ASSUMES we're using the temporary tables `hints` and `tdesc`
+ * ASSUMES we're getting source (vs multitree) IDs as input
  */
 
 /*
@@ -765,6 +771,7 @@ DELIMITER ;
  * isImplicitlyIncludedInTreeDescription( hintNodeSource, hintNodeID )
  * 
  * ASSUMES we're using the temporary tables `hints` and `tdesc`
+ * ASSUMES we're getting source (vs multitree) IDs as input
  *
  * This would rather be a function, but not allowed as we're using dynamic SQL in the called procedures. :-/
  */
@@ -779,7 +786,7 @@ BEGIN
 
   -- we'll loop through the tree-description table, checking identifiers
   DECLARE the_desc_source_tree VARCHAR(20);
-  DECLARE the_desc_node_id MEDIUMINT(8) UNSIGNED;
+  DECLARE the_desc_source_node_id MEDIUMINT(8) UNSIGNED;
 
   -- a flag terminates the loop when no more records are found
   DECLARE no_more_rows INT DEFAULT FALSE;
@@ -799,19 +806,23 @@ BEGIN
   SET no_more_rows = FALSE; -- RESET this flag... somehow calls to getMultitreeNodeID() flip it to TRUE
   CALL getAllAncestors( @multitreeID, "v_ancestors", 'NCBI' );
 
-  -- SELECT * FROM v_ancestors;
+-- SELECT CONCAT('>>> v_ancestors for SOURCE node ', hintNodeID, ', multitree=', @multitreeID) AS '';
+-- SELECT * FROM v_ancestors;
 
   --   TODO: use a cursor for this..? and walk the nodes
   OPEN def_cursor;
   
     the_loop: LOOP
-      FETCH def_cursor INTO the_desc_source_tree, the_desc_node_id;
+      FETCH def_cursor INTO the_desc_source_tree, the_desc_source_node_id;
   
       IF no_more_rows THEN 
         LEAVE the_loop;
       END IF;
 
-      IF (the_desc_source_tree = hintNodeSource AND the_desc_node_id IN (SELECT node_id FROM v_ancestors)) THEN
+      -- convert to multitree ID, to match results of getAllAncestors()
+      SET @multitreeDescNodeID = getMultitreeNodeID( the_desc_source_tree, the_desc_source_node_id );
+
+      IF (the_desc_source_tree = hintNodeSource AND @multitreeDescNodeID IN (SELECT node_id FROM v_ancestors)) THEN
           SET result = TRUE;
           LEAVE the_loop;
       END IF;
@@ -829,6 +840,7 @@ DELIMITER ;
  * addNodeToTreeDescription( hintNodeSource, hintNodeID, NCBIDepth )
  * 
  * ASSUMES we're using the temporary tables `hints` and `tdesc`
+ * ASSUMES we're getting source (vs multitree) IDs as input
  */
 
 DROP PROCEDURE IF EXISTS addNodeToTreeDescription;
@@ -868,7 +880,7 @@ SELECT
 	hints.matching_name, -- entered_name = 'An entered name', -- TODO
 	v_node_info.query_depth, -- depth = v_node_info.query_depth,  -- TODO
 	hintNodeSource, -- source_tree = hintNodeSource,
-	hintNodeID, -- source_node_id = hintNodeID,
+	hintNodeID, -- source_node_id = hintNodeID, -- its source (vs multitree) ID
 	999, -- parent_node_id = 999,  -- TODO
 	TRUE, -- is_pinned_node = TRUE,  -- TODO
 	TRUE, -- is_public_node = TRUE,  -- TODO
@@ -888,6 +900,7 @@ DELIMITER ;
  *
  * This is straightforward removal of a row.
  * ASSUMES we're using the temporary tables `hints` and `tdesc`
+ * ASSUMES we're getting source (vs multitree) IDs as input
  */
 
 DROP PROCEDURE IF EXISTS removeNodeFromTreeDescription;
@@ -909,6 +922,8 @@ DELIMITER ;
  *
  * This is thorough exclusion of a node, incl. adding/removing others as needed.
  * ASSUMES we're using the temporary tables `hints` and `tdesc`
+ * ASSUMES we're getting source (vs multitree) IDs as input
+ * ASSUMES we're pruning from the NCBI tree only
  */
 
 DROP PROCEDURE IF EXISTS excludeNodeFromTreeDescription;
@@ -941,7 +956,6 @@ BEGIN
 	-- it's implicitly included (in an included clade), so...
 	-- remove this node (after fetching its parent-node's ID)
 
-        -- SET the_parent_node_id := (SELECT MIN(parent_node_id) FROM tdesc WHERE source_tree = hintNodeSource AND source_node_id = hintNodeID);
         SET the_parent_node_id := (SELECT MIN(parenttaxonid) FROM NCBI_nodes WHERE taxonid = hintNodeID);
         CALL removeNodeFromTreeDescription (hintNodeSource, hintNodeID);
 
@@ -1061,6 +1075,9 @@ BEGIN
   ;
   
   -- TODO: assign a name for the root node? may not be needed
+
+-- SELECT ">>> TREE DESCRIPTION before looping to create nodes..";
+-- SELECT * FROM tdesc2;
   
   -- For each entry specified in the node-definition table...
   SET no_more_rows = FALSE;
@@ -1071,6 +1088,9 @@ BEGIN
       FETCH desc_cursor 
         INTO desc_node_unique_name, desc_node_entered_name, desc_node_source_tree, desc_node_source_node_id;
   
+-- SELECT '>> node_definition BEFORE pinning';
+-- SELECT desc_node_unique_name, desc_node_entered_name, desc_node_source_tree, desc_node_source_node_id;
+
       IF no_more_rows THEN 
         LEAVE the_loop;
       END IF;
