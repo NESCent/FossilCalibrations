@@ -23,9 +23,39 @@ $query = 'SELECT max(L.MinAge) AS Min FROM Link_CalibrationFossil L, View_Fossil
 $fossil_minage_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $FossMinAge=mysql_fetch_assoc($fossil_minage_results);
 
+/*
 // Get details about tip pairs associated with this calibration
 $query = 'SELECT * FROM Link_CalibrationPair L, View_TipPairs t WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.TipPairsID=t.PairID ORDER BY TaxonA, TaxonB';
 $tippair_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+*/
+
+
+// Get details about the calibrated-node definition for this calibration
+
+// retrieve node-definition hints for side A
+$query="SELECT * 
+	FROM node_definitions
+	WHERE calibration_id = '". $calibration_info['CalibrationID'] ."' AND definition_side = 'A'
+	ORDER BY display_order";
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$side_A_hint_data = array();
+while($row=mysql_fetch_assoc($result)) {
+	$side_A_hint_data[] = $row;
+}
+mysql_free_result($result);
+
+// retrieve node-definition hints for side B
+$query="SELECT * 
+	FROM node_definitions
+	WHERE calibration_id = '". $calibration_info['CalibrationID'] ."' AND definition_side = 'B'
+	ORDER BY display_order";
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$side_B_hint_data = array();
+while($row=mysql_fetch_assoc($result)) {
+	$side_B_hint_data[] = $row;
+}
+mysql_free_result($result);
+
 
 // Fetch any image associated with this calibration (its publication)
 $query = 'SELECT * FROM publication_images WHERE PublicationID='.$calibration_info['PublicationID'];
@@ -72,7 +102,6 @@ require('header.php');
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node min age </i><br><b><?=$FossMinAge['Min']?> mya</b> <font style="font-size:10px">(min age of oldest fossil)</font></td><td width="10%">&nbsp;</td></tr>
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node max age </i><br><b><?=$calibration_info['MaxAge']?> mya</b><font style="font-size:10px"> (<?=$calibration_info['MaxAgeExplanation']?>)</font></td><td width="10%">&nbsp;</td></tr>
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
 
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">fossils used to date this node</i></td><td width="10%">&nbsp;</td></tr>
@@ -96,28 +125,50 @@ while ($row = mysql_fetch_array($fossil_results)) {
 	<?php
 	}
 ?>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
 	
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">extant tip pairs that stem from this node</i></td><td width="10%"></td></tr>
-<tr><td width="10%"></td><td><blockquote>
-<table width="60%" align="left">
-<tr align="left"><td><b class="small_text">Taxon A</b></td><td><b class="small_text">Taxon B</b></td><td></td></tr>
-<?php
-$rowNumber = 0;
-while ($row = mysql_fetch_array($tippair_results)) {
-	$rowNumber++;
-	?>
-	<tr align="left" class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>"><td style="><i class="small_text"><?=$row['TaxonA']?></i></td><td><i class="small_text"><?=$row['TaxonB']?></i></td><td class="small_blue">[<a href="Find_CalibrationsByTips.php?TaxonA=<?=$row['TaxonA']?>&TaxonB=<?=$row['TaxonB']?>">all nodes with this pair</a>]</td></tr>
-
-
-	<?php
-	}
-?>
-  </blockquote></table></td><td width="10%"></td></tr>
+<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">calibrated-node definition (used to place this calibration in the NBCI taxonomy)</i></td><td width="10%"></td></tr>
+<tr><td width="10%"></td><td>
+<blockquote style="overflow: hidden;">
+	<table width="30%" style="float: left;">
+	<tr align="left"><td colspan="2"><b class="small_text">Taxon A</b></td></tr>
+	<?php // list any A-side taxa found (if none, just prompt with +/- buttons)
+	if ($side_A_hint_data) {
+		foreach ($side_A_hint_data as $hint)
+		{ ?>
+		<tr class="definition-hint">
+		  <td align="right" valign="top">
+		    <?= $hint['operator']?>
+		  </td>
+		  <td>
+		    <?= $hint['matching_name'] ?>
+		  </td>
+		</tr>
+	     <? } 
+	}?>
+	</table>
+	<table width="30%" style="float: left;">
+	<tr align="left"><td colspan="2"><b class="small_text">Taxon B</b></td></tr>
+	<?php // list any A-side taxa found (if none, just prompt with +/- buttons)
+	if ($side_B_hint_data) {
+		foreach ($side_B_hint_data as $hint)
+		{ ?>
+		<tr class="definition-hint">
+		  <td align="right" valign="top">
+		    <?= $hint['operator']?>
+		  </td>
+		  <td>
+		    <?= $hint['matching_name'] ?>
+		  </td>
+		</tr>
+	     <? } 
+	}?>
+	</table>
+</blockquote>
+</td><td width="10%"></td></tr>
   
 <tr><td width="10%"></td><td align="left" valign="top"><p></p></td><td width="10%"></td></tr>
 </table>
-
-	
 
 <?php 
 //open and print page footer template
