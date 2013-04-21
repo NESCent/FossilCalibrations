@@ -50,8 +50,21 @@ $showDefaultSearch = true; // TODO: improve logic for this as more filters are i
 
 // apply each included search type in turn, then weigh/consolidate its results?
 
+
+// simple text search; compare to misc titles, text data, and taxa(?)
+// TODO: if a name resolves to a taxon, should it become an implicit tip-taxa or clade search?
+if (!empty($search['SimpleSearch'])) {
+	// break text into tokens (split on commas or whitespace, but respected quoted phrases)
+	// see http://fr2.php.net/manual/en/function.preg-split.php#92632
+	$search_expression = $search['SimpleSearch'];  // eg,  "apple bear \"Tom Cruise\" or 'Mickey Mouse' another word";
+	$searchTerms = preg_split("/[\s,]*\\\"([^\\\"]+)\\\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/", $search_expression, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+	// trim leading and trailing whitespace
+	// remove empty tokens
+?><div class="search-details">SIMPLE SEARCH TERMS:<br/>
+	<pre><? print_r( $searchTerms ); ?></pre></div><?
+}
+
 // tip-taxon search, using one or two taxa...
-$tip_taxa_list=null;
 if (filterIsActive('FilterByTipTaxa')) {
 	if (empty($search['FilterByTipTaxa']['TaxonA']) && empty($search['FilterByTipTaxa']['TaxonB'])) {
 		// no taxa specified, bail out now
@@ -117,6 +130,178 @@ if (filterIsActive('FilterByTipTaxa')) {
 		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR_NEIGHBOR', 'relevance' => 0.2) );
 	}
 }
+
+// search within a named clade
+if (filterIsActive('FilterByClade')) {
+	if (empty($search['FilterByClade'])) {
+		// no clade specified, bail out now
+	} else {
+?><div class="search-details">CLADE SUBMITTED</div><?
+		// search within this clade
+		$showDefaultSearch = false;
+
+		/* 
+		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
+		 */
+
+		// resolve clade multitree ID
+		$multitree_id = nameToMultitreeID($search['FilterByClade']);
+
+		// gather a reasonable number of its clade members (limit depth to stay below this number)
+		$maxMembersToSearch = 10000;
+		$searchIsLimited = true;
+
+		$memberCount = 0;
+		$lastCount = 0;
+		$searchDepth = 0;
+		while ($memberCount < $maxMembersToSearch) {
+			$searchDepth++;
+
+			$query="CALL getCladeFromNode( '$multitree_id', 'clade_member_ids', 'NCBI', '$searchDepth' )";
+if ($searchDepth == 1) { ?><div class="search-details"><?= $query ?></div><? }
+
+			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+			while(mysqli_more_results($mysqli)) {
+			     mysqli_next_result($mysqli);
+			     mysqli_store_result($mysqli);
+			}
+			$query='SELECT COUNT(node_id) FROM clade_member_ids';
+			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+			$row=mysqli_fetch_row($result);
+			$memberCount = $row[0];
+
+?><div class="search-details">CLADE MEMBERS (search depth=<?= $searchDepth ?>): <?= $memberCount ?> members found</div><?
+
+			if ($memberCount == $lastCount) {	
+				// not too many members in this clade
+				$searchIsLimited = false;
+				break;
+			}
+			$lastCount = $memberCount;
+		}
+		$query='SELECT node_id FROM clade_member_ids';
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+		$multitree_id_clade_members = array();
+		while($row=mysqli_fetch_assoc($result)) {
+			$multitree_id_clade_members[] = $row['node_id'];
+		}
+		mysqli_free_result($result);
+
+		if ($searchIsLimited) {
+			?><p style="color: #a33;">
+				For performance reasons, clade searches are limited to <?= number_format($maxMembersToSearch) ?> members. 
+				As a result, some calibrations may not appear. For complete results, search again on a smaller clade.
+			  </p><?
+		}
+
+		// check all clade members (not actually likely to hit, see below)
+		addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => 'CLADE-MEMBER-1', 'relevance' => 0.5) );
+
+		// check the PARENT node IDs for all clade members (actually more likely to hit)
+		$query='SELECT parent_node_id FROM multitree WHERE node_id IN ('. implode(", ", $multitree_id_clade_members) .')';
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+		$multitree_id_clade_members = array();
+		while($row=mysqli_fetch_assoc($result)) {
+			$multitree_id_clade_members[] = $row['parent_node_id'];
+		}
+		addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => 'CLADE-MEMBER-2', 'relevance' => 0.5) );
+
+		// TODO: check all neighbors of direct ancestors
+		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR_NEIGHBOR', 'relevance' => 0.2) );
+	}
+}
+
+
+// filtering results by minimum and/or maximum age
+if (filterIsActive('FilterByAge')) {
+	if (empty($search['FilterByAge']['MinAge']) && empty($search['FilterByAge']['MaxAge'])) {
+		// no ages specified, bail out now
+		
+	} else if (!empty($search['FilterByAge']['MinAge']) && !empty($search['FilterByAge']['MaxAge'])) {
+?><div class="search-details">MIN AND MAX AGES SUBMITTED</div><?
+		// search within this clade
+		$showDefaultSearch = false;
+
+		/* 
+		 * Check for calibrations within the specified age ranage. NOTE that we should check
+		 * both age bounds, as a sanity check in case only one was entered ("blank" ranges will appear as 0).
+		 */
+		$matching_calibration_ids = array();
+		$query="SELECT CalibrationID FROM calibrations WHERE 
+			       MinAge >= '". $search['FilterByAge']['MinAge'] ."' AND MaxAge >= '". $search['FilterByAge']['MinAge'] ."'
+			   AND MinAge <= '". $search['FilterByAge']['MaxAge'] ."' AND MaxAge <= '". $search['FilterByAge']['MaxAge'] ."'
+		";
+?><div class="search-details"><?= $query ?></div><?
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+
+		// TODO: sort/sift from all the results lists above
+		while($row=mysqli_fetch_assoc($result)) {
+			$matching_calibration_ids[] = $row['CalibrationID'];
+		}
+		if (count($matching_calibration_ids) > 0) {
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'MATCHES-AGE', 'relevance' => 1.0) );
+		}
+
+	} else {
+		// just one age was specified
+		$showDefaultSearch = false;
+		$specifiedAge = empty($search['FilterByAge']['MinAge']) ? 'MaxAge' : 'MinAge'; 
+?><div class="search-details">1 AGE SUBMITTED (<?= $specifiedAge ?>)</div><?
+
+		/* 
+		 * Check for calibrations that are newer (or older) than the age specified. NOTE that we should check
+		 * both age bounds, as a sanity check in case only one was entered ("blank" ranges will appear as 0).
+		 */
+		$matching_calibration_ids = array();
+		if ($specifiedAge == 'MinAge') {
+			$query="SELECT CalibrationID FROM calibrations WHERE MinAge >= '". $search['FilterByAge']['MinAge'] ."' AND MaxAge >= '". $search['FilterByAge']['MinAge'] ."'";
+		} else {
+			$query="SELECT CalibrationID FROM calibrations WHERE MinAge <= '". $search['FilterByAge']['MaxAge'] ."' AND MaxAge <= '". $search['FilterByAge']['MaxAge'] ."'";
+		}
+?><div class="search-details"><?= $query ?></div><?
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+
+		// TODO: sort/sift from all the results lists above
+		while($row=mysqli_fetch_assoc($result)) {
+			$matching_calibration_ids[] = $row['CalibrationID'];
+		}
+		if (count($matching_calibration_ids) > 0) {
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'MATCHES-AGE', 'relevance' => 1.0) );
+		}
+	}
+}
+
+
+// filtering results by geological time
+if (filterIsActive('FilterByGeologicalTime')) {
+	if (empty($search['FilterByGeologicalTime'])) {
+		// no time specified, bail out now
+	} else {
+?><div class="search-details">GEOLOGICAL TIME SUBMITTED</div><?
+		// search within this period
+		$showDefaultSearch = false;
+
+		/* 
+		 * Check for calibrations from the specified time
+		 */
+		$matching_calibration_ids = array();
+		$query="SELECT CalibrationID FROM Link_CalibrationFossil WHERE FossilID IN 
+			    (SELECT FossilID FROM fossils WHERE LocalityID IN
+				(SELECT LocalityID FROM localities WHERE GeolTime = 
+				    (SELECT GeolTimeID FROM geoltime WHERE Age = '". $search['FilterByGeologicalTime'] ."')));";
+?><div class="search-details"><?= $query ?></div><?
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+
+		// TODO: sort/sift from all the results lists above
+		while($row=mysqli_fetch_assoc($result)) {
+			$matching_calibration_ids[] = $row['CalibrationID'];
+		}
+		if (count($matching_calibration_ids) > 0) {
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'MATCHES-GEOTIME', 'relevance' => 1.0) );
+		}
+	}
+}
+
 
 // IF no search tools were active and loaded, return the n results most recently added
 if ($showDefaultSearch) {
