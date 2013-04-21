@@ -54,14 +54,77 @@ $showDefaultSearch = true; // TODO: improve logic for this as more filters are i
 // simple text search; compare to misc titles, text data, and taxa(?)
 // TODO: if a name resolves to a taxon, should it become an implicit tip-taxa or clade search?
 if (!empty($search['SimpleSearch'])) {
+	$showDefaultSearch = false;
+
 	// break text into tokens (split on commas or whitespace, but respected quoted phrases)
 	// see http://fr2.php.net/manual/en/function.preg-split.php#92632
 	$search_expression = $search['SimpleSearch'];  // eg,  "apple bear \"Tom Cruise\" or 'Mickey Mouse' another word";
 	$searchTerms = preg_split("/[\s,]*\\\"([^\\\"]+)\\\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/", $search_expression, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-	// trim leading and trailing whitespace
-	// remove empty tokens
 ?><div class="search-details">SIMPLE SEARCH TERMS:<br/>
 	<pre><? print_r( $searchTerms ); ?></pre></div><?
+
+	/* TODO: IF a term resolves as a geological period, copy it to that filter?
+		IF geological-time filter is not already being used
+		IF geological-time filter is not already blocked
+ 	 */
+
+	/* TODO: IF a term resolves to a taxon, copy it to tip-taxa?
+		IF tip-taxa filter is not already being used
+		IF tip-taxa filter is not already blocked
+		Copy the FIRST TWO matching terms found to taxa A and B, ignore others
+			$multitree_id_A = nameToMultitreeID($search['FilterByTipTaxa']['TaxonA']);
+			$multitree_id_B = nameToMultitreeID($search['FilterByTipTaxa']['TaxonB']);
+	 */
+
+	/* Search for each term (keeping tally for relevance score) in:
+	 *  > calibration node name
+	 *  > its publication description (full reference)
+	 *  > associated fossils (ID, taxon, collection?)
+
+	 *  > geological time?
+	 *  > implied tip-taxa search?
+	 *  > implied clade search?
+
+	 *  > phylogenetic publication (lcf.PhyloPub => publications)?
+	 *  > fossil publication (f.FossilPub => publications)?
+	 *  > fossil locality (f.LocalityID => localities)?
+	 */
+	$matching_calibration_ids = array();
+	$termPosition = 0;
+	foreach($searchTerms as $term) {
+		$termPosition++;
+		$query="SELECT c.CalibrationID FROM calibrations AS c
+			JOIN publications AS p ON p.PublicationID = c.NodePub
+			JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
+			JOIN fossils AS f ON f.FossilID = lcf.FossilID
+			WHERE
+				c.NodeName LIKE '%$term%' OR 
+				c.MinAgeExplanation LIKE '%$term%' OR 
+				c.MaxAgeExplanation LIKE '%$term%' OR 
+				p.ShortName LIKE '%$term%' OR 
+				p.FullReference LIKE '%$term%' OR 
+				p.DOI LIKE '%$term%' OR 
+				lcf.Species LIKE '%$term%' OR 
+				lcf.PhyJustification LIKE '%$term%' OR 
+				f.CollectionAcro LIKE '%$term%' OR 
+				f.CollectionNumber LIKE '%$term%'
+		";
+?><div class="search-details">SIMPLE-SEARCH QUERY:<br/><? print_r($query) ?></div><?
+
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+		while(mysqli_more_results($mysqli)) {
+		     mysqli_next_result($mysqli);
+		}
+?><div class="search-details">SIMPLE-SEARCH RESULT:<br/><? print_r($result) ?></div><?
+		// TODO: sort/sift from all the results lists above
+		while($row=mysqli_fetch_assoc($result)) {
+			$matching_calibration_ids[] = $row['CalibrationID'];
+		}
+
+		if (count($matching_calibration_ids) > 0) {
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => "MATCHES-TERM-$termPosition", 'relevance' => 1.0) );
+		}
+	}
 }
 
 // tip-taxon search, using one or two taxa...
@@ -72,7 +135,7 @@ if (filterIsActive('FilterByTipTaxa')) {
 	} else if (!empty($search['FilterByTipTaxa']['TaxonA']) && !empty($search['FilterByTipTaxa']['TaxonB'])) {
 ?><div class="search-details">2 TAXA SUBMITTED</div><?
 		// both taxa were specified... 
-		$showDefaultSearch = false; // TODO
+		$showDefaultSearch = false;
 
 		/* 
 		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
