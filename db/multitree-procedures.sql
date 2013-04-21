@@ -361,48 +361,40 @@ INSERT INTO hier SELECT node_id, parent_node_id, v_depth FROM multitree WHERE no
 
 CREATE TEMPORARY TABLE tmp ENGINE=memory SELECT * FROM hier;
 
-WHILE NOT v_done DO
+the_loop:WHILE NOT v_done DO
 
--- SELECT '======== v_depth ========';
--- SELECT v_depth;
--- SELECT '======== hier ========';
--- SELECT * FROM hier;
+    -- SELECT v_depth, (SELECT COUNT(*) FROM hier), (SELECT COUNT(*) FROM tmp);
 
-    IF EXISTS( SELECT 1 FROM multitree p INNER JOIN hier ON p.parent_node_id = hier.node_id AND hier.depth = v_depth) THEN
+    SET v_depth = v_depth + 1;          
+
+    IF limitDepth IS NOT NULL THEN
+        IF v_depth > limitDepth THEN
+	    SET v_done = 1;
+	    LEAVE the_loop;
+        END IF;
+    END IF;
+
+    IF EXISTS( SELECT 1 FROM multitree p INNER JOIN hier ON p.parent_node_id = hier.node_id AND hier.depth = (v_depth - 1)) THEN
 
         INSERT INTO hier 
-            SELECT p.node_id, p.parent_node_id, v_depth + 1 FROM multitree p 
-            INNER JOIN tmp ON p.parent_node_id = tmp.node_id AND tmp.depth = v_depth;
+            SELECT p.node_id, p.parent_node_id, v_depth FROM multitree p 
+            INNER JOIN tmp ON p.parent_node_id = tmp.node_id AND tmp.depth = v_depth - 1;
 
-        SET v_depth = v_depth + 1;          
-
+	-- stash this depth's results into tmp, for comparison next time
         TRUNCATE TABLE tmp;
         INSERT INTO tmp SELECT * FROM hier WHERE depth = v_depth;
-
-        IF limitDepth IS NOT NULL THEN
-            IF v_depth > limitDepth THEN
-	        SET v_done = 1;
-            END IF;
-	END IF;
 
     ELSE
         SET v_done = 1;
     END IF;
 
-    -- TODO: remove this!
-    -- IF v_depth = 9 THEN SET v_done := 1; END IF;
-
 END WHILE;
  
--- 
--- SELECT v_depth;
--- SELECT '======== tmp ========';
--- SELECT * FROM tmp;
--- SELECT '======== hier ========';
--- SELECT * FROM hier;
--- 
+-- SELECT '======== FINAL COUNTS ========';
+-- SELECT v_depth, (SELECT COUNT(*) FROM hier), (SELECT COUNT(*) FROM tmp);
 
 -- put resulting values into 'tmp' so we can rename+preserve them
+TRUNCATE TABLE tmp;
 INSERT INTO tmp SELECT DISTINCT
  p.node_id,
  b.node_id AS parent_node_id,
@@ -1214,13 +1206,12 @@ system echo "=========================== FULL INFO for common ancestor =========
 CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "mostRecentCommonAncestor_info" );
 SELECT * FROM mostRecentCommonAncestor_info;
 
-***/
 
 
 
 system echo "=========================== TREE DEFINITION ==========================="
 
-SET @calibrationID = 104;  /* 106 */
+SET @calibrationID = 104;
 DROP TEMPORARY TABLE IF EXISTS testHints;
 CREATE TEMPORARY TABLE testHints ENGINE=memory AS (SELECT * FROM node_definitions WHERE calibration_id = @calibrationID);
 
@@ -1246,5 +1237,7 @@ system echo "........................... pinned_nodes ..........................
 SELECT * FROM pinned_nodes WHERE calibration_id = @calibrationID;
 
 system echo "=========================== DONE ==========================="
+
+***/
 
 
