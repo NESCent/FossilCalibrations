@@ -205,72 +205,86 @@ if (filterIsActive('FilterByClade')) {
 
 		/* 
 		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
-		 */
+		 * 
+		 * REMINDER: Prior versions of this file used a different approach, checking all clade members(!). This was
+		 * painfully slow, esp. for large clades like Eukaryota, but it might contain some lessons if the logic above
+		 * starts to crawl with many calibrations added.
+                 */
 
 		// resolve clade multitree ID
-		$multitree_id = nameToMultitreeID($search['FilterByClade']);
+		$clade_root_source_id = nameToSourceNodeInfo($search['FilterByClade']);
+		$clade_root_source_id = $clade_root_source_id['taxonid'];
 
-		// gather a reasonable number of its clade members (limit depth to stay below this number)
-		$maxMembersToSearch = 10000;
-		$searchIsLimited = true;
+		// test all eligible calibrations, backtracking from node IDs (should still be faster than testing every Eukaryote!)
+		$test_taxon_ids = array();
+		// test ALL nodes in all custom trees
+		$query="SELECT node_id, tree_id from FCD_nodes;";
+?><div class="search-details">SEARCH FOR ALL CUSTOM-TREE NODES (SOURCE IDS):<br/><?= $query ?></div><?
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+		while($row=mysqli_fetch_assoc($result)) {
+			$test_taxon_ids[] = $row;
+		}
+?><div class="search-details">Checking <?= count($test_taxon_ids) ?> custom-tree nodes for clade membership...</div><?
+/*
 
-		$memberCount = 0;
-		$lastCount = 0;
-		$searchDepth = 0;
-		while ($memberCount < $maxMembersToSearch) {
-			$searchDepth++;
+		       ";
+		$query="SELECT c.CalibrationID FROM calibrations AS c
+			JOIN publications AS p ON p.PublicationID = c.NodePub
+			JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
+			JOIN fossils AS f ON f.FossilID = lcf.FossilID
+			WHERE
+				c.NodeName LIKE '%$term%' OR 
+				c.MinAgeExplanation LIKE '%$term%' OR 
+				c.MaxAgeExplanation LIKE '%$term%' OR 
+				p.ShortName LIKE '%$term%' OR 
+				p.FullReference LIKE '%$term%' OR 
+				p.DOI LIKE '%$term%' OR 
+				lcf.Species LIKE '%$term%' OR 
+				lcf.PhyJustification LIKE '%$term%' OR 
+				f.CollectionAcro LIKE '%$term%' OR 
+				f.CollectionNumber LIKE '%$term%'
+		";
+*/
 
-			$query="CALL getCladeFromNode( '$multitree_id', 'clade_member_ids', 'NCBI', '$searchDepth' )";
-if ($searchDepth == 1) { ?><div class="search-details"><?= $query ?></div><? }
+		// if any node comes 
+		$matching_tree_ids = array();  // once a tree has matched, stop checking it!
+		$matching_calibration_ids = array();
+		foreach($test_taxon_ids as $taxon_ids) {
+			$test_node_id = $taxon_ids['node_id'];
+			$test_tree_id = $taxon_ids['tree_id'];
+			if (!in_array($test_tree_id, $matching_tree_ids)) {
+?><div class="search-details">Testing node <?= $test_node_id ?> in tree <?= $test_tree_id ?></div><?
+				$query="CALL isMemberOfClade('NCBI', '$clade_root_source_id', CONCAT('FCD-', '$test_tree_id'), '$test_node_id', @isInClade);";
+?><div class="search-details"><pre><?= $query ?></pre></div><?
+				$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+				while(mysqli_more_results($mysqli)) {
+				     mysqli_next_result($mysqli);
+				     mysqli_store_result($mysqli);
+				}
+				$query='SELECT @isInClade';
+				$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+				$foundInClade = mysqli_fetch_assoc($result);
+				$foundInClade = $foundInClade['@isInClade'];
+?><div class="search-details">Result for node <?= $test_node_id ?>: <? print_r($foundInClade); ?></div><?
+				if ($foundInClade) {
+					$matching_tree_ids[] = $test_tree_id;
+					// TODO: add this calibration(!)?
+?><div class="search-details">First match on node <?= $test_node_id ?>, tree <?= $test_tree_id ?></div><?
+				}
+			}
+		}
 
+		if (count($matching_tree_ids) > 0) {
+			$query="SELECT calibration_id FROM FCD_trees WHERE tree_id IN (". implode(",", $matching_tree_ids) .");";
 			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
-			while(mysqli_more_results($mysqli)) {
-			     mysqli_next_result($mysqli);
-			     mysqli_store_result($mysqli);
+			while($row=mysqli_fetch_assoc($result)) {
+				$matching_calibration_ids[] = $row['calibration_id'];
 			}
-			$query='SELECT COUNT(node_id) FROM clade_member_ids';
-			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
-			$row=mysqli_fetch_row($result);
-			$memberCount = $row[0];
-
-?><div class="search-details">CLADE MEMBERS (search depth=<?= $searchDepth ?>): <?= $memberCount ?> members found</div><?
-
-			if ($memberCount == $lastCount) {	
-				// not too many members in this clade
-				$searchIsLimited = false;
-				break;
+			if (count($matching_calibration_ids) > 0) {
+				addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'CLADE-MEMBER', 'relevance' => 1.0) );
 			}
-			$lastCount = $memberCount;
-		}
-		$query='SELECT node_id FROM clade_member_ids';
-		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
-		$multitree_id_clade_members = array();
-		while($row=mysqli_fetch_assoc($result)) {
-			$multitree_id_clade_members[] = $row['node_id'];
-		}
-		mysqli_free_result($result);
-
-		if ($searchIsLimited) {
-			?><p style="color: #a33;">
-				For performance reasons, clade searches are limited to <?= number_format($maxMembersToSearch) ?> members. 
-				As a result, some calibrations may not appear. For complete results, search again on a smaller clade.
-			  </p><?
 		}
 
-		// check all clade members (not actually likely to hit, see below)
-		addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => 'CLADE-MEMBER-1', 'relevance' => 0.5) );
-
-		// check the PARENT node IDs for all clade members (actually more likely to hit)
-		$query='SELECT parent_node_id FROM multitree WHERE node_id IN ('. implode(", ", $multitree_id_clade_members) .')';
-		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
-		$multitree_id_clade_members = array();
-		while($row=mysqli_fetch_assoc($result)) {
-			$multitree_id_clade_members[] = $row['parent_node_id'];
-		}
-		addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => 'CLADE-MEMBER-2', 'relevance' => 0.5) );
-
-		// TODO: check all neighbors of direct ancestors
-		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR_NEIGHBOR', 'relevance' => 0.2) );
 	}
 }
 
