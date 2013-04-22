@@ -151,7 +151,8 @@ if (filterIsActive('FilterByTipTaxa')) {
 
 		// check MRCA (common ancestor)
 		$multitree_id_MRCA = getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B );
-?><div class="search-details">MRCA: <?= $multitree_id_MRCA ?></div><?
+?><div class="search-details">MRCA: <?= $multitree_id_MRCA ?> <? if (empty($multitree_id_MRCA)) { ?>EMPTY<? } ?> <? if ($multitree_id_MRCA == null) { ?>NULL<? } ?></div><?
+		// NOTE that if no MRCA was found, we still pass a one-item array to addAssociatedCalibrations()
 		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => 'MRCA', 'relevance' => 1.0) );
 
 		// check director ancestors of A or B (includes the tip taxa)

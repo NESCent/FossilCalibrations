@@ -164,7 +164,11 @@ function getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B ) {
 		$result = mysqli_store_result($mysqli);
 	}
 	$mrca_data = mysqli_fetch_assoc($result);
-	return $mrca_data['node_id'];
+	if ($mrca_data) {
+		return $mrca_data['node_id'];
+	} else {
+		return null;
+	}
 }
 
 function getAllMultitreeAncestors( $multitree_node_id ) {
@@ -237,6 +241,12 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	global $mysqli;
 	$targetNodeIDs = Array();
 
+	// bail on missing/empty IDs (for more legible calling code)
+	if ($multitreeIDs == null) return;
+	if (count($multitreeIDs) == 0) return;
+	if ($multitreeIDs[0] == null) return;
+	//if (empty($multitreeIDs[0])) return;
+
 	// TODO: GUARD against visitors seeing unpublished calibrations!
 
 	// test for any UN-pinned FCD nodes; for now, this is a valid test for calibration target nodes!
@@ -248,7 +258,7 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	}
 /* ?><h3><? print_r($result) ?></h3><? */
 	while ($row=mysqli_fetch_assoc($result)) {
-?><div class="search-details">CALIBRATED NODE: <? print_r($row) ?></div><?
+/* ?><div class="search-details">CALIBRATED NODE: <? print_r($row) ?></div><? */
 		$targetNodeIDs[] = $row['source_node_id'];
 	}
 

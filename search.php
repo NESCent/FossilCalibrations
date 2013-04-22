@@ -33,7 +33,7 @@ $nonce = md5('salt'.microtime());
 <!--
 	<h3 style="display: inline-block; font-size: 1em; font-family: Helvetica,Arial,sans-serif;">Search</h3>
 -->
-	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px;" placeholder="Search by author, clade, publication, species,etc." value="<?= $search['SimpleSearch'] ?>"/>
+	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px;" placeholder="Search by author, clade, publication, species,etc." value="<?= htmlspecialchars($search['SimpleSearch']) ?>"/>
 	<input type="submit" style="" value="Update" />
 </div>
 
@@ -68,11 +68,11 @@ $nonce = md5('salt'.microtime());
 <table width="100%" border="0" align="left">
   <tr>
     <td style="width: 60px; text-align: right;">Species&nbsp;A&nbsp;</td>
-    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 92%;" placeholder="Proper or common name" value="<?= $search['FilterByTipTaxa']['TaxonA'] ?>"></td>
+    <td><input type="text" name="TaxonA" id="TaxonA" style="width: 92%;" placeholder="Proper or common name" value="<?= htmlspecialchars($search['FilterByTipTaxa']['TaxonA']) ?>"></td>
   </tr>
   <tr>
     <td style="text-align: right;">Species&nbsp;B&nbsp;</td>
-    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 92%;" placeholder="Proper or common name" value="<?= $search['FilterByTipTaxa']['TaxonB'] ?>"> </td>
+    <td><input type="text" name="TaxonB" id="TaxonB" style="width: 92%;" placeholder="Proper or common name" value="<?= htmlspecialchars($search['FilterByTipTaxa']['TaxonB']) ?>"> </td>
   </tr>
   <tr>
     <td style="text-align: right; position: relative; top: -4px; font-size: 0.8em;">(optional)</td>
@@ -94,7 +94,7 @@ $nonce = md5('salt'.microtime());
 <table width="100%" border="0" align="left">
   <tr>
     <td style="width: 60px; text-align: right;">Clade&nbsp;</td>
-    <td><input type="text" name="FilterByClade" id="FilterByClade" style="width: 92%;" placeholder="Proper or common name" value="<?= $search['FilterByClade'] ?>"></td>
+    <td><input type="text" name="FilterByClade" id="FilterByClade" style="width: 92%;" placeholder="Proper or common name" value="<?= htmlspecialchars($search['FilterByClade']) ?>"></td>
 <!--
     <td>
 	<input type="submit" name="Submit1" id="Submit1" value="Show all within clade"
@@ -118,11 +118,11 @@ $nonce = md5('salt'.microtime());
 <table width="100%" border="0" align="left">
   <tr>
     <td style="width: 140px; text-align: right;">Minimum (youngest)&nbsp;</td>
-    <td><input type="text" name="MinAge" id="MinAge" style="width: 50%;" value="<?= $search['FilterByAge']['MinAge'] ?>">&nbsp;Ma&nbsp;</td>
+    <td><input type="text" name="MinAge" id="MinAge" style="width: 50%;" value="<?= htmlspecialchars($search['FilterByAge']['MinAge']) ?>">&nbsp;Ma&nbsp;</td>
   </tr>
   <tr>
     <td style="text-align: right;">Maximum (oldest)&nbsp;</td>
-    <td><input type="text" name="MaxAge" id="MaxAge" style="width: 50%;" value="<?= $search['FilterByAge']['MaxAge'] ?>">&nbsp;Ma&nbsp;</td>
+    <td><input type="text" name="MaxAge" id="MaxAge" style="width: 50%;" value="<?= htmlspecialchars($search['FilterByAge']['MaxAge']) ?>">&nbsp;Ma&nbsp;</td>
   </tr>
 </table>
 			</dd>
