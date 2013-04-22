@@ -428,6 +428,53 @@ DELIMITER ;
 
 
 /*
+ * isMemberOfClade(p_claderoot_source_tree, p_claderoot_source_node_id, p_testnode_source_tree, p_testnode_source_node_id, @isInClade)
+ * 
+ * ASSUMES we're only concerned with clades in the NCBI taxonomy
+ * ASSUMES we're getting source (vs multitree) IDs as input
+ */
+
+DROP PROCEDURE IF EXISTS isMemberOfClade;
+
+DELIMITER #
+
+CREATE PROCEDURE isMemberOfClade(p_claderoot_source_tree VARCHAR(20), p_claderoot_source_node_id VARCHAR(20), p_testnode_source_tree VARCHAR(20), p_testnode_source_node_id MEDIUMINT(8), OUT result TINYINT)
+BEGIN
+  -- Declarations must be at the very top of BEGIN/END block!
+  DECLARE matchingAncestors INT;
+
+  SET result = FALSE;
+
+  -- typically we're checking a pinned FCD node against an NCBI clade root (all converted to multitree IDs)
+  SET @cladeRootMultitreeID = getMultitreeNodeID( p_claderoot_source_tree, p_claderoot_source_node_id );
+  SET @testNodeMultitreeID = getMultitreeNodeID( p_testnode_source_tree, p_testnode_source_node_id );
+
+SELECT @cladeRootMultitreeID, @testNodeMultitreeID;
+
+  CALL getAllAncestors( @testNodeMultitreeID, "test_ancestors", 'NCBI' );
+
+SELECT '== test ancestors ==';
+SELECT * FROM test_ancestors;
+
+  SELECT COUNT(*)
+    FROM test_ancestors 
+    WHERE node_id = @cladeRootMultitreeID
+    INTO matchingAncestors;
+
+  IF matchingAncestors > 0 THEN
+      SET result =  TRUE;
+  END IF;
+
+SELECT matchingAncestors AS '== matching ancestor count ==';
+
+END #
+
+DELIMITER ;
+
+
+
+
+/*
  * buildTreeDescriptionFromNodeDefinition( hintTableName, treeDescriptionTableName )
  *
  * This takes a table of hints, using the schema for `node_definition`:
