@@ -86,9 +86,10 @@ function testForProp( $data, $property, $default ) {
 
 /* High-level functions for search and data reporting
  */
-function nameToMultitreeID( $taxonName ) {
+function nameToSourceNodeInfo( $taxonName ) {
 	// check list of names against this query
 	// show un-published names only to logged-in admins/reviewers
+	// returns a simple object with 'source' and 'taxonid' properties
 	// 
 	// TODO: Handle ambiguous names and homonyms? should we be taking IDs in to start with?
 	global $mysqli;
@@ -102,22 +103,39 @@ function nameToMultitreeID( $taxonName ) {
 
 	if (!$node_data) {
 	    // fall back to FCD names *if* no NCBI node was found
-	    $query="SELECT taxonid, 'FCD' AS source
+	    $query="SELECT FCD_names.node_id, CONCAT('FCD-',FCD_nodes.tree_id) AS source
 		FROM FCD_names
-		WHERE name LIKE '". mysql_real_escape_string($taxonName) ."'".
+		JOIN FCD_nodes ON FCD_nodes.node_id = FCD_names.node_id
+		WHERE FCD_names.name LIKE '". mysql_real_escape_string($taxonName) ."'".
 		// non-admin users should only see *Published* publication names
 		((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? "" :  
-		    " AND is_public_name = 1"
+		    " AND FCD_names.is_public_name = 1"
 		)
 		." LIMIT 1;";
 	    $match_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	    $node_data = mysqli_fetch_assoc($match_list);
 	}
 
+?><div class="search-details">nameToSourceNodeInfo() return this node_data:<br/><? print_r($node_data) ?></div><?
+
+	if (!$node_data) return null;
+
+	return $node_data;
+}
+function nameToMultitreeID( $taxonName ) {
+	// check list of names against this query
+	// show un-published names only to logged-in admins/reviewers
+	// 
+	// TODO: Handle ambiguous names and homonyms? should we be taking IDs in to start with?
+	global $mysqli;
+
+	$node_data = nameToSourceNodeInfo( $taxonName );
+
 	if (!$node_data) return null;
 
 	// call stored *function* to retrieve the multitree ID
 	$query="SELECT getMultitreeNodeID( '". $node_data['source'] ."', '". $node_data['taxonid'] ."' )";
+
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 
 	while(mysqli_more_results($mysqli)) {
