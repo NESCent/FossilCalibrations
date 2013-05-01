@@ -116,7 +116,7 @@ function nameToSourceNodeInfo( $taxonName ) {
 	    $node_data = mysqli_fetch_assoc($match_list);
 	}
 
-?><div class="search-details">nameToSourceNodeInfo() return this node_data:<br/><? print_r($node_data) ?></div><?
+?><div class="search-details">nameToSourceNodeInfo('<?= $taxonName ?>') return this node_data:<br/><? print_r($node_data) ?></div><?
 
 	if (!$node_data) return null;
 
@@ -143,6 +143,7 @@ function nameToMultitreeID( $taxonName ) {
 		$result = mysqli_store_result($mysqli);
 	}
 	$row = mysqli_fetch_row($result);
+?><div class="search-details">nameToMultitreeID('<?= $taxonName ?>') returns ID:<br/><? print_r($row[0]) ?></div><?
 	return $row[0];
 }
 
@@ -264,15 +265,14 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 
 	if (count($targetNodeIDs) > 0) {
 		// now fetch the associated calibration for each target node
-
-
-		$query="SELECT calibration_id FROM FCD_trees WHERE tree_id IN
+		$query="SELECT * FROM FCD_trees WHERE tree_id IN
 				(SELECT tree_id FROM FCD_nodes WHERE node_id IN (". implode(",", $targetNodeIDs) ."));
 		       ";
 		$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 
 		while($row=mysqli_fetch_assoc($result)) {
 			$calibrationIDs[] = $row['calibration_id'];
+?><div class="search-details">Adding calibration <?= $row['calibration_id'] ?>, tied to root node <?= $row['root_node_id'] ?></div><?
 		}
 		if (count($calibrationIDs) > 0) {
 			addCalibrations( $existingArray, $calibrationIDs, $qualifiers );

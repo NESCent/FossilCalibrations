@@ -56,7 +56,7 @@ $nonce = md5('salt'.microtime());
 		<h3>Advanced search filters</h3>
 		<dl class="filter-list">
 			<dt class="optional-filter">
-				By <a class="term" href="#">extant (living) species</a>
+				By <a class="term" href="#">tip taxa</a>
 				<input name="HiddenFilters[]" type="hidden" value="FilterByTipTaxa" <?= in_array('FilterByTipTaxa', $search['HiddenFilters']) ? '' : 'disabled="disabled"' ?> />
 				<input name="BlockedFilters[]" type="hidden" value="FilterByTipTaxa" <?= in_array('FilterByTipTaxa', $search['BlockedFilters']) ? '' : 'disabled="disabled"' ?> />
 				<div class="blocked-explanation">
@@ -67,11 +67,11 @@ $nonce = md5('salt'.microtime());
 			<dd>
 <table width="100%" border="0" align="left">
   <tr>
-    <td style="width: 60px; text-align: right;">Species&nbsp;A&nbsp;</td>
+    <td style="width: 60px; text-align: right;">Taxon&nbsp;A&nbsp;</td>
     <td><input type="text" name="TaxonA" id="TaxonA" style="width: 92%;" placeholder="Proper or common name" value="<?= htmlspecialchars($search['FilterByTipTaxa']['TaxonA']) ?>"></td>
   </tr>
   <tr>
-    <td style="text-align: right;">Species&nbsp;B&nbsp;</td>
+    <td style="text-align: right;">Taxon&nbsp;B&nbsp;</td>
     <td><input type="text" name="TaxonB" id="TaxonB" style="width: 92%;" placeholder="Proper or common name" value="<?= htmlspecialchars($search['FilterByTipTaxa']['TaxonB']) ?>"> </td>
   </tr>
   <tr>

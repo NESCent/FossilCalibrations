@@ -154,15 +154,18 @@ if (filterIsActive('FilterByTipTaxa')) {
 ?><div class="search-details">MRCA: <?= $multitree_id_MRCA ?> <? if (empty($multitree_id_MRCA)) { ?>EMPTY<? } ?> <? if ($multitree_id_MRCA == null) { ?>NULL<? } ?></div><?
 		// NOTE that if no MRCA was found, we still pass a one-item array to addAssociatedCalibrations()
 		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => 'MRCA', 'relevance' => 1.0) );
+?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		// check director ancestors of A or B (includes the tip taxa)
 		$multitree_id_ancestors_A = getAllMultitreeAncestors( $multitree_id_A );
 ?><div class="search-details">ANCESTORS-A: <?= implode(", ", $multitree_id_ancestors_A) ?></div><?
 		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_A, Array('relationship' => 'ANCESTOR-A', 'relevance' => 0.5) );
+?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		$multitree_id_ancestors_B = getAllMultitreeAncestors( $multitree_id_B );
 ?><div class="search-details">ANCESTORS-B: <?= implode(", ", $multitree_id_ancestors_B) ?></div><?
 		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_B, Array('relationship' => 'ANCESTOR-B', 'relevance' => 0.5) );
+?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		// TODO: check all within clade of MRCA
 		// addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => 'MRCA-CLADE', 'relevance' => 0.25) );
