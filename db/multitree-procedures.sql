@@ -516,7 +516,6 @@ DECLARE the_hint_source_tree VARCHAR(20);
 DECLARE the_hint_node_id MEDIUMINT(8) UNSIGNED;  -- NOTE that this is a positive ID from its *source* tree (not multitree)
 DECLARE the_hint_node_depth INT;
 DECLARE the_hint_operator ENUM('+','-');
-DECLARE MRCA_id MEDIUMINT(8) UNSIGNED DEFAULT NULL;
 
 -- a flag terminates the loop when no more records are found
 DECLARE no_more_rows INT DEFAULT FALSE;
@@ -564,7 +563,6 @@ PREPARE cmd FROM @sql;
 EXECUTE cmd;
 DEALLOCATE PREPARE cmd;
 
-
 -- order hints by by taxon depth (distance from root of NCBI tree)
 OPEN hint_cursor;
 
@@ -576,6 +574,7 @@ OPEN hint_cursor;
     END IF;
 
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
+    -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
     CALL getAllAncestors( the_hint_node_id, "v_path", the_hint_source_tree );
 
     UPDATE hints
@@ -586,7 +585,6 @@ OPEN hint_cursor;
 
 CLOSE hint_cursor;
 SET no_more_rows = FALSE;
-
 
 -- build the empty tree-description table
 
@@ -603,127 +601,61 @@ CREATE TEMPORARY TABLE tdesc (
 	is_explicit TINYINT UNSIGNED
 ) ENGINE = memory;
 
--- INSERT INTO tdesc VALUES ('test', 'test', 0, '',0,0,0,0,1,1); -- DEBUG
--- IF FALSE THEN -- DEBUG
+-- ?? Walk A and B sides separately? or all together? if separate, what happens
+-- ?? if they touch overlapping parts of the NCBI tree?
 
-
--- reckon MRCA of all INCLUDED (+) taxa on *both* sides; add this first node to the tree description
+-- walk the remaining ordered hints, from root to leaves, and for each taxon...
 SET no_more_rows = FALSE;
 OPEN hint_cursor;
 
-  -- this time nodes should be properly sorted by the depths assigned above
   the_loop: LOOP
     FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_node_depth, the_hint_operator;
-
     IF no_more_rows THEN 
       LEAVE the_loop;
     END IF;
 
-    IF the_hint_source_tree = 'NCBI' AND the_hint_operator = '+' THEN
-        -- IF this is the first MRCA candidate, save its ID and loop again
-        IF ISNULL(MRCA_id) THEN
-            SET MRCA_id  = the_hint_node_id;
-            SELECT MRCA_id AS "starting MRCA_id, confirmed as (+)";
-            ITERATE the_loop;
-        END IF;
+    -- IF it's INCLUDED (+)...
+    IF the_hint_operator = '+' THEN
+	-- ? is this node already directly included in the tree description?
+	--   (eg, as a side effect of excluding another nearby)
+	IF isExplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id) THEN
+	    -- IF YES, ignore this hint and move to the next hint
+	    ITERATE the_loop;
+	END IF;
+   
+	-- ? is this node already within a clade in this tree description?
+	CALL isImplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id, @isIncluded);
+	IF @isIncluded THEN
+	    -- IF YES, ignore this hint and move to the next hint
+	    ITERATE the_loop;
+	END IF;
+   
+        -- SELECT "NOT INCLUDED YET, adding it now";
 
-	-- ELSE test against the current MRCA and keep going deeper...
-	SELECT the_hint_node_id AS "testing MRCA against this node:";
-	-- convert both IDs to multitree IDs first
-	SET @multitreeID_A = getMultitreeNodeID( 'NCBI', MRCA_id  );
-	SET @multitreeID_B = getMultitreeNodeID( 'NCBI', the_hint_node_id  );
-	SET no_more_rows = FALSE; -- RESET this flag... somehow calls to getMultitreeNodeID() flip it to TRUE
-
-        CALL getMostRecentCommonAncestor( @multitreeID_A, @multitreeID_B, "mostRecentCommonAncestor_ids", 'NCBI' );
-
-	CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "deeper_MRCA_info" );
-	-- IMPORTANT: we use this info to remap deeper MRCA ID back to source ID!
-	
-	-- TODO: Convert MRCA_id *back* to source ID from multitree ID!?
-	SET MRCA_id = (SELECT source_node_id FROM deeper_MRCA_info WHERE source_tree = 'NCBI');
-	SELECT MRCA_id AS "deeper MRCA_id?";
-
+	-- STILL HERE? explicitly include this node in the tree description
+	CALL addNodeToTreeDescription (the_hint_source_tree, the_hint_node_id, the_hint_node_depth);
+   
+    -- ELSE it's EXCLUDED (-)...
     ELSE
-	SELECT the_hint_node_id AS "skipping this hint...";
+	-- ? is this node currently within a clade in this tree description?
+	CALL isImplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id, @isIncluded);
+	IF NOT @isIncluded THEN
+	    -- IF NO, ignore this hint and move to the next hint
+	    SET no_more_rows = FALSE; -- because sometimes CALLS (to addNode..., etc) flip this to TRUE [MySQL sucks.]
+	    ITERATE the_loop;
+	END IF;
+	
+	-- STILL HERE? prune this node via a recursive walk toward the root node....
+	CALL excludeNodeFromTreeDescription( the_hint_source_tree, the_hint_node_id );
+
     END IF;
 
+    SET no_more_rows = FALSE; -- because sometimes CALLS (to addNode..., etc) flip this to TRUE [MySQL sucks.]
   END LOOP;
 
 CLOSE hint_cursor;
 SET no_more_rows = FALSE;
 
-
-IF ISNULL(MRCA_id) THEN
-    -- there were no INCLUDED (+) taxa, so there's nothing to work with here; return empty set
-    SELECT "NO MRCA FOUND, finishing early";
-ELSE
-    -- add the deepest MRCA as the first entry in our tree definition
-    CALL addNodeToTreeDescription( 'NCBI', MRCA_id, NULL );
-    
-    -- IF there are no EXCLUDED (-) taxa, we're done! ELSE continue
-    IF (SELECT COUNT(*) FROM hints WHERE operator = '-') = 0 THEN
-        SELECT "NO EXCLUDED STUFF, finishing early";
-    ELSE
-        SELECT "FOUND SOME EXCLUDED STUFF, more work to do...";
-        
-        -- ?? Walk A and B sides separately? or all together? if separate, what happens
-        -- ?? if they touch overlapping parts of the NCBI tree?
-    
-        -- walk the remaining ordered hints, from root to leaves, and for each taxon...
-        SET no_more_rows = FALSE;
-        OPEN hint_cursor;
-        
-          the_loop: LOOP
-            FETCH hint_cursor INTO the_hint_source_tree, the_hint_node_id, the_hint_node_depth, the_hint_operator;
-        
-            IF no_more_rows THEN 
-              LEAVE the_loop;
-            END IF;
-    
-            -- IF it's INCLUDED (+)...
-	    IF the_hint_operator = '+' THEN
-           
-	        -- ? is this node already directly included in the tree description?
-	        --   (eg, as a side effect of excluding another nearby)
-                IF isExplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id) THEN
-	            -- IF YES, ignore this hint and move to the next hint
-                    ITERATE the_loop;
-                END IF;
-           
-	        -- ? is this node already within a clade in this tree description?
-                CALL isImplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id, @isIncluded);
-                IF @isIncluded THEN
-	            -- IF YES, ignore this hint and move to the next hint
-                    ITERATE the_loop;
-                END IF;
-           
-	        -- STILL HERE? explicitly include this node in the tree description
-                CALL addNodeToTreeDescription (the_hint_source_tree, the_hint_node_id, the_hint_node_depth);
-           
-            -- ELSE it's EXCLUDED (-)...
-            ELSE
-           
-                -- ? is this node currently within a clade in this tree description?
-                CALL isImplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id, @isIncluded);
-                IF NOT @isIncluded THEN
-                    -- IF NO, ignore this hint and move to the next hint
-                    ITERATE the_loop;
-                END IF;
-                
-                -- STILL HERE? prune this node via a recursive walk toward the root node....
-                CALL excludeNodeFromTreeDescription( the_hint_source_tree, the_hint_node_id );
-    
-            END IF;
-    
-          END LOOP;
-        
-        CLOSE hint_cursor;
-        SET no_more_rows = FALSE;
-        
-    END IF;
-END IF;
-
--- END IF; -- DEBUG
 
 -- ?? *A/B resolution? recognition of stem-group definition for precise inclusion of the calibrated node?
 
