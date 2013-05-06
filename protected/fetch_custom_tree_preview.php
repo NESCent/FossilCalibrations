@@ -10,9 +10,13 @@
 
    // open and load site variables
    require_once('../Site.conf');
-/*
-?><pre><?= print_r($_POST) ?></pre><?
-*/
+
+   $verbose = false;
+
+if ($verbose) { ?>
+<h3>POSTed data</h3>
+<pre><?= print_r($_POST) ?></pre>
+<? }
 
    // bail out now if there are no hints on either side of this node defintion
    if (!isset($_POST["hintName_A"]) && !isset($_POST["hintName_B"])) {
@@ -96,14 +100,26 @@
    while($row=mysqli_fetch_assoc($result)) {
       $hints_data[] = $row;
    }
-/*
-   foreach( $hints_data as $row ) {
-?>
-<pre><?= print_r($row) ?></pre>
-<?
-   }
-*/
    mysqli_free_result($result);
+
+
+/*** TEST: let's copy this table to a permanent one 'TEST_preview_hints' ***
+   $query="DROP TABLE IF EXISTS TEST_preview_hints";
+   $result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+
+   $query="CREATE TABLE TEST_preview_hints LIKE preview_hints";
+   $result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+
+   $query="INSERT TEST_preview_hints SELECT * FROM preview_hints";
+   $result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));
+ *** END ***/
+
+
+if ($verbose) { ?><h3><?= count($hints_data) ?> HINT(S) from preview_hints:</h3><?
+   foreach( $hints_data as $row ) { ?>
+<pre><?= print_r($row) ?></pre>
+<? }
+}
 
    ///$query='CALL getFullNodeInfo( "preview_hints", "preview_tree_definition" )';
    $query='CALL buildTreeDescriptionFromNodeDefinition( "preview_hints", "preview_tree_definition" )';
@@ -121,6 +137,13 @@
    while($row=mysqli_fetch_assoc($result)) {
       $included_taxa_data[] = $row;
    }
+
+if ($verbose) { ?><h3><?= count($included_taxa_data) ?> TAXA from preview_tree_definition:</h3><?
+   foreach( $included_taxa_data as $row ) { ?>
+<pre><?= print_r($row) ?></pre>
+<? }
+}
+
    mysqli_free_result($result);
 
    if (count($included_taxa_data) == 0) {
@@ -145,9 +168,13 @@
    }
  
    foreach( $included_taxa_data as $row ) {
-      /*
-      ?><pre><?= print_r($row) ?></pre><? 
-      */
+
+/* already reported above
+       if ($verbose) { ?><h3>INCLUDED TAXON</h3>
+	<pre><?= print_r($row) ?></pre>
+      <? }
+*/
+
       ?><i style="padding-left: <?= treeDepthToIndent($row['depth']) ?>;"><?= $row['unique_name'] ?></i><?
       if ($row['entered_name'] && ($row['entered_name'] != $row['unique_name'])) { 
           ?>&nbsp; (entered as '<?= $row['entered_name'] ?>')<?
