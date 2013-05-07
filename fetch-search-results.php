@@ -153,7 +153,7 @@ if (filterIsActive('FilterByTipTaxa')) {
 		$multitree_id_MRCA = getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B );
 ?><div class="search-details">MRCA: <?= $multitree_id_MRCA ?> <? if (empty($multitree_id_MRCA)) { ?>EMPTY<? } ?> <? if ($multitree_id_MRCA == null) { ?>NULL<? } ?></div><?
 		// NOTE that if no MRCA was found, we still pass a one-item array to addAssociatedCalibrations()
-		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => 'MRCA', 'relevance' => 1.0) );
+		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => 'COMMON-ANCESTOR', 'relevance' => 1.0) );
 ?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		// check director ancestors of A or B (includes the tip taxa)
@@ -194,7 +194,7 @@ if (filterIsActive('FilterByTipTaxa')) {
 		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors, Array('relationship' => ('ANCESTOR-'.$specifiedTaxon), 'relevance' => 1.0) );
 
 		// TODO: check all neighbors of direct ancestors
-		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR_NEIGHBOR', 'relevance' => 0.2) );
+		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR-NEIGHBOR', 'relevance' => 0.2) );
 	}
 }
 
@@ -414,10 +414,82 @@ if ($responseType == 'JSON') {
 
 /* ?><h3>FINAL: <?= count($searchResults) ?> results</h3><? */
 
+function getRelationshipFromResult( $result, $relType ) {
+	foreach($result['qualifiers'] as $qual) {
+ /*?><pre class="search-details" style="color: red;">getRelationshipFromResult: <?= print_r($qual) ?> results</pre><?*/
+		if ($qual['relationship'] == $relType) {
+			return $qual;
+		}
+	}
+	return null;
+}
+
 // still here? then build HTML markup for the results
 if (count($searchResults) == 0) {
 	?><p style="font-style: italic;">No matching calibrations found. To see more results, simplify your search by removing text above or hiding filters.</p><?
 } else {
+
+	// Each result may contain multiple qualifiers (for "hits" on
+	// ancestory, age, etc), but it can only be listed once. Choose 
+	// the displayed relationship and relevance to show for each
+	// as $displayedRelationship, $displayedRelevance
+	foreach($searchResults as &$result)  // by reference!
+	{ 
+
+		//  Choose relationship and relevance to display
+		switch(count($result['qualifiers'])) {
+			case 0:
+				// this should never happen
+				$result['displayedRelationship'] = '???'; 
+				$result['displayedRelevance'] = '???';
+				break;
+
+			case 1:
+				// simple result, copy values directly
+				$result['displayedRelationship'] = $result['qualifiers'][0]['relationship']; 
+				$result['displayedRelevance'] = $result['qualifiers'][0]['relevance'];
+				break;
+
+			default:	
+				// complex result, with more than one qualifier
+				/* Choose a relationship (and relevance score) based on rules of 
+				   precedence/interest, ie, some kinds of result are more interesting 
+				   than others:
+					1. TODO: "direct hits" on entered taxa  [tip or clade search]
+					2. MRCA or any common ancestor		[tip only]
+					3. ancestor of one taxon		[tip only]
+					4. clade member				[clade only]
+					5. TODO: neighboring calibrations	[tip or clade]
+					6. no relationship			[other search]
+				 */
+				if (getRelationshipFromResult($result, 'ANCESTOR-A') && getRelationshipFromResult($result, 'ANCESTOR-B')) {
+					// bump this to show as common ancestor
+					$result['displayedRelationship'] = 'COMMON-ANCESTOR'; 
+					$result['displayedRelevance'] = 1.0;
+				} else if (getRelationshipFromResult($result, 'ANCESTOR-A')) {
+					$result['displayedRelationship'] = 'ANCESTOR-A'; 
+					// TODO: preset relevance depends on whether Taxon B was entered
+					$qual = getRelationshipFromResult($result, 'ANCESTOR-A');
+					$result['displayedRelevance'] = $qual['relevance'];
+				} else if (getRelationshipFromResult($result, 'ANCESTOR-B')) {
+					$result['displayedRelationship'] = 'ANCESTOR-B'; 
+					// TODO: preset relevance depends on whether Taxon B was entered
+					$qual = getRelationshipFromResult($result, 'ANCESTOR-B');
+					$result['displayedRelevance'] = $qual['relevance'];
+				} else {
+					// relevance is a weighted average, or highlighted score
+					$result['displayedRelationship'] = '???';
+					$result['displayedRelevance'] = null;
+				}
+		}
+
+	}
+	unset($result);	// IMPORTANT: because PHP is "special" and has bound $result to a reference above...
+
+	// Do any final sorting for display, using visible (consolidated) relationship and relevance
+	/* TODO TODO TODO */
+
+	// Display the sorted list
 	foreach($searchResults as $result) 
 	{ 
 		// print hidden diagnostic info
@@ -429,27 +501,74 @@ if (count($searchResults) == 0) {
 
 		$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $result['CalibrationID'];
 
-		/* TODO: Preset these "qualifiers" in consolidated results */
-		$relationship = isset($result['relationship']) ? $result['relationship'] : null; 
-		$relevance = isset($result['relevance']) ? $result['relevance'] : null; 
+		// fetch detailed properties from this result
+		$displayedRelationship = $result['displayedRelationship'];
+		$displayedRelevance = $result['displayedRelevance'];
 		$minAge = floatval($result['MinAge']);
 		$maxAge = floatval($result['MaxAge']);
 		// PHP's floats are imprecise, so we should define what constitutes equality here
 		$epsilon = 0.0001;
+
 ?>
 <div class="search-result">
 	<table class="qualifiers" border="0">
 		<tr>
-			<td width="30" title="Cladistic relatioship to entered taxa">
-			<? if ($relationship) { ?>
-				<?= $relationship ?>
-			<? } else { ?>
+			<td width="30">
+			<? if ($displayedRelationship) { 
+			   // choose an appropriate "qualifier" icon for this result
+			   $icon = null;
+			   $label = null;
+			   switch($displayedRelationship) {
+				case 'ANCESTOR-A':
+					//$icon = 'result-ancestor1.jpg';
+					$icon = 'result-ancestor2.jpg';
+					$label = 'Ancestor of A';
+					break;
+
+				case 'ANCESTOR-B':
+					//$icon = 'result-ancestor1.jpg';
+					$icon = 'result-ancestor2.jpg';
+					$label = 'Ancestor of B';
+					break;
+
+				case 'CLADE-MEMBER':
+					$icon = 'result-member.jpg';
+					$label = 'Clade member';
+					break;
+
+				case 'MRCA-CLADE':
+					$icon = 'result-member.jpg';
+					$label = 'Member of ancestor clade';
+					break;
+
+				case 'COMMON-ANCESTOR':  // was 'MRCA'
+					$icon = 'result-mrca.jpg'; // nearest common ancestor
+					$label = 'Common ancestor of A and B';
+					break;
+
+				// case 'MRCA-NEIGHBOR':
+				// case 'ANCESTOR-NEIGHBOR':
+				// case 'MATCHES-AGE':
+				// case 'MATCHES-GEOTIME':
+				case '??':
+					// TODO: match other icons
+					$icon = 'result-tip.jpg';  // tip taxon
+					$label = 'Unknown relationship';
+					
+				default:
+					$icon = 'result-neutral.jpg';
+					$label = 'No clear relationship';
+			   }
+			  ?>
+			  <img class="qualifier-icon" title="<?= $label ?>" src="/images/<?= $icon ?>" alt="<?= $label ?>" />
+			  <?
+			} else { ?>
 				&nbsp;	
 			<? } ?>
 			</td>
 			<td width="*" title="Relevance based on all filters used">
-			<? if ($relevance) { ?>
-				<?= intval($relevance * 100) ?>% match
+			<? if ($displayedRelevance) { ?>
+				<?= intval($displayedRelevance * 100) ?>% match
 			<? } else { ?>
 				&nbsp;	
 			<? } ?>

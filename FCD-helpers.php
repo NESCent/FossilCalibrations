@@ -201,7 +201,7 @@ function getAllMultitreeAncestors( $multitree_node_id ) {
 }
 
 function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
-	// add calibration data to the existing array with the qualifier(s) provided
+	// add calibration data to the existing array (or embellish it), with the qualifier(s) provided
 	global $mysqli;
 
 /* SIMPLER QUERY, in case we want to postpone the heavy one below
@@ -226,13 +226,28 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 		mysqli_next_result($mysqli);
 		mysqli_store_result($mysqli);
 	}
+
 	while($row=mysqli_fetch_assoc($result)) {
-		foreach($qualifiers as $qName => $qValue) {
-			$row[$qName] = $qValue;
+		// test to see if this calibration is already in the array; if so, just add another weighted relationship
+		$alreadyInArray = false;
+		foreach ($existingArray as &$testResult) {  
+			// NOTE that we grab each result by REFERENCE, so we can modify it in place
+			if ($testResult['CalibrationID'] == $row['CalibrationID']) {
+				// it's already here; just add the new relationship+relevance combo
+				$alreadyInArray = true;
+				$testResult['qualifiers'][ ] = $qualifiers;
+				break;
+			}
 		}
-		/* ?><div class="search-details"><? print_r($row) ?></div><? */
-		$existingArray[] = $row;
+
+		if (!$alreadyInArray) {
+			// it's a whole new calibration; add it with this initial relationship+relevance combo
+			$row['qualifiers'] = Array( $qualifiers );
+			$existingArray[] = $row;
+		}
+
 	}
+
 	mysqli_free_result($result);
 }
 

@@ -333,6 +333,9 @@ dl.filter-list dd.blocked-filter {
 .search-result .qualifiers td:last-child {
 	text-align: right;
 }
+.search-result .qualifier-icon {
+	margin: -3px 0 -5px;
+}
 .search-result a.calibration-link {
 	display: block;
 	text-decoration: none;
