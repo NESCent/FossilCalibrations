@@ -24,8 +24,8 @@ $nonce = md5('salt'.microtime());
 <div id="simple-search-header" 
      style="">
 	<select name="SortResultsBy" id="SortResultsBy" style="float: right; margin-top: 3px;">
-		<option value="RELEVANCE_DESC" 		<?= ($search['SortResultsBy'] == 'RELEVANCE_DESC') ? 'selected="selected"' : '' ?> >Group by relevance</option>
-		<option value="RELATIONSHIP" 		<?= ($search['SortResultsBy'] == 'RELATIONSHIP') ? 'selected="selected"' : '' ?> >Group by relationship</option>
+		<option value="RELEVANCE_DESC" 		<?= ($search['SortResultsBy'] == 'RELEVANCE_DESC') ? 'selected="selected"' : '' ?> >Sort by relevance</option>
+		<option value="RELATIONSHIP" 		<?= ($search['SortResultsBy'] == 'RELATIONSHIP') ? 'selected="selected"' : '' ?> >Sort by relationship</option>
 		<option value="DATE_ADDED_DESC" 	<?= ($search['SortResultsBy'] == 'DATE_ADDED_DESC') ? 'selected="selected"' : '' ?> >Sort by date added</option>
 		<option value="CALIBRATED_AGE_ASC" 	<?= ($search['SortResultsBy'] == 'CALIBRATED_AGE_ASC') ? 'selected="selected"' : '' ?> >Sort by calibrated age</option>
 	</select>

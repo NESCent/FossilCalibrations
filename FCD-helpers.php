@@ -297,4 +297,34 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	return;
 }
 
+
+/* Multi-column (key) sorting for nested associative arrays, eg, search results
+ * Adapted from http://nl.php.net/manual/en/function.natsort.php#69346
+ *
+ * EXAMPLE: $records = columnSort($records, array('name', 'asc', 'addres', 'desc', 'city', 'asc'));
+ */
+
+$globalMultisortVar = array();
+
+function columnSort($recs, $cols) {
+    global $globalMultisortVar;
+    $globalMultisortVar = $cols;
+    usort($recs, 'multiStrnatcmp');
+    return($recs);
+}
+
+function multiStrnatcmp($a, $b) {
+    global $globalMultisortVar;
+    $cols = $globalMultisortVar;
+    $i = 0;
+    $result = 0;
+    while ($result == 0 && $i < count($cols)) {
+        $result = ($cols[$i + 1] == 'desc' ? 
+		   strnatcmp($b[$cols[$i]], $a[$cols[$i]]) : 
+		   $result = strnatcmp($a[$cols[$i]], $b[$cols[$i]]));
+        $i+=2;
+    }
+    return $result;
+}
+
 ?>

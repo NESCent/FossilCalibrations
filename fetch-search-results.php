@@ -122,7 +122,7 @@ if (!empty($search['SimpleSearch'])) {
 		}
 
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => "MATCHES-TERM-$termPosition", 'relevance' => 1.0) );
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => "03-MATCHES-TERM-$termPosition", 'relevance' => 1.0) );
 		}
 	}
 }
@@ -153,28 +153,28 @@ if (filterIsActive('FilterByTipTaxa')) {
 		$multitree_id_MRCA = getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B );
 ?><div class="search-details">MRCA: <?= $multitree_id_MRCA ?> <? if (empty($multitree_id_MRCA)) { ?>EMPTY<? } ?> <? if ($multitree_id_MRCA == null) { ?>NULL<? } ?></div><?
 		// NOTE that if no MRCA was found, we still pass a one-item array to addAssociatedCalibrations()
-		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => 'COMMON-ANCESTOR', 'relevance' => 1.0) );
+		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => '10-COMMON-ANCESTOR', 'relevance' => 1.0) );
 ?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		// check director ancestors of A or B (includes the tip taxa)
 		$multitree_id_ancestors_A = getAllMultitreeAncestors( $multitree_id_A );
 ?><div class="search-details">ANCESTORS-A: <?= implode(", ", $multitree_id_ancestors_A) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_A, Array('relationship' => 'ANCESTOR-A', 'relevance' => 0.5) );
+		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_A, Array('relationship' => '09-ANCESTOR-A', 'relevance' => 0.5) );
 ?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		$multitree_id_ancestors_B = getAllMultitreeAncestors( $multitree_id_B );
 ?><div class="search-details">ANCESTORS-B: <?= implode(", ", $multitree_id_ancestors_B) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_B, Array('relationship' => 'ANCESTOR-B', 'relevance' => 0.5) );
+		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_B, Array('relationship' => '08-ANCESTOR-B', 'relevance' => 0.5) );
 ?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		// TODO: check all within clade of MRCA
-		// addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => 'MRCA-CLADE', 'relevance' => 0.25) );
+		// addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => '04-MRCA-CLADE', 'relevance' => 0.25) );
 
 		// TODO: check all neighbors of MRCA
-		// addAssociatedCalibrations( $searchResults, $multitree_id_mrca_neighbors, Array('relationship' => 'MRCA-NEIGHBOR', 'relevance' => 0.1) );
+		// addAssociatedCalibrations( $searchResults, $multitree_id_mrca_neighbors, Array('relationship' => '06-MRCA-NEIGHBOR', 'relevance' => 0.1) );
 
 		// TODO: check all neighbors of direct ancestors of A or B
-		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR-NEIGHBOR', 'relevance' => 0.1) );
+		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => '05-ANCESTOR-NEIGHBOR', 'relevance' => 0.1) );
 	} else {
 ?><div class="search-details">1 TAXON SUBMITTED</div><?
 		// just one taxon was specified
@@ -191,10 +191,10 @@ if (filterIsActive('FilterByTipTaxa')) {
 		// check its direct ancestors (includes the tip taxon)
 		$multitree_id_ancestors = getAllMultitreeAncestors( $multitree_id );
 ?><div class="search-details">ANCESTORS-<?= $specifiedTaxon ?>: <?= implode(", ", $multitree_id_ancestors) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors, Array('relationship' => ('ANCESTOR-'.$specifiedTaxon), 'relevance' => 1.0) );
+		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors, Array('relationship' => ($specifiedTaxon == 'A' ? '09-ANCESTOR-A' : '08-ANCESTOR-B'), 'relevance' => 1.0) );
 
 		// TODO: check all neighbors of direct ancestors
-		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => 'ANCESTOR-NEIGHBOR', 'relevance' => 0.2) );
+		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => '05-ANCESTOR-NEIGHBOR', 'relevance' => 0.2) );
 	}
 }
 
@@ -285,7 +285,7 @@ if (filterIsActive('FilterByClade')) {
 				$matching_calibration_ids[] = $row['calibration_id'];
 			}
 			if (count($matching_calibration_ids) > 0) {
-				addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'CLADE-MEMBER', 'relevance' => 1.0) );
+				addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '07-CLADE-MEMBER', 'relevance' => 1.0) );
 			}
 		}
 
@@ -320,7 +320,7 @@ if (filterIsActive('FilterByAge')) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
 		}
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'MATCHES-AGE', 'relevance' => 1.0) );
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
 		}
 
 	} else {
@@ -347,7 +347,7 @@ if (filterIsActive('FilterByAge')) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
 		}
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'MATCHES-AGE', 'relevance' => 1.0) );
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
 		}
 	}
 }
@@ -378,7 +378,7 @@ if (filterIsActive('FilterByGeologicalTime')) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
 		}
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => 'MATCHES-GEOTIME', 'relevance' => 1.0) );
+			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '01-MATCHES-GEOTIME', 'relevance' => 1.0) );
 		}
 	}
 }
@@ -387,21 +387,16 @@ if (filterIsActive('FilterByGeologicalTime')) {
 // IF no search tools were active and loaded, return the n results most recently added
 if ($showDefaultSearch) {
 ?><div class="search-details">SHOWING DEFAULT SEARCH</div><?
-	$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
-		FROM (
-			SELECT CF.CalibrationID, V . *
-			FROM View_Fossils V
-			JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
-		) AS J
-		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
-		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+	$matching_calibration_ids = array();
+	$query="SELECT c.CalibrationID FROM calibrations AS c
 		ORDER BY DateCreated DESC
-		LIMIT 10';
-	$recently_added_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
-
-	// TODO: sort/sift from all the results lists above
-	while($row=mysqli_fetch_assoc($recently_added_list)) {
-		$searchResults[] = $row;
+		LIMIT 10";
+	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	while($row=mysqli_fetch_assoc($result)) {
+		$matching_calibration_ids[] = $row['CalibrationID'];
+	}
+	if (count($matching_calibration_ids) > 0) {
+		addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '00-NONE', 'relevance' => null) );
 	}
 }
 
@@ -435,12 +430,27 @@ if (count($searchResults) == 0) {
 	// as $displayedRelationship, $displayedRelevance
 	foreach($searchResults as &$result)  // by reference!
 	{ 
-
-		//  Choose relationship and relevance to display
+		/* Choose relationship and relevance to display.
+		 * NOTE that the hidden identifier for all relationships includes a numeric 
+		 * prefix for sorting purposes, based on totally subjective "importance".
+			12-DIRECT-MATCH  	[same as an entered taxon]
+			11-MRCA
+			10-COMMON-ANCESTOR
+			09-ANCESTOR-A
+			08-ANCESTOR-B
+			07-CLADE-MEMBER
+			06-MRCA-NEIGHBOR
+			05-ANCESTOR-NEIGHBOR
+			04-MRCA-CLADE
+			03-MATCHES-TERM-{#}
+			02-MATCHES-AGE
+			01-MATCHES-GEOTIME
+			00-NONE
+		 */
 		switch(count($result['qualifiers'])) {
 			case 0:
 				// this should never happen
-				$result['displayedRelationship'] = '???'; 
+				$result['displayedRelationship'] = '00-NONE'; 
 				$result['displayedRelevance'] = '???';
 				break;
 
@@ -462,23 +472,23 @@ if (count($searchResults) == 0) {
 					5. TODO: neighboring calibrations	[tip or clade]
 					6. no relationship			[other search]
 				 */
-				if (getRelationshipFromResult($result, 'ANCESTOR-A') && getRelationshipFromResult($result, 'ANCESTOR-B')) {
+				if (getRelationshipFromResult($result, '09-ANCESTOR-A') && getRelationshipFromResult($result, '08-ANCESTOR-B')) {
 					// bump this to show as common ancestor
-					$result['displayedRelationship'] = 'COMMON-ANCESTOR'; 
+					$result['displayedRelationship'] = '10-COMMON-ANCESTOR'; 
 					$result['displayedRelevance'] = 1.0;
-				} else if (getRelationshipFromResult($result, 'ANCESTOR-A')) {
-					$result['displayedRelationship'] = 'ANCESTOR-A'; 
-					// TODO: preset relevance depends on whether Taxon B was entered
-					$qual = getRelationshipFromResult($result, 'ANCESTOR-A');
+				} else if (getRelationshipFromResult($result, '09-ANCESTOR-A')) {
+					$result['displayedRelationship'] = '09-ANCESTOR-A'; 
+					// TODO: preset relevance should vary depending on whether Taxon B was entered
+					$qual = getRelationshipFromResult($result, '09-ANCESTOR-A');
 					$result['displayedRelevance'] = $qual['relevance'];
-				} else if (getRelationshipFromResult($result, 'ANCESTOR-B')) {
-					$result['displayedRelationship'] = 'ANCESTOR-B'; 
-					// TODO: preset relevance depends on whether Taxon B was entered
-					$qual = getRelationshipFromResult($result, 'ANCESTOR-B');
+				} else if (getRelationshipFromResult($result, '08-ANCESTOR-B')) {
+					$result['displayedRelationship'] = '08-ANCESTOR-B'; 
+					// TODO: preset relevance should vary depending on whether Taxon A was entered
+					$qual = getRelationshipFromResult($result, '08-ANCESTOR-B');
 					$result['displayedRelevance'] = $qual['relevance'];
 				} else {
 					// relevance is a weighted average, or highlighted score
-					$result['displayedRelationship'] = '???';
+					$result['displayedRelationship'] = '00-NONE';
 					$result['displayedRelevance'] = null;
 				}
 		}
@@ -487,7 +497,40 @@ if (count($searchResults) == 0) {
 	unset($result);	// IMPORTANT: because PHP is "special" and has bound $result to a reference above...
 
 	// Do any final sorting for display, using visible (consolidated) relationship and relevance
-	/* TODO TODO TODO */
+	switch($search['SortResultsBy']) {
+		case 'RELEVANCE_DESC':
+			$searchResults = columnSort($searchResults, array(
+				'displayedRelevance', 'desc',
+				'displayedRelationship', 'desc',
+				'DateCreated', 'desc',
+				'MinAge', 'desc'
+			));
+			break;
+		case 'RELATIONSHIP':
+			$searchResults = columnSort($searchResults, array(
+				'displayedRelationship', 'desc',
+				'displayedRelevance', 'desc',
+				'DateCreated', 'desc',
+				'MinAge', 'desc'
+			));
+			break;
+		case 'DATE_ADDED_DESC':
+			$searchResults = columnSort($searchResults, array(
+				'DateCreated', 'desc',
+				'displayedRelevance', 'desc',
+				'displayedRelationship', 'desc',
+				'MinAge', 'desc'
+			));
+			break;
+		case 'CALIBRATED_AGE_ASC':
+			$searchResults = columnSort($searchResults, array(
+				'MinAge', 'desc',
+				'displayedRelevance', 'desc',
+				'displayedRelationship', 'desc',
+				'DateCreated', 'desc'
+			));
+			break;
+	}
 
 	// Display the sorted list
 	foreach($searchResults as $result) 
@@ -519,45 +562,55 @@ if (count($searchResults) == 0) {
 			   $icon = null;
 			   $label = null;
 			   switch($displayedRelationship) {
-				case 'ANCESTOR-A':
+
+				// case '12-DIRECT-MATCH':
+
+				case '11-MRCA':
+				case '10-COMMON-ANCESTOR':
+					$icon = 'result-mrca.jpg'; // nearest common ancestor
+					$label = 'Common ancestor of A and B';
+					break;
+
+				case '09-ANCESTOR-A':
 					//$icon = 'result-ancestor1.jpg';
 					$icon = 'result-ancestor2.jpg';
 					$label = 'Ancestor of A';
 					break;
 
-				case 'ANCESTOR-B':
+				case '08-ANCESTOR-B':
 					//$icon = 'result-ancestor1.jpg';
 					$icon = 'result-ancestor2.jpg';
 					$label = 'Ancestor of B';
 					break;
 
-				case 'CLADE-MEMBER':
+				case '07-CLADE-MEMBER':
 					$icon = 'result-member.jpg';
 					$label = 'Clade member';
 					break;
 
-				case 'MRCA-CLADE':
+				// case '06-MRCA-NEIGHBOR':
+
+				// case '05-ANCESTOR-NEIGHBOR':
+
+				case '04-MRCA-CLADE':
 					$icon = 'result-member.jpg';
 					$label = 'Member of ancestor clade';
 					break;
 
-				case 'COMMON-ANCESTOR':  // was 'MRCA'
-					$icon = 'result-mrca.jpg'; // nearest common ancestor
-					$label = 'Common ancestor of A and B';
-					break;
+				// see below for  '03-MATCHES-TERM-{#}' (regex) 
 
-				// case 'MRCA-NEIGHBOR':
-				// case 'ANCESTOR-NEIGHBOR':
-				// case 'MATCHES-AGE':
-				// case 'MATCHES-GEOTIME':
-				case '??':
-					// TODO: match other icons
-					$icon = 'result-tip.jpg';  // tip taxon
-					$label = 'Unknown relationship';
-					
-				default:
+				case '02-MATCHES-AGE':
+				case '01-MATCHES-GEOTIME':
+				case '00-NONE':
 					$icon = 'result-neutral.jpg';
 					$label = 'No clear relationship';
+
+				default:
+					// TODO: add regex for '03-MATCHES-TERM-{#}'
+					// TODO: match other icons
+					//$icon = 'result-tip.jpg';  // tip taxon
+					$icon = 'result-neutral.jpg';
+					$label = $displayedRelationship;
 			   }
 			  ?>
 			  <img class="qualifier-icon" title="<?= $label ?>" src="/images/<?= $icon ?>" alt="<?= $label ?>" />
