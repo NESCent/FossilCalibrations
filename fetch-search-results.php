@@ -33,6 +33,9 @@ $responseType = $search['ResponseType']; // HTML | JSON | ??
 
 $searchResults = array();
 
+// keep track of how many possible matches there are for each result (based on search tools used)
+$possibleMatches = 0;
+
 /* TODO: If the requested sort doesn't make sense given the search type(s), apply 
  * some simple rules to override it.
  */
@@ -92,6 +95,7 @@ if (!empty($search['SimpleSearch'])) {
 	$matching_calibration_ids = array();
 	$termPosition = 0;
 	foreach($searchTerms as $term) {
+		$possibleMatches++;
 		$termPosition++;
 		$query="SELECT c.CalibrationID FROM calibrations AS c
 			JOIN publications AS p ON p.PublicationID = c.NodePub
@@ -136,6 +140,7 @@ if (filterIsActive('FilterByTipTaxa')) {
 ?><div class="search-details">2 TAXA SUBMITTED</div><?
 		// both taxa were specified... 
 		$showDefaultSearch = false;
+		$possibleMatches += 2;
 
 		/* 
 		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
@@ -159,12 +164,12 @@ if (filterIsActive('FilterByTipTaxa')) {
 		// check director ancestors of A or B (includes the tip taxa)
 		$multitree_id_ancestors_A = getAllMultitreeAncestors( $multitree_id_A );
 ?><div class="search-details">ANCESTORS-A: <?= implode(", ", $multitree_id_ancestors_A) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_A, Array('relationship' => '09-ANCESTOR-A', 'relevance' => 0.5) );
+		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_A, Array('relationship' => '09-ANCESTOR-A', 'relevance' => 1.0) );
 ?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		$multitree_id_ancestors_B = getAllMultitreeAncestors( $multitree_id_B );
 ?><div class="search-details">ANCESTORS-B: <?= implode(", ", $multitree_id_ancestors_B) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_B, Array('relationship' => '08-ANCESTOR-B', 'relevance' => 0.5) );
+		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_B, Array('relationship' => '08-ANCESTOR-B', 'relevance' => 1.0) );
 ?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
 
 		// TODO: check all within clade of MRCA
@@ -179,6 +184,7 @@ if (filterIsActive('FilterByTipTaxa')) {
 ?><div class="search-details">1 TAXON SUBMITTED</div><?
 		// just one taxon was specified
 		$showDefaultSearch = false;
+		$possibleMatches++;
 		$specifiedTaxon = empty($search['FilterByTipTaxa']['TaxonA']) ? 'B' : 'A'; 
 
 		/* 
@@ -206,6 +212,7 @@ if (filterIsActive('FilterByClade')) {
 ?><div class="search-details">CLADE SUBMITTED</div><?
 		// search within this clade
 		$showDefaultSearch = false;
+		$possibleMatches++;
 
 		/* 
 		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
@@ -302,6 +309,7 @@ if (filterIsActive('FilterByAge')) {
 ?><div class="search-details">MIN AND MAX AGES SUBMITTED</div><?
 		// search within this clade
 		$showDefaultSearch = false;
+		$possibleMatches++;
 
 		/* 
 		 * Check for calibrations within the specified age ranage. NOTE that we should check
@@ -326,6 +334,7 @@ if (filterIsActive('FilterByAge')) {
 	} else {
 		// just one age was specified
 		$showDefaultSearch = false;
+		$possibleMatches++;
 		$specifiedAge = empty($search['FilterByAge']['MinAge']) ? 'MaxAge' : 'MinAge'; 
 ?><div class="search-details">1 AGE SUBMITTED (<?= $specifiedAge ?>)</div><?
 
@@ -361,6 +370,7 @@ if (filterIsActive('FilterByGeologicalTime')) {
 ?><div class="search-details">GEOLOGICAL TIME SUBMITTED</div><?
 		// search within this period
 		$showDefaultSearch = false;
+		$possibleMatches++;
 
 		/* 
 		 * Check for calibrations from the specified time
@@ -396,7 +406,7 @@ if ($showDefaultSearch) {
 		$matching_calibration_ids[] = $row['CalibrationID'];
 	}
 	if (count($matching_calibration_ids) > 0) {
-		addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '00-NONE', 'relevance' => null) );
+		addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '00-NONE', 'relevance' => 0.0) );
 	}
 }
 
@@ -451,13 +461,11 @@ if (count($searchResults) == 0) {
 			case 0:
 				// this should never happen
 				$result['displayedRelationship'] = '00-NONE'; 
-				$result['displayedRelevance'] = '???';
 				break;
 
 			case 1:
 				// simple result, copy values directly
 				$result['displayedRelationship'] = $result['qualifiers'][0]['relationship']; 
-				$result['displayedRelevance'] = $result['qualifiers'][0]['relevance'];
 				break;
 
 			default:	
@@ -475,23 +483,41 @@ if (count($searchResults) == 0) {
 				if (getRelationshipFromResult($result, '09-ANCESTOR-A') && getRelationshipFromResult($result, '08-ANCESTOR-B')) {
 					// bump this to show as common ancestor
 					$result['displayedRelationship'] = '10-COMMON-ANCESTOR'; 
-					$result['displayedRelevance'] = 1.0;
 				} else if (getRelationshipFromResult($result, '09-ANCESTOR-A')) {
 					$result['displayedRelationship'] = '09-ANCESTOR-A'; 
-					// TODO: preset relevance should vary depending on whether Taxon B was entered
-					$qual = getRelationshipFromResult($result, '09-ANCESTOR-A');
-					$result['displayedRelevance'] = $qual['relevance'];
 				} else if (getRelationshipFromResult($result, '08-ANCESTOR-B')) {
 					$result['displayedRelationship'] = '08-ANCESTOR-B'; 
-					// TODO: preset relevance should vary depending on whether Taxon A was entered
-					$qual = getRelationshipFromResult($result, '08-ANCESTOR-B');
-					$result['displayedRelevance'] = $qual['relevance'];
+				} else if (getRelationshipFromResult($result, '07-CLADE-MEMBER')) {
+					$result['displayedRelationship'] = '07-CLADE-MEMBER'; 
+				// TODO: add other remaining relationship types, in precedence shown above
 				} else {
 					// relevance is a weighted average, or highlighted score
 					$result['displayedRelationship'] = '00-NONE';
-					$result['displayedRelevance'] = null;
+					$result['displayedRelevance'] = 0;
 				}
 		}
+
+		// choose relevance by examining the search and weighting matches against the search tools used
+		if (count($result['qualifiers']) == 0) {
+			$result['displayedRelevance'] = 0.0;
+		} else {
+			/* Average the relevance for all qualifiers on this result, including zeroes for any
+			 * missing matches (based on $search properties). This gives us an overall relevance 
+			 * score that should look about right.
+			 */
+ ?><pre class="search-details" style="color: red;">possibleMatches: <?= $possibleMatches ?></pre><?
+			$relevanceScores = array();
+			foreach ($result['qualifiers'] as $qual) {
+				$relevanceScores[] = $qual['relevance'];
+			}
+			while(count($relevanceScores) < $possibleMatches) {
+				$relevanceScores[] = 0.0;
+			}
+			$result['displayedRelevance'] = array_sum($relevanceScores) / count ($relevanceScores);
+ ?><pre class="search-details" style="color: red;">displayedRelevance: <?= array_sum($relevanceScores) ?> / <?= count ($relevanceScores) ?> = <?= $result['displayedRelevance'] ?></pre><?
+ ?><pre class="search-details" style="color: red;">  scores: <?= print_r($relevanceScores) ?></pre><?
+		}
+		
 
 	}
 	unset($result);	// IMPORTANT: because PHP is "special" and has bound $result to a reference above...
@@ -600,10 +626,19 @@ if (count($searchResults) == 0) {
 				// see below for  '03-MATCHES-TERM-{#}' (regex) 
 
 				case '02-MATCHES-AGE':
+					$icon = 'result-neutral.jpg';
+					$label = 'Matches age filter';
+					break;
+
 				case '01-MATCHES-GEOTIME':
+					$icon = 'result-neutral.jpg';
+					$label = 'Matches geological time';
+					break;
+
 				case '00-NONE':
 					$icon = 'result-neutral.jpg';
 					$label = 'No clear relationship';
+					break;
 
 				default:
 					// TODO: add regex for '03-MATCHES-TERM-{#}'
