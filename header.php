@@ -32,19 +32,32 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 <body>
 <div id="header">
     <div id="inner-header">
-	<? if (isset($skipHeaderSearch) && $skipHeaderSearch)
+      <? if (isset($skipHeaderSearch) && $skipHeaderSearch)
 	   { ?>
 	<div id="skip-header-search">
 		[For a basic text search, use the topmost field below]
 	</div>
-	<? } else { 
+      <? } else { 
 		// TODO: add basic search form here ?>
-        <div id="simple-search" style="">
+	<form id="simple-search" action="/search.php">
 	    <!--<input type="submit" class="search-button" style="" value="Search" />-->
 	    <input type="image" class="search-button" style="" value="Search" src="/images/search-button.png" />
-	    <input type="text" class="search-field" style="" value="Search by author, clade, publication, species, etc." />
-        </div>
-	<? } ?>
+	    <input id="header-search-input" name="SimpleSearch" type="text" class="search-field" style="" placeholder="Search by author, clade, publication, species, etc." value="" />
+        </form>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			// bind autocomplete behavior for simple-search field
+			$('#header-search-input').autocomplete({
+				source: '/autocomplete_all_names.php',
+				autoSelect: true,  // recognizes typed-in values if they match an item
+				autoFocus: true,
+				delay: 20,
+				minLength: 3,
+				minChars: 3
+			});
+		});
+	</script>
+      <? } ?>
 
 	<?php // rotate header logo, randomly for now
  		$logoOptions = Array('dark', 'light', 'bw');
@@ -92,6 +105,4 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 <div id="main">
 <div id="inner-main">
 <!-- begin content -->
-
-
 
