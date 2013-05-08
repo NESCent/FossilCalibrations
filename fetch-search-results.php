@@ -24,6 +24,11 @@ function filterIsActive( $fullFilterName ) {
 	return true;
 }
 
+// we need consistent number formatting to get natural sorting to work
+function sortableNumber( $number ) {
+	return number_format($number, 2, '.', '');
+}
+
 $responseType = $search['ResponseType']; // HTML | JSON | ??
 
 /* TODO: page or limit results, eg, 
@@ -493,13 +498,13 @@ if (count($searchResults) == 0) {
 				} else {
 					// relevance is a weighted average, or highlighted score
 					$result['displayedRelationship'] = '00-NONE';
-					$result['displayedRelevance'] = 0;
+					$result['displayedRelevance'] = sortableNumber(0);
 				}
 		}
 
 		// choose relevance by examining the search and weighting matches against the search tools used
 		if (count($result['qualifiers']) == 0) {
-			$result['displayedRelevance'] = 0.0;
+			$result['displayedRelevance'] = sortableNumber(0.0);
 		} else {
 			/* Average the relevance for all qualifiers on this result, including zeroes for any
 			 * missing matches (based on $search properties). This gives us an overall relevance 
@@ -513,7 +518,7 @@ if (count($searchResults) == 0) {
 			while(count($relevanceScores) < $possibleMatches) {
 				$relevanceScores[] = 0.0;
 			}
-			$result['displayedRelevance'] = array_sum($relevanceScores) / count ($relevanceScores);
+			$result['displayedRelevance'] = sortableNumber(array_sum($relevanceScores) / count ($relevanceScores));
  ?><pre class="search-details" style="color: red;">displayedRelevance: <?= array_sum($relevanceScores) ?> / <?= count ($relevanceScores) ?> = <?= $result['displayedRelevance'] ?></pre><?
  ?><pre class="search-details" style="color: red;">  scores: <?= print_r($relevanceScores) ?></pre><?
 		}
@@ -522,14 +527,24 @@ if (count($searchResults) == 0) {
 	}
 	unset($result);	// IMPORTANT: because PHP is "special" and has bound $result to a reference above...
 
+
+ ?><pre class="search-details" style="color: red;">strnatcmp(0, 1.0) = <?= strnatcmp(0, 1.0)  ?></pre><?
+ ?><pre class="search-details" style="color: red;">strnatcmp(0.5, 1.0) = <?= strnatcmp(0.5, 1.0)  ?></pre><?
+ ?><pre class="search-details" style="color: red;">strnatcmp(0.5, 0.25) = <?= strnatcmp(0.5, 0.25)  ?></pre><?
+ ?><pre class="search-details" style="color: red;">strnatcmp(0.5, 0.2) = <?= strnatcmp(0.5, 0.2)  ?></pre><?
+ ?><pre class="search-details" style="color: red;">strnatcmp(0.75, 0.25) = <?= strnatcmp(0.75, 0.25)  ?></pre><?
+ ?><pre class="search-details" style="color: red;">strnatcmp(1, 0.25) = <?= strnatcmp(1, 0.25)  ?></pre><?
+
+
 	// Do any final sorting for display, using visible (consolidated) relationship and relevance
 	switch($search['SortResultsBy']) {
 		case 'RELEVANCE_DESC':
 			$searchResults = columnSort($searchResults, array(
-				'displayedRelevance', 'desc',
-				'displayedRelationship', 'desc',
-				'DateCreated', 'desc',
-				'MinAge', 'desc'
+				'displayedRelevance', 'desc'
+//,
+				//'displayedRelationship', 'desc',
+				//'DateCreated', 'desc',
+				//'MinAge', 'desc'
 			));
 			break;
 		case 'RELATIONSHIP':

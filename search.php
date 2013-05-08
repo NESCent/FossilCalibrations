@@ -408,6 +408,11 @@ $(document).ready(function() {
 	};
 
 	$('input[name=TaxonA], input[name=TaxonB], input[name=FilterByClade]').autocomplete(taxonPickerSettings);
+
+	// bind sort menu and submit buttons to refresh results list (via AJAX?)
+	$('#SortResultsBy').unbind('change').change(function() {
+		 $('form#advanced-search').submit();
+	});
 });
 
 </script>
