@@ -61,6 +61,12 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 		      */
 			minChars: 3
 		});
+		
+		$('#adv-search-link').unbind('click').click(function() {
+			// pass the current search terms to the full search page
+			$('#simple-search-form').submit();
+			return false;
+		});
 	});
 </script>
 
@@ -143,15 +149,16 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <div class="center-column" style="padding-left: 0;">
 
- <div style="height: 160px; text-align: center; padding-top: 60px;">
+ <form id="simple-search-form" action="/search.php"
+       style="height: 160px; text-align: center; padding-top: 60px;">
 		<div id="simple-search" style="float: none; text-align: center; margin: 3px auto 10px;">
 			<input type="submit" style="float: right;" value="Go" />
-			<input id="simple-search-input" type="text" style="width: 80%;" value="Search by author, clade, publication, species,etc." />
+			<input id="simple-search-input" name="SimpleSearch" type="text" style="width: 80%;" placeholder="Search by author, clade, publication, species,etc." value="" />
 		</div>
 		<p>
-			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a href="/search.php">Advanced search</a> &nbsp;|&nbsp; <a href="#">Example searches</a>
+			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a id="adv-search-link" href="/search.php">Advanced search</a> <!-- &nbsp;|&nbsp; <a href="#">Example searches</a> -->
 		</p>
- </div>
+ </form>
 
 <!--<h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>-->
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">

@@ -65,13 +65,9 @@ if (!isset($search) || ($search == null)) {
 	}
 	if (isset($_GET['HiddenFilters'])) {
 	    $search['HiddenFilters'] = $_GET['HiddenFilters']; // should be an Array
-	} else {
-	    $search['HiddenFilters'] = Array();
 	}
 	if (isset($_GET['BlockedFilters'])) {
 	    $search['BlockedFilters'] = $_GET['BlockedFilters']; // should be an Array
-	} else {
-	    $search['BlockedFilters'] = Array();
 	}
 	if (isset($_GET['SortResultsBy'])) {
 	    $search['SortResultsBy'] = trim($_GET['SortResultsBy']);
