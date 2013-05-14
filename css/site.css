@@ -518,6 +518,12 @@ blockquote.odd, tr.odd td {
 .ancestor-path, .child-listing {
 	margin-bottom: 1em;
 }
+.ancestor-path a, .child-listing a {
+	text-decoration: none;
+}
+.child-listing .calibration-count {
+	font-weight: bold;
+}
 
 .diagnostic {
 	color: #d88;

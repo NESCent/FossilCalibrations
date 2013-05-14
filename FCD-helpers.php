@@ -297,6 +297,86 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	return;
 }
 
+function getAllCalibrationsInClade($clade_root_source_id) {
+	// faster clade tally, using a pre-cooked table 'calibrations_by_NCBI_clade'
+	global $mysqli;
+	$calibrationIDs = array();
+
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."';";
+?><div class="search-details">QUERY:<br/><?= $query ?></div><?
+	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	while($row=mysqli_fetch_assoc($result)) {
+		$calibrationIDs[] = $row['calibration_id'];
+	}
+	return $calibrationIDs;
+}
+
+function getDirectCalibrationsInCladeRoot($clade_root_source_id) {
+	// this one returns only those calibrations directly associated with the clade-root node
+	global $mysqli;
+	$calibrationIDs = array();
+
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."' AND is_direct_relationship = 1;";
+?><div class="search-details">QUERY:<br/><?= $query ?></div><?
+	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	while($row=mysqli_fetch_assoc($result)) {
+		$calibrationIDs[] = $row['calibration_id'];
+	}
+	return $calibrationIDs;
+}
+
+function SLOW_getCalibrationsInClade($clade_root_source_id) {
+	// adapted from search logic, BUT it's very slow (too slow) for browsing UI
+	global $mysqli;
+
+	// test all eligible calibrations, backtracking from node IDs (should still be faster than testing every Eukaryote!)
+	$test_taxon_ids = array();
+	// test ALL nodes in all custom trees
+	$query="SELECT node_id, tree_id from FCD_nodes;";
+/* ?><div class="search-details">SEARCH FOR ALL CUSTOM-TREE NODES (SOURCE IDS):<br/><?= $query ?></div><? */
+	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	while($row=mysqli_fetch_assoc($result)) {
+		$test_taxon_ids[] = $row;
+	}
+
+	// if any node comes 
+	$matching_tree_ids = array();  // once a tree has matched, stop checking it!
+	$matching_calibration_ids = array();
+	foreach($test_taxon_ids as $taxon_ids) {
+		$test_node_id = $taxon_ids['node_id'];
+		$test_tree_id = $taxon_ids['tree_id'];
+		if (!in_array($test_tree_id, $matching_tree_ids)) {
+/* ?><div class="search-details">Testing node <?= $test_node_id ?> in tree <?= $test_tree_id ?></div><? */
+			$query="CALL isMemberOfClade('NCBI', '$clade_root_source_id', CONCAT('FCD-', '$test_tree_id'), '$test_node_id', @isInClade);";
+/* ?><div class="search-details"><pre><?= $query ?></pre></div><? */
+			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+			while(mysqli_more_results($mysqli)) {
+			     mysqli_next_result($mysqli);
+			     mysqli_store_result($mysqli);
+			}
+			$query='SELECT @isInClade';
+			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+			$foundInClade = mysqli_fetch_assoc($result);
+			$foundInClade = $foundInClade['@isInClade'];
+/* ?><div class="search-details">Result for node <?= $test_node_id ?>: <? print_r($foundInClade); ?></div><? */
+			if ($foundInClade) {
+				$matching_tree_ids[] = $test_tree_id;
+/* ?><div class="search-details">First match on node <?= $test_node_id ?>, tree <?= $test_tree_id ?></div><? */
+			}
+		}
+	}
+
+	if (count($matching_tree_ids) > 0) {
+		$query="SELECT calibration_id FROM FCD_trees WHERE tree_id IN (". implode(",", $matching_tree_ids) .");";
+		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+		while($row=mysqli_fetch_assoc($result)) {
+			$matching_calibration_ids[] = $row['calibration_id'];
+		}
+	}
+
+	return $matching_calibration_ids;
+}
+
 
 /* Multi-column (key) sorting for nested associative arrays, eg, search results
  * Adapted from http://nl.php.net/manual/en/function.natsort.php#69346

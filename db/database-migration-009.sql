@@ -22,12 +22,10 @@ CREATE TABLE calibrations_by_NCBI_clade (
 /* 
  * Add new status flag and timestamp for this
  */
-/*
 ALTER TABLE site_status
     ADD COLUMN cladeCalibration_status VARCHAR(50) NOT NULL DEFAULT 'Up to date' AFTER `NCBI_status`;
 ALTER TABLE site_status
     ADD COLUMN last_cladeCalibration_update TIMESTAMP NOT NULL AFTER `last_NCBI_update`;
-*/
 
 
 /*

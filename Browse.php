@@ -5,7 +5,6 @@ require('Site.conf');
 // open and print header template
 require('header.php');
 
-
 // fetch the multitree ID (if any) for the specified node (source+ID, eg "NCBI:4321"
 // NOTE that we'll query on the multitree ID, but it never appears to the user or in the URL
 $defaultNodeSpec = 'NCBI:1';
@@ -134,27 +133,55 @@ $descendant_trees = array_unique($descendant_trees);
 <p><h1>Browse multitree at node<br/> 
 '<?= htmlspecialchars($targetNodeInfo['uniquename']) ?>' (<?= $nodeSource ?>:<?= $nodeSourceID ?>, mID:<?= $nodeMultitreeID ?>)</h1></p>
 <?php
+    $calibrationsInThisTaxon = getDirectCalibrationsInCladeRoot($nodeMultitreeID);
+?>
+<h3>There are <?= count($calibrationsInThisTaxon) ?> calibrations directly related to this taxon</h3>
+<?php
 if (count($ancestor_trees) > 1) { ?>
 <p><em>This node has been pinned across <?= count($ancestor_trees) ?> trees, as shown below.</em></p>
 <? }
 
-$nthAncestor = 0;
-foreach ($ancestor_trees as $tree) { ?>
+// clear the big ancestor list
+$ancestors = array();
+
+foreach ($ancestor_trees as $tree) { 
+	// To avoid duplication, we need to retrieve ancestors for each tree separately
+	$sql = 'CALL getAllAncestors('. $nodeMultitreeID .', "TEMP_ancestors", "'.$tree.'" )';
+	$results = mysqli_query($mysqli, $sql) or die ('Error in sql: '.$sql.'|'. mysql_error());
+	while(mysqli_more_results($mysqli)) mysqli_next_result($mysqli); // wait for this to finish
+	//mysqli_store_result($mysqli);
+
+	$sql = 'CALL getFullNodeInfo("TEMP_ancestors", "TEMP_ancestors_info" )';
+	$results = mysqli_query($mysqli, $sql) or die ('Error in sql: '.$sql.'|'. mysql_error());
+	while(mysqli_more_results($mysqli)) mysqli_next_result($mysqli); // wait for this to finish
+	//mysqli_store_result($mysqli);
+
+	$sql = 'SELECT * FROM TEMP_ancestors_info WHERE source_tree = "'. $tree .'"';
+	$ancestors_info_results = mysqli_query($mysqli, $sql) or die ('Error in sql: '.$sql.'|'. mysql_error());
+	while(mysqli_more_results($mysqli)) mysqli_next_result($mysqli); // wait for this to finish
+
+	$ancestors = array();
+	while ($row = mysqli_fetch_array($ancestors_info_results)) {
+		$ancestors[]=$row;
+	}
+
+	// Skip this tree if only the target node is in it 
+	if (count($ancestors) < 2) continue;
+?>
 <h3 class="contentheading">Ancestors in tree '<?= $tree ?>'</h3>
 <div class="ancestor-path">
-<?  foreach ($ancestors as $row) {
-	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // don't include the target node!
-	if ($row['source_tree'] != $tree) continue;
-	// TODO: distinguish between multiple trees, and list separately? or mixed?
-/* ?><br/><pre><? var_dump($row); ?></pre><? */
-	$nthAncestor++;
-	// show each ancestor as a breadcrumb/link in chain of ancestry ?>
-	
-	<? if ($nthAncestor > 1) { ?>&raquo;<? } ?>
-	<a href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
-	<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
+	<? $nthAncestor = 0;
+	   foreach ($ancestors as $row) {
+		if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // don't include the target node!
+	 /* ?><br/><pre><? var_dump($row); ?></pre><? */
+		$nthAncestor++;
+		// show each ancestor as a breadcrumb/link in chain of ancestry ?>
+		
+		<? if ($nthAncestor > 1) { ?>&raquo;<? } ?>
+		<a href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+		<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
 
-<?  } ?>
+	<?  } ?>
 </div><!-- end of .ancestor-path -->
 <? }
 
@@ -162,13 +189,18 @@ foreach ($descendant_trees as $tree) { ?>
 <h3 class="contentheading">Child nodes in tree '<?= $tree ?>'</h3>
 <ul class="child-listing">
 <?  foreach ($descendants as $row) {
-	//if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // don't include the target node!
+	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
 	if ($row['source_tree'] != $tree) continue;
 	if ($row['query_depth'] != 1) continue; // show immediate children only!
+	// try a more specific count
+	$calibrationsInThisClade = getAllCalibrationsInClade($row['multitree_node_id']);
 ?>
     <li>	
       <? if ($row['is_calibration_target'] == 1) { ?><strong><? } ?>
+       <? if (count($calibrationsInThisClade) > 0) { ?><em><? } ?>
 	<a href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+        <? if (count($calibrationsInThisClade) > 0) { ?> &nbsp; <a href="#TODO" title="Click to see calibrations">(<span class="calibration-count"><?= count($calibrationsInThisClade) ?></span>)</a><? } ?>
+       <? if (count($calibrationsInThisClade) > 0) { ?></em><? } ?>
       <? if ($row['is_calibration_target'] == 1) { ?></strong><? } ?>
 	<!-- <em>depth=<?= $row['query_depth'] ?></em> -->
 	<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
