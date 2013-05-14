@@ -55,12 +55,14 @@ mysql_free_result($result);
  *  values should be 'Needs update', 'Updating now', or 'Up to date'
  */
 $autoCompleteStatus = $site_status['autocomplete_status'];
+$calibrationsByCladeStatus = $site_status['cladeCalibration_status'];
 $multitreeStatus = $site_status['multitree_status'];
 $NCBIStatus = $site_status['NCBI_status'];
 
 ?>
 <script type="text/javascript">
    var autoCompleteStatus = '<?= $autoCompleteStatus ?>';
+   var calibrationsByCladeStatus = '<?= $calibrationsByCladeStatus ?>';
    var multitreeStatus = '<?= $multitreeStatus ?>';
    var NCBIStatus = '<?= $NCBIStatus ?>';
 
@@ -97,6 +99,20 @@ $NCBIStatus = $site_status['NCBI_status'];
             async: true
          });
       });
+      $('#update-calibrations-by-clade').unbind('click').click(function() {
+         // AJAX call to start operation, returns all status vars
+         $.ajax({
+            type: 'POST',
+            url: '/protected/remote_operation.php',
+            data: {'operation': 'UPDATE_CALIBRATIONS_BY_CLADE'},
+            success: function(data) {
+               console.log('success! from initial call to UPDATE_CALIBRATIONS_BY_CLADE');
+               checkRemoteUpdateStatus();
+            },
+            dataType: 'json',
+            async: true
+         });
+      });
       $('#update-NCBI').unbind('click').click(function() {
          alert('This feature is not currently available through the web.'); // TODO
       });
@@ -122,6 +138,7 @@ $NCBIStatus = $site_status['NCBI_status'];
              // console.log('success! from call to CHECK_UPDATE_STATUS');
              autoCompleteStatus = data.autocomplete_status;
              multitreeStatus = data.multitree_status;
+             calibrationsByCladeStatus = data.cladeCalibration_status;
              NCBIStatus = data.NCBI_status;
              updateStatusIndicators();
              /* NOTE that we daisy-chain timeouts, instead of using
@@ -138,12 +155,13 @@ $NCBIStatus = $site_status['NCBI_status'];
    }
 
    function blurStatusIndicators() {
-      $('#update-autocomplete-status img, #update-multitree-status img').attr('src', '/images/status-black.png');
-      $('#update-autocomplete-status i, #update-multitree-status i').html('...');
+      $('#update-autocomplete-status img, #update-calibrations-by-clade-status img, #update-multitree-status img').attr('src', '/images/status-black.png');
+      $('#update-autocomplete-status i, #update-calibrations-by-clade-status i, #update-multitree-status i').html('...');
    }
 
    function updateStatusIndicators() {
       updateAutocompleteStatus();
+      updateCalibrationsByCladeStatus();
       updateMultitreeStatus();
    }
 
@@ -182,6 +200,45 @@ $NCBIStatus = $site_status['NCBI_status'];
          'src': indicatorImgPath,
          'alt': autoCompleteStatus,
          'title': autoCompleteStatus
+      });
+      $indicator.find('i').html( msg );
+   }
+
+   function updateCalibrationsByCladeStatus( ) {
+      switch(calibrationsByCladeStatus) {
+         case 'Needs update': 
+            indicatorImgPath = '/images/status-red.png';
+            msg = "Needs update (requires ~35 minutes)";
+            isDisabled = false;
+            break;
+
+         case 'Updating now': 
+            indicatorImgPath = '/images/status-yellow.png';
+            msg = "Updating now";  // TODO: add live ", ~n minutes remaining" ?
+            isDisabled = true;
+            break;
+
+         case 'Up to date':
+            indicatorImgPath = '/images/status-green.png';
+            msg = "Up to date";
+            isDisabled = false;
+            break;
+
+         default:
+            console.log('ERROR: unexpected value for calibrationsByCladeStatus:'+ calibrationsByCladeStatus +' <'+ typeof(calibrationsByCladeStatus) +'>');
+            return;
+      }
+      var $button = $('#update-calibrations-by-clade');
+      if (isDisabled) {
+         $button.attr('disabled','disabled');
+      } else {
+         $button.removeAttr('disabled');
+      }
+      var $indicator = $('#update-calibrations-by-clade-status');
+      $indicator.find('img').attr({
+         'src': indicatorImgPath,
+         'alt': calibrationsByCladeStatus,
+         'title': calibrationsByCladeStatus
       });
       $indicator.find('i').html( msg );
    }
@@ -294,6 +351,17 @@ Site Statistics
  </tr>
  <tr>
   <td align="right" valign="top">
+   Last calibrations-by-clade update
+  </td>
+  <td valign="top" style="font-weight: bold;">
+   <?= date("M d, Y - h:m a", strtotime($site_status['last_cladeCalibration_update'])) ?>
+   <? /*if ($site_status['needs_build'] == 1) { ?>
+        <b style="color: #c33;">&mdash; needs update!</b>
+   <? } */ ?>
+  </td>
+ </tr>
+ <tr>
+  <td align="right" valign="top">
    Last multitree update
   </td>
   <td valign="top" style="font-weight: bold;">
@@ -325,6 +393,17 @@ Site Maintenance
    <div id="update-autocomplete-status">
       <img align="absmiddle" src="/images/status-red.png" title="ready" alt="ready" />
       &nbsp; <i>Needs update (requires ~10 minutes)</i>
+   </div>
+  </td>
+ </tr>
+ <tr>
+  <td align="right" valign="top">
+   <input type="button" id="update-multitree" value="Update calibrations-by-clade table" />
+  </td>
+  <td valign="top">
+   <div id="update-calibrations-by-clade-status">
+      <img align="absmiddle" src="/images/status-yellow.png" title="ready" alt="ready" />
+      &nbsp; <i>Updating now, ~6 minutes remaining</i>
    </div>
   </td>
  </tr>

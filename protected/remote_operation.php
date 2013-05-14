@@ -19,10 +19,14 @@ if (!isset($_POST['operation'])) {
 $operation = $_POST['operation'];
 
 
-
 switch($operation) {
    case 'UPDATE_AUTOCOMPLETE':
       runSQLScript('protected/UPDATE_AUTOCOMPLETE.sql');
+      echo "['OK']";
+      return;
+
+   case 'UPDATE_CLADES_BY_CALIBRATION':
+      runSQLScript('protected/UPDATE_CLADES_BY_CALIBRATION.sql');
       echo "['OK']";
       return;
 
