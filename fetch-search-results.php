@@ -694,7 +694,7 @@ if (count($searchResults) == 0) {
 			</td>
 		</tr>
 	</table>
-	<a class="calibration-link" href="<?= $calibrationDisplayURL ?>>
+	<a class="calibration-link" href="<?= $calibrationDisplayURL ?>">
 		<span class="name"><?= $result['NodeName'] ?></span>
 		<span class="citation">&ndash; from <?= $result['ShortName'] ?></span>
 	</a>

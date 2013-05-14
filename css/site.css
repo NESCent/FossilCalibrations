@@ -521,8 +521,24 @@ blockquote.odd, tr.odd td {
 .ancestor-path a, .child-listing a {
 	text-decoration: none;
 }
+.child-listing .no-calibrations {
+	font-weight: normal;
+}
+.child-listing .has-calibrations {
+	font-weight: bold;
+}
 .child-listing .calibration-count {
 	font-weight: bold;
+}
+.nlevel-option {
+	color: #ccc !important;
+}
+.nlevel-option:hover,
+.nlevel-option.selected {
+	color: #4C92B1 !important;
+}
+.nlevel-option.selected {
+	text-decoration: none !important;
 }
 
 .diagnostic {

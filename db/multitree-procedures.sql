@@ -378,7 +378,8 @@ the_loop:WHILE NOT v_done DO
 
         INSERT INTO hier 
             SELECT p.node_id, p.parent_node_id, v_depth FROM multitree p 
-            INNER JOIN tmp ON p.parent_node_id = tmp.node_id AND tmp.depth = v_depth - 1;
+            INNER JOIN tmp ON p.parent_node_id = tmp.node_id AND tmp.depth = v_depth - 1 AND p.node_id != p.parent_node_id ;
+		-- note that we test for the root node (two matching IDs) so it doesn't get repeated
 
 	-- stash this depth's results into tmp, for comparison next time
         TRUNCATE TABLE tmp;
