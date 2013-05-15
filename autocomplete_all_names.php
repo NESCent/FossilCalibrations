@@ -24,7 +24,10 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 // fetch any matching publication names
 //$query='SELECT PublicationID AS value, ShortName as label, FullReference  // works with vanilla jQuery UI autocomplete
-$query='SELECT name AS value, name as label, description
+
+//$query='SELECT name AS value, name as label, description
+// skipping description (currently unused in any case) to filter out duplicate names
+$query='SELECT DISTINCT name AS value, name as label
 	FROM AC_names_searchable
 	WHERE name LIKE "'. $q .'%"'.
 	// non-admin users should only see *Published* publication names

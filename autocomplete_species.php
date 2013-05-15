@@ -22,8 +22,8 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 // check list of names against this query
 // TODO: show un-published names only to logged-in admins/reviewers
 
-// fetch any matching taxon names
-$query='SELECT name AS value, name as label, description
+// fetch any matching taxon names (need descriptions, too? REQUIRES changing view 'AC_names_taxa')
+$query='SELECT name AS value, name as label
 	FROM AC_names_taxa
 	WHERE name LIKE "'. $q .'%"'.
 	// non-admin users should only see *Published* names?
