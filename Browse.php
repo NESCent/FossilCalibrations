@@ -352,9 +352,13 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 			var url = window.location.href;
 			url = url.split('#')[0];  // remove any fragment
 			if (url.indexOf('levels=') === -1) {
-				url += ('&levels=' + $clicked.text());
+				if (url.indexOf('?') === -1) {
+					url += ('?levels=' + $clicked.text());
+				} else {
+					url += ('&levels=' + $clicked.text());
+				}
 			} else {
-				url = url.replace(/&levels=(all|\d?)/, '&levels='+ $clicked.text());
+				url = url.replace(/levels=(all|\d?)/, 'levels='+ $clicked.text());
 			}
 			window.location.href = url;
 			return false;
