@@ -28,7 +28,7 @@ CREATE TABLE AC_names_nodes (
 
 -- Let's not create more huge tables just for taxa and extant species
 CREATE OR REPLACE VIEW AC_names_taxa AS
-  (SELECT DISTINCT name FROM AC_names_nodes WHERE (is_taxon = 1));
+  (SELECT name FROM AC_names_nodes WHERE (is_taxon = 1));
 
 CREATE OR REPLACE VIEW AC_names_extant_species AS
   (SELECT * FROM AC_names_nodes WHERE (is_taxon = 1) AND (is_extant_species = 1));
