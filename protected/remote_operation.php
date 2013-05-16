@@ -25,8 +25,8 @@ switch($operation) {
       echo "['OK']";
       return;
 
-   case 'UPDATE_CLADES_BY_CALIBRATION':
-      runSQLScript('protected/UPDATE_CLADES_BY_CALIBRATION.sql');
+   case 'UPDATE_CALIBRATIONS_BY_CLADE':
+      runSQLScript('protected/UPDATE_CALIBRATIONS_BY_CLADE.sql');
       echo "['OK']";
       return;
 

@@ -1,1 +1,1 @@
-CALL refreshCalibrationsByClade('FINAL');
+CALL refreshMultitree('FINAL');
