@@ -90,9 +90,6 @@ JOIN node_identity ON node_identity.source_tree = 'NCBI' AND node_identity.sourc
 -- this will give us tallies to show in a compact tree format
 OPEN direct_relationship_cursor;
 
-  CREATE TEMPORARY TABLE tmp_ancestors ENGINE=memory SELECT * FROM v_ancestors;
-  /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
-
   the_loop: LOOP
     FETCH direct_relationship_cursor INTO the_ncbi_id, the_multitree_id, the_calibration_id, the_publication_status;
 
@@ -103,6 +100,9 @@ OPEN direct_relationship_cursor;
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
     CALL getAllAncestors( the_multitree_id, "v_ancestors", 'NCBI' );
+
+    CREATE TEMPORARY TABLE IF NOT EXISTS tmp_ancestors ENGINE=memory SELECT * FROM v_ancestors;
+    /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
 
     TRUNCATE TABLE tmp_ancestors;
     INSERT INTO tmp_ancestors SELECT * FROM v_ancestors;

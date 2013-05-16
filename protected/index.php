@@ -398,7 +398,7 @@ Site Maintenance
  </tr>
  <tr>
   <td align="right" valign="top">
-   <input type="button" id="update-multitree" value="Update calibrations-by-clade table" />
+   <input type="button" id="update-calibrations-by-clade" value="Update calibrations-by-clade table" />
   </td>
   <td valign="top">
    <div id="update-calibrations-by-clade-status">
