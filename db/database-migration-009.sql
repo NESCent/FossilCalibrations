@@ -21,11 +21,13 @@ CREATE TABLE calibrations_by_NCBI_clade (
 
 /* 
  * Add new status flag and timestamp for this
- */
+
 ALTER TABLE site_status
     ADD COLUMN cladeCalibration_status VARCHAR(50) NOT NULL DEFAULT 'Up to date' AFTER `NCBI_status`;
 ALTER TABLE site_status
     ADD COLUMN last_cladeCalibration_update TIMESTAMP NOT NULL AFTER `last_NCBI_update`;
+
+ */
 
 
 /*
@@ -97,9 +99,16 @@ OPEN direct_relationship_cursor;
       LEAVE the_loop;
     END IF;
 
+IF the_calibration_id != 104 THEN
+	ITERATE the_loop;
+END IF;
+
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
     CALL getAllAncestors( the_multitree_id, "v_ancestors", 'NCBI' );
+
+SELECT "cal-104 ancestors:";
+SELECT * FROM v_ancestors;
 
     CREATE TEMPORARY TABLE IF NOT EXISTS tmp_ancestors ENGINE=memory SELECT * FROM v_ancestors;
     /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
@@ -107,25 +116,52 @@ OPEN direct_relationship_cursor;
     TRUNCATE TABLE tmp_ancestors;
     INSERT INTO tmp_ancestors SELECT * FROM v_ancestors;
 
+SELECT "... count before adding nodes:";
+SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id;
+
+    -- first pass, to gather indirect relationships on pinned nodes
     INSERT INTO tmp_calibrations_by_NCBI_clade (clade_root_NCBI_id, clade_root_multitree_id, calibration_id, is_direct_relationship, publication_status)
     SELECT
-      COALESCE(node_identity.source_node_id, multitree.node_id),  -- NCBI ID for a node that is identical to FCD nodes in FCD-tree for a given calibration
-      COALESCE(node_identity.multitree_node_id, multitree.node_id),  -- its corresponding multitree ID
+      node_identity.source_node_id,  -- NCBI ID for a node that is identical to FCD nodes in FCD-tree for a given calibration
+      node_identity.multitree_node_id,  -- its corresponding multitree ID
       the_calibration_id,
       0,  -- these are INDIRECT relationships
       the_publication_status
     FROM
       node_identity 
-    JOIN multitree ON multitree.node_id IN (SELECT node_id FROM v_ancestors)
     WHERE node_identity.source_tree = 'NCBI' 
-        AND node_identity.multitree_node_id IN (SELECT node_id FROM tmp_ancestors) 
-        AND node_identity.multitree_node_id != the_multitree_id;  -- DON'T repeat the direct node here!
+      AND node_identity.multitree_node_id IN (SELECT node_id FROM tmp_ancestors) 
+      AND node_identity.multitree_node_id != the_multitree_id;  -- DON'T repeat the direct node here!
+
+SELECT "... count after adding PINNED nodes:";
+SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id;
+
+    -- second pass, to gather indirect relationships on UN-pinned nodes
+    INSERT INTO tmp_calibrations_by_NCBI_clade (clade_root_NCBI_id, clade_root_multitree_id, calibration_id, is_direct_relationship, publication_status)
+    SELECT
+      multitree.node_id,  -- NCBI ID for an un-pinned NCBI node
+      multitree.node_id,  -- its corresponding multitree ID (unchanged for un-pinned nodes!)
+      the_calibration_id,
+      0,  -- these are INDIRECT relationships
+      the_publication_status
+    FROM
+      multitree 
+    WHERE multitree.node_id IN (SELECT node_id FROM v_ancestors) 
+      AND multitree.node_id != the_multitree_id;  -- DON'T repeat the direct node here!
+
+SELECT "... count after adding UN-pinned nodes:";
+SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id;
 
     SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
   END LOOP;
 
 CLOSE direct_relationship_cursor;
 SET no_more_rows = FALSE;
+
+
+SELECT "cal-104 results:";
+SELECT * FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = 104;
+
 
 -- if we're serious, replace/rename the real tables
 IF testOrFinal = 'FINAL' THEN
