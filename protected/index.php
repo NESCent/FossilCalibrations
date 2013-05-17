@@ -71,20 +71,6 @@ $NCBIStatus = $site_status['NCBI_status'];
 
    $(document).ready(function() {
       // bind site maintenance buttons
-      $('#update-autocomplete').unbind('click').click(function() {
-         // AJAX call to start operation, returns all status vars
-         $.ajax({
-            type: 'POST',
-            url: '/protected/remote_operation.php',
-            data: {'operation': 'UPDATE_AUTOCOMPLETE'},
-            success: function(data) {
-               console.log('success! from initial call to UPDATE_AUTOCOMPLETE');
-               checkRemoteUpdateStatus();
-            },
-            dataType: 'json',
-            async: true
-         });
-      });
       $('#update-multitree').unbind('click').click(function() {
          // AJAX call to start operation, returns all status vars
          $.ajax({
@@ -107,6 +93,20 @@ $NCBIStatus = $site_status['NCBI_status'];
             data: {'operation': 'UPDATE_CALIBRATIONS_BY_CLADE'},
             success: function(data) {
                console.log('success! from initial call to UPDATE_CALIBRATIONS_BY_CLADE');
+               checkRemoteUpdateStatus();
+            },
+            dataType: 'json',
+            async: true
+         });
+      });
+      $('#update-autocomplete').unbind('click').click(function() {
+         // AJAX call to start operation, returns all status vars
+         $.ajax({
+            type: 'POST',
+            url: '/protected/remote_operation.php',
+            data: {'operation': 'UPDATE_AUTOCOMPLETE'},
+            success: function(data) {
+               console.log('success! from initial call to UPDATE_AUTOCOMPLETE');
                checkRemoteUpdateStatus();
             },
             dataType: 'json',
@@ -208,8 +208,14 @@ $NCBIStatus = $site_status['NCBI_status'];
       switch(calibrationsByCladeStatus) {
          case 'Needs update': 
             indicatorImgPath = '/images/status-red.png';
-            msg = "Needs update (requires ~35 minutes)";
-            isDisabled = false;
+            // this operation depends on an up-to-date multitree...
+	    if (multitreeStatus === 'Up to date') {
+               isDisabled = false;
+               msg = "Needs update (requires ~35 minutes)";
+            } else {
+               isDisabled = true;
+               msg = "Needs update (but update the multitree first!)";
+            }
             break;
 
          case 'Updating now': 
@@ -385,28 +391,7 @@ Site Statistics
 Site Maintenance
 </h3>
 <table border="0" cellspacing="5">
- <tr>
-  <td align="right" valign="top">
-   <input type="button" id="update-autocomplete" value="Update auto-complete lists" />
-  </td>
-  <td valign="top">
-   <div id="update-autocomplete-status">
-      <img align="absmiddle" src="/images/status-red.png" title="ready" alt="ready" />
-      &nbsp; <i>Needs update (requires ~10 minutes)</i>
-   </div>
-  </td>
- </tr>
- <tr>
-  <td align="right" valign="top">
-   <input type="button" id="update-calibrations-by-clade" value="Update calibrations-by-clade table" />
-  </td>
-  <td valign="top">
-   <div id="update-calibrations-by-clade-status">
-      <img align="absmiddle" src="/images/status-yellow.png" title="ready" alt="ready" />
-      &nbsp; <i>Updating now, ~6 minutes remaining</i>
-   </div>
-  </td>
- </tr>
+
  <tr>
   <td align="right" valign="top">
    <input type="button" id="update-multitree" value="Update searchable multitree" />
@@ -418,6 +403,31 @@ Site Maintenance
    </div>
   </td>
  </tr>
+
+ <tr>
+  <td align="right" valign="top">
+   <input type="button" id="update-calibrations-by-clade" value="Update calibrations-by-clade table" />
+  </td>
+  <td valign="top">
+   <div id="update-calibrations-by-clade-status">
+      <img align="absmiddle" src="/images/status-yellow.png" title="ready" alt="ready" />
+      &nbsp; <i>Updating now, ~6 minutes remaining</i>
+   </div>
+  </td>
+ </tr>
+
+ <tr>
+  <td align="right" valign="top">
+   <input type="button" id="update-autocomplete" value="Update auto-complete lists" />
+  </td>
+  <td valign="top">
+   <div id="update-autocomplete-status">
+      <img align="absmiddle" src="/images/status-red.png" title="ready" alt="ready" />
+      &nbsp; <i>Needs update (requires ~10 minutes)</i>
+   </div>
+  </td>
+ </tr>
+
  <tr>
   <td align="right" valign="top">
    <input type="button" id="update-NCBI" value="Upload and import NCBI taxonomy" />
@@ -429,6 +439,7 @@ Site Maintenance
    </div>
   </td>
  </tr>
+
 </table>
 
 </div>

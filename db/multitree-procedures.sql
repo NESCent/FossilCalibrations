@@ -1108,6 +1108,7 @@ BEGIN
     ,needs_multitree_build = true
     ,autocomplete_status = 'Needs update'
     ,multitree_status = 'Needs update'
+    ,cladeCalibration_status = 'Needs update'
   ;
 
   -- clean up, just in case
