@@ -531,7 +531,7 @@ blockquote.odd, tr.odd td {
 	font-weight: bold;
 }
 .nlevel-option {
-	color: #ccc !important;
+	color: #999 !important;
 }
 .nlevel-option:hover,
 .nlevel-option.selected {

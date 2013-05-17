@@ -6,9 +6,9 @@ require('Site.conf');
 require('header.php');
 
 // read view options from query-string (or set to defaults)
-$lineage = isset($_GET['lineage']) ? $_GET['lineage'] : 'full';  // full | sparse
-$members = isset($_GET['members']) ? $_GET['members'] : 'full';  // full | sparse 
-$levels = isset($_GET['levels']) ? $_GET['levels'] : '1';  // 1 | 2 | 3 | 4 | 5 | all
+$lineage = isset($_GET['lineage']) ? $_GET['lineage'] : 'sparse';  // full | sparse
+$members = isset($_GET['members']) ? $_GET['members'] : 'sparse';  // full | sparse 
+$levels = isset($_GET['levels']) ? $_GET['levels'] : '2';  // 1 | 2 | 3 | 4 | 5 | all
 
 // fetch the multitree ID (if any) for the specified node (source+ID, eg "NCBI:4321"
 // NOTE that we'll query on the multitree ID, but it never appears to the user or in the URL
@@ -127,7 +127,9 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 <?php
     $calibrationsInThisTaxon = getDirectCalibrationsInCladeRoot($nodeMultitreeID);
 ?>
-<h3 class="contentheading">Lineage <a id="lineage-toggle" href="#" title="Click to use abbreviated lineaage">(full)</a></h3>
+<h3 class="contentheading">Lineage 
+	<a id="lineage-toggle" href="#" title="">&nbsp;</a>
+</h3>
 <div class="ancestor-path">
 	<? $nthAncestor = 0;
 	   foreach ($ancestors as $row) {
@@ -232,13 +234,13 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 <? } ?>
 
 <h3 class="contentheading">Clade Members 
-	<a id="full-sparse-toggle" href="#" title="Click to show only clade members with calibrations">(full tree)</a>
+	<a id="full-sparse-toggle" href="#" title="">&nbsp;</a>
+	&nbsp;&mdash;&nbsp;
+	showing 
 	&nbsp;
-	- showing 
+	<a class="nlevel-option <?= ($levels == '1') ? 'selected' : '' ?>" href="/Browse.php?node=<?= $nodeSource ?>:<?= $nodeSourceID ?>" title="Click to show first-level clade members only">1</a>
 	&nbsp;
-	<a class="nlevel-option <?= ($levels == '1') ? 'selected' : '' ?>" href="#TODO" title="Click to show first-level clade members only">1</a>
-	&nbsp;
-	<a class="nlevel-option <?= ($levels == '2') ? 'selected' : '' ?>" href="#TODO" title="Click to show first- and second-level clade members">2</a>
+	<a class="nlevel-option <?= ($levels == '2') ? 'selected' : '' ?>" href="/Browse.php?node=<?= $nodeSource ?>:<?= $nodeSourceID ?>" title="Click to show first- and second-level clade members">2</a>
 <!-- 3 levels is pretty slow in a crowded part of the tree...
 	&nbsp;
 	<a class="nlevel-option <?= ($levels == '3') ? 'selected' : '' ?>" href="#TODO" title="Click to show three levels of clade members">3</a>
@@ -253,7 +255,7 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 	level<?= ($levels != '1') ? 's' : '' ?>
 </h3>
 <p>Note that the number of calibrations shown for a node below may not match the total number for its clade members. This is due to differences between phylogeny and the NCBI taxonomy.</p>
-<ul class="child-listing">
+<ul class="child-listing" style="display: none;">
 <?  foreach ($descendants as $row) {
 	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
 	//if ($row['query_depth'] != 1) continue; // show immediate children only!
@@ -261,7 +263,7 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 	$calibrationsInThisClade = getAllCalibrationsInClade($row['multitree_node_id']);
 ?>
     <li class="<?= (count($calibrationsInThisClade) > 0) ? 'has-calibrations' : 'no-calibrations' ?> node-id-<?= $row['multitree_node_id'] ?> parent-id-<?= $row['parent_multitree_node_id'] ?>">	
-	<a href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+	<a class="node-link" href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
         <? if (count($calibrationsInThisClade) > 0) { ?> 
 		&nbsp; <a target="_blank" title="Click to see calibrations"
 			  href="/search.php?SortResultsBy=DATE_ADDED_DESC&SimpleSearch=&HiddenFilters[]=FilterByTipTaxa&BlockedFilters[]=FilterByTipTaxa&TaxonA=&TaxonB=&FilterByClade=<?= htmlspecialchars($row['uniquename']) ?>&HiddenFilters[]=FilterByAge&MinAge=&MaxAge=&HiddenFilters[]=FilterByGeologicalTime&FilterByGeologicalTime=">(<span class="calibration-count"><?= count($calibrationsInThisClade) ?></span>)</a>
@@ -278,6 +280,87 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 </div><!-- END OF center-column -->
 <!--<div style="background-color: #fcc; color: #fff; clear: both;">test</div>-->
 <script type="text/javascript">
+	// copy view settings from server
+	var lineage = '<?= $lineage ?>';
+	var members = '<?= $members ?>';
+	var levels = '<?= $levels ?>';
+
+	function updateView() {
+		// if something in our view has changed (eg, lineage, levels) update all page elements
+
+		var $optionalAncestors = $('.ancestor-path a:contains(>)'); 
+			// TODO: replace this with something smarter?
+
+		switch(lineage) {
+			case 'full':
+				$('#lineage-toggle').text('(full)');
+				$('#lineage-toggle').attr('title', "Click to show abbreviated lineage");
+
+				$optionalAncestors.show();
+				$optionalAncestors.prev('.path-divider').show();
+				break;
+			case 'sparse':
+				$('#lineage-toggle').text('(abbreviated)');
+				$('#lineage-toggle').attr('title', "Click to show full lineage");
+
+				$optionalAncestors.hide();
+				$optionalAncestors.prev('.path-divider').hide();
+				break;
+			default:
+				console.log("ERROR - unexpected value for lineage: "+ lineage);
+		}
+
+		switch(members) {
+			case 'full':
+				$('#full-sparse-toggle').text('(full tree)');
+				$('#full-sparse-toggle').attr('title', "Click to show only clade members with calibrations");
+
+				$('li.no-calibrations').show();
+				$('ul.child-listing .empty-warning').remove();
+				break;
+			case 'sparse':
+				$('#full-sparse-toggle').text('(sparse tree)');
+				$('#full-sparse-toggle').attr('title', "Click to show all clade members");
+
+				$('li.no-calibrations').hide();
+				if ($('li.has-calibrations').length === 0) {
+					$('ul.child-listing').prepend(
+						'<li class="empty-warning" style="font-style: italic;">'
+						+ 'There are no calibrations in this part of the tree. '
+						+ '<a href="#" onclick="$(\'#full-sparse-toggle\').click(); return false;">'
+						+ 'Switch to the full tree view</a> to see nodes in this area.</li>');
+				} else {
+					$('ul.child-listing .empty-warning').remove();
+				}
+				break;
+			default:
+				console.log("ERROR - unexpected value for members: "+ members);
+		}
+
+		switch(levels) {
+			default:
+				console.log("INFO - found this value for levels: "+ levels);
+		}
+		
+		// modify URLs for all "live" hyperlinks to reflect the current view
+		$('.ancestor-path a, a.nlevel-option, ul.child-listing li a.node-link').each(function() {
+			var $link = $(this);
+			var oldHref = $link.attr('href');
+			var url = oldHref.split('&')[0];  // remove any fragment and most args (all but the node IDs)
+			url += ('&lineage=' + lineage);
+			url += ('&members=' + members);
+			if ($link.is('.nlevel-option')) {
+				url += ('&levels=' + $link.text());
+			} else {
+				url += ('&levels=' + levels);
+			}
+
+			$link.attr('href', url);
+		});
+
+		$('ul.child-listing').show();
+	}
+
 	$(document).ready(function() {
 		// clean up multi-level tree (move children into sub-lists, indent)
 		var $taxa = $('ul.child-listing li');
@@ -307,7 +390,7 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 				}
 				$subList.append($movingItem);
 			} else {
-				console.log("WARNING: expected one parent item, found "+ $parentItem.length +" .. possibly off-screen root?");
+				console.log("INFO: expected one parent item, found "+ $parentItem.length +" .. possibly off-screen root?");
 				return;
 			}
 		});
@@ -315,36 +398,14 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 		// view options for browsing UI
 		$('#lineage-toggle').unbind('click').click(function() {
 			var $clicked = $(this);
-			var $optionalAncestors = $('.ancestor-path a:contains(>)'); 
-				// TODO: replace this with something real!
-			if ($clicked.text().indexOf('full') > -1) {
-				// switch to sparse tree
-				$optionalAncestors.hide();
-				$optionalAncestors.prev('.path-divider').hide();
-				$clicked.text('(abbreviated)');
-				$clicked.attr('title', "Click to show full lineage");
-			} else {
-				// switch to full tree
-				$optionalAncestors.show();
-				$optionalAncestors.prev('.path-divider').show();
-				$clicked.text('(full)');
-				$clicked.attr('title', "Click to show abbreviated lineage");
-			}
+			lineage = (lineage === 'sparse') ? 'full' : 'sparse';
+			updateView();
 			return false;
 		});
 		$('#full-sparse-toggle').unbind('click').click(function() {
 			var $clicked = $(this);
-			if ($clicked.text().indexOf('full') > -1) {
-				// switch to sparse tree
-				$('li.no-calibrations').hide();
-				$clicked.text('(sparse tree)');
-				$clicked.attr('title', "Click to show all clade members");
-			} else {
-				// switch to full tree
-				$('li.no-calibrations').show();
-				$clicked.text('(full tree)');
-				$clicked.attr('title', "Click to show only clade members with calibrations");
-			}
+			members = (members === 'sparse') ? 'full' : 'sparse';
+			updateView();
 			return false;
 		});
 		$('.nlevel-option').unbind('click').click(function() {
@@ -352,22 +413,14 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 			if ($clicked.is('.selected')) {
 				// already selected, don't reload the page
 				return false;
-			}
-			var url = window.location.href;
-			url = url.split('#')[0];  // remove any fragment
-			if (url.indexOf('levels=') === -1) {
-				if (url.indexOf('?') === -1) {
-					url += ('?levels=' + $clicked.text());
-				} else {
-					url += ('&levels=' + $clicked.text());
-				}
 			} else {
-				url = url.replace(/levels=(all|\d?)/, 'levels='+ $clicked.text());
+				return true;
 			}
-			window.location.href = url;
-			return false;
 		});
+
+		updateView();
 	});
+
 </script>
 <?php 
 //open and print page footer template
