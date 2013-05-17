@@ -286,6 +286,9 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 			var itsClassNames = $movingItem.attr('class').split(' ');
 			var parentMarkerClass = null;
 			for (var i = 0; i < itsClassNames.length; i++) {
+
+				//if (itsClassNames[i] === 'node-id-33213') debugger;
+
 				if (itsClassNames[i].indexOf('parent-id-') === 0) {
 					parentMarkerClass = itsClassNames[i].replace('parent-id-', 'node-id-');
 				}
@@ -297,9 +300,10 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 			var $parentItem = $taxa.filter('.'+ parentMarkerClass);
 			if ($parentItem.length === 1) {
 				// if parent already has a sub-list, add to it; else create one
-				var $subList = $parentItem.find('ul');
+				var $subList = $parentItem.find('ul:eq(0)');
 				if ($subList.length === 0) {
-					$subList = $parentItem.append('<ul></ul>');
+					$parentItem.append('<ul></ul>');
+					$subList = $parentItem.find('ul:eq(0)')
 				}
 				$subList.append($movingItem);
 			} else {
