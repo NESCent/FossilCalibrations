@@ -99,25 +99,20 @@ OPEN direct_relationship_cursor;
       LEAVE the_loop;
     END IF;
 
-IF the_calibration_id != 104 THEN
-	ITERATE the_loop;
-END IF;
-
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
     CALL getAllAncestors( the_multitree_id, "v_ancestors", 'NCBI' );
-
-SELECT "cal-104 ancestors:";
-SELECT * FROM v_ancestors;
 
     CREATE TEMPORARY TABLE IF NOT EXISTS tmp_ancestors ENGINE=memory SELECT * FROM v_ancestors;
     /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
 
     TRUNCATE TABLE tmp_ancestors;
-    INSERT INTO tmp_ancestors SELECT * FROM v_ancestors;
+    -- copy all the ancestor IDs that are *not* already linked to this calibration
+    INSERT INTO tmp_ancestors SELECT * FROM v_ancestors
+      WHERE node_id NOT IN (SELECT clade_root_multitree_id FROM tmp_calibrations_by_NCBI_clade 
+			    WHERE calibration_id = the_calibration_id);
 
-SELECT "... count before adding nodes:";
-SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id;
+  IF EXISTS (SELECT 1 FROM tmp_ancestors) THEN
 
     -- first pass, to gather indirect relationships on pinned nodes
     INSERT INTO tmp_calibrations_by_NCBI_clade (clade_root_NCBI_id, clade_root_multitree_id, calibration_id, is_direct_relationship, publication_status)
@@ -133,9 +128,6 @@ SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_c
       AND node_identity.multitree_node_id IN (SELECT node_id FROM tmp_ancestors) 
       AND node_identity.multitree_node_id != the_multitree_id;  -- DON'T repeat the direct node here!
 
-SELECT "... count after adding PINNED nodes:";
-SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id;
-
     -- second pass, to gather indirect relationships on UN-pinned nodes
     INSERT INTO tmp_calibrations_by_NCBI_clade (clade_root_NCBI_id, clade_root_multitree_id, calibration_id, is_direct_relationship, publication_status)
     SELECT
@@ -146,21 +138,16 @@ SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_c
       the_publication_status
     FROM
       multitree 
-    WHERE multitree.node_id IN (SELECT node_id FROM v_ancestors) 
+    WHERE multitree.node_id IN (SELECT node_id FROM tmp_ancestors) 
       AND multitree.node_id != the_multitree_id;  -- DON'T repeat the direct node here!
 
-SELECT "... count after adding UN-pinned nodes:";
-SELECT count(*) FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id;
+  END IF; -- if there are new ancestors, add them
 
     SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
   END LOOP;
 
 CLOSE direct_relationship_cursor;
 SET no_more_rows = FALSE;
-
-
-SELECT "cal-104 results:";
-SELECT * FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = 104;
 
 
 -- if we're serious, replace/rename the real tables
