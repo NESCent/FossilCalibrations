@@ -20,6 +20,11 @@ $operation = $_POST['operation'];
 
 
 switch($operation) {
+   case 'REBUILD_ALL_CALIBRATION_TREES':
+      runSQLScript('protected/REBUILD_ALL_CALIBRATION_TREES.sql');
+      echo "['OK']";
+      return;
+
    case 'UPDATE_AUTOCOMPLETE':
       runSQLScript('protected/UPDATE_AUTOCOMPLETE.sql');
       echo "['OK']";

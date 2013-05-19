@@ -168,3 +168,99 @@ END #
 
 DELIMITER ;
 
+
+/*
+ * buildCalibrationTree( the_calibration_id )
+ *
+ * Builds multitree "inputs" for the specified calibration:
+ *   FCD_trees
+ *   FCD_nodes
+ *   FCD_names
+ *   pinned_nodes
+ */
+
+DROP PROCEDURE IF EXISTS buildCalibrationTree;
+
+DELIMITER #
+
+CREATE PROCEDURE buildCalibrationTree(IN the_calibration_id INT(11))
+BEGIN
+
+-- DECLARE any local vars here
+
+/* 
+ * Custom tree (re)generation, adapted from 'update_calibration.php'
+ */
+
+SELECT CONCAT ("...(re)building tree for calibration", the_calibration_id);
+
+-- describe this calibration's new tree, based on the updated node definition (hints)
+DROP TEMPORARY TABLE IF EXISTS updateHints;
+
+CREATE TEMPORARY TABLE updateHints ENGINE=memory AS 
+    (SELECT * FROM node_definitions WHERE calibration_id = the_calibration_id);
+
+CALL buildTreeDescriptionFromNodeDefinition( "updateHints", "updateTreeDef" );
+
+-- store the resulting tree, pinned to NCBI or other FCD nodes as needed
+CALL updateTreeFromDefinition( the_calibration_id, "updateTreeDef" );
+
+DROP TEMPORARY TABLE IF EXISTS updateHints;
+DROP TEMPORARY TABLE IF EXISTS updateTreeDef;
+
+END #
+
+DELIMITER ;
+
+/*
+ * rebuildAllCalibrationTrees( )
+ *
+ * NOTE that this should always be run BEFORE rebuilding the multitree, since
+ * this is only builds multitree "inputs" with source IDs for trees and nodes:
+ *   FCD_trees
+ *   FCD_nodes
+ *   FCD_names
+ *   pinned_nodes
+ */
+
+DROP PROCEDURE IF EXISTS rebuildAllCalibrationTrees;
+
+DELIMITER #
+
+CREATE PROCEDURE rebuildAllCalibrationTrees ()
+BEGIN
+
+-- DECLARE any local vars here
+DECLARE the_calibration_id INT(11);
+
+-- a flag terminates the loop when no more records are found
+DECLARE no_more_rows INT DEFAULT FALSE;
+
+-- a cursor to fetch all calibration IDs
+DECLARE calibration_cursor CURSOR FOR 
+  SELECT CalibrationID FROM calibrations;
+
+DECLARE CONTINUE HANDLER FOR NOT FOUND 
+  SET no_more_rows = TRUE;
+
+OPEN calibration_cursor;
+
+  the_loop: LOOP
+    FETCH calibration_cursor INTO the_calibration_id;
+
+    IF no_more_rows THEN 
+      LEAVE the_loop;
+    END IF;
+
+    CALL buildCalibrationTree( the_calibration_id ); 
+
+    SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
+  END LOOP;
+
+CLOSE calibration_cursor;
+SET no_more_rows = FALSE;
+
+END #
+
+DELIMITER ;
+

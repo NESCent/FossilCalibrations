@@ -71,6 +71,20 @@ $NCBIStatus = $site_status['NCBI_status'];
 
    $(document).ready(function() {
       // bind site maintenance buttons
+      $('#rebuild-all-calibration-trees').unbind('click').click(function() {
+         // AJAX call to start operation, returns all status vars
+         $.ajax({
+            type: 'POST',
+            url: '/protected/remote_operation.php',
+            data: {'operation': 'REBUILD_ALL_CALIBRATION_TREES'},
+            success: function(data) {
+               console.log('success! from initial call to REBUILD_ALL_CALIBRATION_TREES');
+               checkRemoteUpdateStatus();
+            },
+            dataType: 'json',
+            async: true
+         });
+      });
       $('#update-multitree').unbind('click').click(function() {
          // AJAX call to start operation, returns all status vars
          $.ajax({
@@ -391,6 +405,17 @@ Site Statistics
 Site Maintenance
 </h3>
 <table border="0" cellspacing="5">
+
+ <tr>
+  <td align="right" valign="top">
+   <input type="button" id="rebuild-all-calibration-trees" value="Rebuild all calibration trees" />
+  </td>
+  <td valign="top">
+   <div id="rebuild-all-calibration-trees-status">
+      <i><strong>Note:</strong> This is rarely needed!</i>
+   </div>
+  </td>
+ </tr>
 
  <tr>
   <td align="right" valign="top">
