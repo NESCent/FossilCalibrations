@@ -293,7 +293,7 @@ OPEN pinned_node_cursor;
 
     -- if the multitree ID wasn't found (presumably an NCBI node), add new entry now
     IF 
-      the_matching_multitree_node_id <=> NULL
+      the_matching_multitree_node_id <=> NULL  -- REMINDER: this operator is null-safe EQUALS
     THEN 
       INSERT INTO tmp_node_identity
       VALUES (
@@ -304,17 +304,15 @@ OPEN pinned_node_cursor;
         1,  -- TODO: revisit and confirm this assumption?
 	1   -- this is obviously a pinned node
       );
-    -- ELSE
-      -- BEGIN
-      -- END;
+      -- use the new ID for all identical nodes
+      SET the_matching_multitree_node_id = @nextID;
     END IF;
-    -- use the new ID for all identical nodes
-    SET the_matching_multitree_node_id = @nextID;
+ -- ELSE (ie, there's already a multitree ID for this pinned node) KEEP the_matching_multitree_node_id set above!
 
     -- consolidate multitree_id for all pinned nodes
     -- (be careful to modify ALL matching nodes, even if 3+ are pinned)
     UPDATE tmp_node_identity
-      SET multitree_node_id = the_matching_multitree_node_id, 
+      SET multitree_node_id = the_matching_multitree_node_id,
           -- is_public_node = IF(the_is_public_flag = 1, 1, is_public_node),
           comments = CONCAT("PINNED! ", comments),
 	  is_pinned_node = 1  -- flip this flag if still FALSE
