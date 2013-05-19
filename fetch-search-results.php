@@ -103,9 +103,9 @@ if (!empty($search['SimpleSearch'])) {
 		$possibleMatches++;
 		$termPosition++;
 		$query="SELECT c.CalibrationID FROM calibrations AS c
-			JOIN publications AS p ON p.PublicationID = c.NodePub
-			JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
-			JOIN fossils AS f ON f.FossilID = lcf.FossilID
+			LEFT OUTER JOIN publications AS p ON p.PublicationID = c.NodePub
+			LEFT OUTER JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
+			LEFT OUTER JOIN fossils AS f ON f.FossilID = lcf.FossilID
 			WHERE
 				c.NodeName LIKE '%$term%' OR 
 				c.MinAgeExplanation LIKE '%$term%' OR 
@@ -147,6 +147,9 @@ if (filterIsActive('FilterByTipTaxa')) {
 		$showDefaultSearch = false;
 		$possibleMatches += 2;
 
+?><div class="search-details">Starting result count: <?= count($searchResults) ?></div><?
+
+
 		/* 
 		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
 		 */
@@ -154,10 +157,6 @@ if (filterIsActive('FilterByTipTaxa')) {
 		// resolve taxon multitree IDs
 		$multitree_id_A = nameToMultitreeID($search['FilterByTipTaxa']['TaxonA']);
 		$multitree_id_B = nameToMultitreeID($search['FilterByTipTaxa']['TaxonB']);
-/*
-?><h3>A: <?= $multitree_id_A ?></h3><?
-?><h3>B: <?= $multitree_id_A ?></h3><?
-*/
 
 		// check MRCA (common ancestor)
 		$multitree_id_MRCA = getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B );
@@ -510,7 +509,7 @@ if (count($searchResults) == 0) {
 			 * missing matches (based on $search properties). This gives us an overall relevance 
 			 * score that should look about right.
 			 */
- ?><pre class="search-details" style="color: red;">possibleMatches: <?= $possibleMatches ?></pre><?
+/* ?><pre class="search-details" style="color: red;">possibleMatches: <?= $possibleMatches ?></pre><? */
 			$relevanceScores = array();
 			foreach ($result['qualifiers'] as $qual) {
 				$relevanceScores[] = $qual['relevance'];
@@ -519,8 +518,8 @@ if (count($searchResults) == 0) {
 				$relevanceScores[] = 0.0;
 			}
 			$result['displayedRelevance'] = sortableNumber(array_sum($relevanceScores) / count ($relevanceScores));
- ?><pre class="search-details" style="color: red;">displayedRelevance: <?= array_sum($relevanceScores) ?> / <?= count ($relevanceScores) ?> = <?= $result['displayedRelevance'] ?></pre><?
- ?><pre class="search-details" style="color: red;">  scores: <?= print_r($relevanceScores) ?></pre><?
+ ?><pre class="search-details" style="color: red;"><b>'<?= $result['NodeName'] ?>'</b>:<br/> displayedRelevance: <?= array_sum($relevanceScores) ?> / <?= count ($relevanceScores) ?> = <?= $result['displayedRelevance'] ?></pre><?
+/* ?><pre class="search-details" style="color: red;">  scores: <?= print_r($relevanceScores) ?></pre><? */
 		}
 		
 
@@ -528,12 +527,14 @@ if (count($searchResults) == 0) {
 	unset($result);	// IMPORTANT: because PHP is "special" and has bound $result to a reference above...
 
 
+/* TEST of sort order for floating-point scores:
  ?><pre class="search-details" style="color: red;">strnatcmp(0, 1.0) = <?= strnatcmp(0, 1.0)  ?></pre><?
  ?><pre class="search-details" style="color: red;">strnatcmp(0.5, 1.0) = <?= strnatcmp(0.5, 1.0)  ?></pre><?
  ?><pre class="search-details" style="color: red;">strnatcmp(0.5, 0.25) = <?= strnatcmp(0.5, 0.25)  ?></pre><?
  ?><pre class="search-details" style="color: red;">strnatcmp(0.5, 0.2) = <?= strnatcmp(0.5, 0.2)  ?></pre><?
  ?><pre class="search-details" style="color: red;">strnatcmp(0.75, 0.25) = <?= strnatcmp(0.75, 0.25)  ?></pre><?
  ?><pre class="search-details" style="color: red;">strnatcmp(1, 0.25) = <?= strnatcmp(1, 0.25)  ?></pre><?
+*/
 
 
 	// Do any final sorting for display, using visible (consolidated) relationship and relevance
