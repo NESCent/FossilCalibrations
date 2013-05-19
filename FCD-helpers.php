@@ -245,6 +245,7 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 			$row['qualifiers'] = Array( $qualifiers );
 			$existingArray[] = $row;
 		}
+?><div class="search-details">Adding calibration <?= $row['CalibrationID'] ?> (inner add-op or non-cladistic search)</div><?
 
 	}
 
