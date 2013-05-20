@@ -541,10 +541,9 @@ if (count($searchResults) == 0) {
 	switch($search['SortResultsBy']) {
 		case 'RELEVANCE_DESC':
 			$searchResults = columnSort($searchResults, array(
-				'displayedRelevance', 'desc'
-//,
+				'displayedRelevance', 'desc',
+				'DateCreated', 'desc'
 				//'displayedRelationship', 'desc',
-				//'DateCreated', 'desc',
 				//'MinAge', 'desc'
 			));
 			break;

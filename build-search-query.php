@@ -37,7 +37,7 @@ if (!isset($search) || ($search == null)) {
 	    // to preserve values that were entered, then hidden 
 	'BlockedFilters' => Array(),
 	    // to preserve values that were entered, but blocked by rules
-	'SortResultsBy' => 'DATE_ADDED_DESC',
+	'SortResultsBy' => 'RELEVANCE_DESC',  // was 'DATE_ADDED_DESC',
 	'ResponseType' => 'HTML'
  	    // support JSON response, others?
     ); 
