@@ -151,7 +151,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 </div><!-- end of .ancestor-path -->
 
 <p><h1><!-- Browsing the tree, at node -->
-<?= htmlspecialchars($targetNodeInfo['uniquename']) ?> <span style="color: #ccc;">(<?= $nodeSource ?>:<?= $nodeSourceID ?>, mID:<?= $nodeMultitreeID ?>)</span></h1></p>
+<?= htmlspecialchars($targetNodeInfo['uniquename']) ?> <span style="display: none;">(<?= $nodeSource ?>:<?= $nodeSourceID ?>, mID:<?= $nodeMultitreeID ?>)</span></h1></p>
 
 <h3 class="contentheading">Directly related calibrations</h3>
 <p>
