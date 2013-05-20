@@ -97,6 +97,7 @@ function nameToSourceNodeInfo( $taxonName ) {
 	$query="SELECT taxonid, 'NCBI' AS source
 		FROM NCBI_names
 		WHERE name LIKE '". mysql_real_escape_string($taxonName) ."'
+		OR uniquename LIKE '". mysql_real_escape_string($taxonName) ."'
 	    LIMIT 1;";
 	$match_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	$node_data = mysqli_fetch_assoc($match_list);
@@ -210,6 +211,11 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 			    (SELECT calibration_id FROM FCD_trees WHERE tree_id IN
 				(SELECT tree_id FROM FCD_nodes WHERE node_id IN (". implode(",", $targetNodeIDs) .")));";
 */
+
+	if (count($calibrationIDs) == 0) {
+		// we got an empty ID list for some reason
+		return;
+	}
 
 	$query="SELECT DISTINCT C . *, img.image, img.caption AS image_caption
 		FROM (

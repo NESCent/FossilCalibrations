@@ -213,7 +213,7 @@ if (filterIsActive('FilterByClade')) {
 	if (empty($search['FilterByClade'])) {
 		// no clade specified, bail out now
 	} else {
-?><div class="search-details">CLADE SUBMITTED</div><?
+?><div class="search-details">CLADE SUBMITTED: <?= htmlspecialchars($search['FilterByClade']) ?></div><?
 		// search within this clade
 		$showDefaultSearch = false;
 		$possibleMatches++;
