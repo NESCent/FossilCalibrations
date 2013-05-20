@@ -62,9 +62,15 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			minChars: 3
 		});
 		
+
 		$('#adv-search-link').unbind('click').click(function() {
 			// pass the current search terms to the full search page
 			$('#simple-search-form').submit();
+			return false;
+		});
+		$('#browse-link').unbind('click').click(function() {
+			// pass the current search terms to the full search page
+			$('#simple-search-form').attr('action','/Browse.php').submit();
 			return false;
 		});
 	});
@@ -156,7 +162,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			<input id="simple-search-input" name="SimpleSearch" type="text" style="width: 80%;" placeholder="Search by author, clade, publication, species,etc." value="" />
 		</div>
 		<p>
-			<a href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a id="adv-search-link" href="/search.php">Advanced search</a> <!-- &nbsp;|&nbsp; <a href="#">Example searches</a> -->
+			<a id="browse-link" href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a id="adv-search-link" href="/search.php">Advanced search</a> <!-- &nbsp;|&nbsp; <a href="#">Example searches</a> -->
 		</p>
  </form>
 

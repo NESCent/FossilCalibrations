@@ -10,11 +10,22 @@ $lineage = isset($_GET['lineage']) ? $_GET['lineage'] : 'sparse';  // full | spa
 $members = isset($_GET['members']) ? $_GET['members'] : 'sparse';  // full | sparse 
 $levels = isset($_GET['levels']) ? $_GET['levels'] : '2';  // 1 | 2 | 3 | 4 | 5 | all
 
+// connect to mySQL server and select the Fossil Calibration database
+// NOTE that to use stored procedures and functions in MySQL, the newer mysqli API is recommended.
+///$connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
+///mysql_select_db('FossilCalibration') or die ('Unable to select database!');
+$mysqli = new mysqli($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password'], 'FossilCalibration');
+
 // fetch the multitree ID (if any) for the specified node (source+ID, eg "NCBI:4321"
 // NOTE that we'll query on the multitree ID, but it never appears to the user or in the URL
 $defaultNodeSpec = 'NCBI:1';
 if (isset($_GET['node'])) {
+	// we have an explicit target node (probably browsing the tree already)
 	$nodeValues = $_GET['node'];
+} else if (isset($_GET['SimpleSearch'])) {
+	// we jumped here from the home page; try to find a taxon using TNRS (use first guess)
+	$multitree_id = nameToMultitreeID($_GET['SimpleSearch']);
+	$nodeValues = 'mID:'.$multitree_id;
 } else {
 	// if no node-spec was submitted, default to (NCBI root node "Life")
 	$nodeValues = $defaultNodeSpec;
@@ -29,12 +40,6 @@ if (empty($nodeSource) || empty($nodeSourceID)) {
 	$nodeValues = $defaultNodeSpec;
 	list($nodeSource, $nodeSourceID) = explode(':', $nodeValues);
 }
-
-// connect to mySQL server and select the Fossil Calibration database
-// NOTE that to use stored procedures and functions in MySQL, the newer mysqli API is recommended.
-///$connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
-///mysql_select_db('FossilCalibration') or die ('Unable to select database!');
-$mysqli = new mysqli($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password'], 'FossilCalibration');
 
 // convert this to a multitree node
 $sql = 'SELECT getMultitreeNodeID( "'. $nodeSource .'", '. $nodeSourceID .') AS mID';
@@ -256,7 +261,12 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 </h3>
 <p>Note that the number of calibrations shown for a node below may not match the total number for its clade members. This is due to differences between phylogeny and the NCBI taxonomy.</p>
 <ul class="child-listing" style="display: none;">
-<?  foreach ($descendants as $row) {
+<?  if ((count($descendants) == 0) ||
+	((count($descendants) == 1 && $descendants[0]['multitree_node_id'] == $nodeMultitreeID))
+       ) { ?>
+	<li class="" style="font-style: italic;">There are no more nodes below this one.</li>
+<?  }
+    foreach ($descendants as $row) {
 	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
 	//if ($row['query_depth'] != 1) continue; // show immediate children only!
 	// try a more specific count
@@ -323,8 +333,8 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 				$('#full-sparse-toggle').attr('title', "Click to show all clade members");
 
 				$('li.no-calibrations').hide();
-				if ($('li.has-calibrations').length === 0) {
-					$('ul.child-listing').prepend(
+				if ($('li.has-calibrations').length === 0 && $('li.no-calibrations').length > 0) {
+					$('ul.child-listing:eq(0)').prepend(
 						'<li class="empty-warning" style="font-style: italic;">'
 						+ 'There are no calibrations in this part of the tree. '
 						+ '<a href="#" onclick="$(\'#full-sparse-toggle\').click(); return false;">'
