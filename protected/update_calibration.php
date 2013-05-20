@@ -274,7 +274,22 @@ foreach($fossil_positions as $pos) {
 }
 
 /* Add or update the main calibration record
+ *
+ * NOTE that we should sync its PublicationStatus with the main publication, in
+ * case this has been added, removed, or changed. This complements the trigger 
+ * 'push_pub_status' that fires when saving publications. If no publication is
+ * found, set it to Private Draft.
  */
+$query="SELECT PublicationStatus FROM publications WHERE PublicationID = '". mysql_real_escape_string($mainPubID) ."'";
+$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+if (mysql_num_rows($result)==0) {
+	$newPublicationStatus = '1';   // default is Private Draft  
+} else {
+	$row = mysql_fetch_assoc($result);
+	$newPublicationStatus = $row['PublicationStatus'];
+}
+mysql_free_result($result);
+
 // list all new OR updated values
 $newValues = "
 		 CalibrationID = '". mysql_real_escape_string($_POST['CalibrationID']) ."'
@@ -285,7 +300,7 @@ $newValues = "
 		,MaxAge = '". mysql_real_escape_string($_POST['MaxAge']) ."'
 		,MaxAgeExplanation = '". mysql_real_escape_string($_POST['MaxAgeJust']) ."'
 		,NodePub = '". mysql_real_escape_string($mainPubID) ."'
-		,PublicationStatus = '". mysql_real_escape_string($_POST['PublicationStatus']) ."'
+		,PublicationStatus = '". $newPublicationStatus ."'
 		,CalibrationQuality = '". mysql_real_escape_string($_POST['CalibrationQuality']) ."'
 		,AdminComments = '". mysql_real_escape_string($_POST['AdminComments']) ."'
 ";
