@@ -965,7 +965,7 @@ DELIMITER ;
 
 
 /*
- * updateTreeFromDefinition (CalibrationID, treeDescriptionTableName)
+ * updateTreeFromDefinition (p_calibration_id, treeDescriptionTableName)
  *
  * When a calibration is saved, this will build and add/replace its tree in the database.
  */
@@ -976,7 +976,7 @@ DELIMITER #
 
 -- Use the named "tree definition" table (an existing temp table)
 -- to build and save a custom tree for this calibration.
-CREATE PROCEDURE updateTreeFromDefinition (IN calibrationID INT(11), IN treeDescriptionTableName VARCHAR(80))
+CREATE PROCEDURE updateTreeFromDefinition (IN p_calibration_id INT(11), IN treeDescriptionTableName VARCHAR(80))
 BEGIN
 
   -- DECLARE any local vars here
@@ -996,19 +996,19 @@ BEGIN
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND 
     SET no_more_rows = TRUE;
-  
+
   DROP TEMPORARY TABLE IF EXISTS tdesc2;
   
   SET @sql = CONCAT('CREATE TEMPORARY TABLE tdesc2 ENGINE=memory AS (SELECT * FROM ', treeDescriptionTableName ,');');
-  SELECT @sql as "";
+  -- SELECT @sql as "";
   PREPARE cmd FROM @sql;
   EXECUTE cmd;
   DEALLOCATE PREPARE cmd;
 
   -- clear any existing data for this calibration's custom tree
-  SET @oldTreeID = (SELECT tree_id FROM FCD_trees WHERE calibration_id = calibrationID);
+  SET @oldTreeID = (SELECT tree_id FROM FCD_trees WHERE calibration_id = p_calibration_id);
   -- clear pinned nodes (pinned from this tree to any other)
-  DELETE FROM pinned_nodes WHERE calibration_id = calibrationID;
+  DELETE FROM pinned_nodes WHERE calibration_id = p_calibration_id;
   -- clear names assigned (only) to its nodes
   DELETE FROM FCD_names WHERE node_id IN (SELECT node_id FROM FCD_nodes WHERE tree_id = @oldTreeID);
   -- clear nodes assigned to its tree
@@ -1017,14 +1017,16 @@ BEGIN
   DELETE FROM FCD_trees WHERE tree_id = @oldTreeID;
   
   -- Create a new tree for this calibration
+  -- set the 'is_public_tree' flag based on the PublicationStatus of related calibration
+  SET @pubState = (SELECT MAX(PublicationStatus) FROM calibrations WHERE CalibrationID = p_calibration_id);
+
   INSERT INTO FCD_trees
   SET
      -- tree_id  -- AUTO_INCREMENT
      root_node_id = NULL
-    ,calibration_id = calibrationID
-    ,comments = CONCAT('tree for FCD-', calibrationID)
-    ,is_public_tree = false 
-      -- TODO: set this based on PublicationStatus of related publication?
+    ,calibration_id = p_calibration_id
+    ,comments = CONCAT('tree for FCD-', p_calibration_id)
+    ,is_public_tree = IF(@pubState = '4', 1, 0)  -- 4=Published
   ;
   SET @treeID = LAST_INSERT_ID();
   
@@ -1092,7 +1094,7 @@ BEGIN
        ,target_node_id = desc_node_source_node_id     -- pinning TO this existing node (Homo)
        ,pinned_tree = CONCAT('FCD-', @treeID)    -- TODO: standardize tree IDs?
        ,pinned_node_id = @pinnedNodeID
-       ,calibration_id = calibrationID
+       ,calibration_id = p_calibration_id
        ,comments = CONCAT('pinned node from tree FCD-', @treeID)
        ,is_public_node = 0  -- refers to the pinned (newly submitted) node
       ;
