@@ -74,7 +74,7 @@ require('header.php');
 <? if (userIsAdmin()) { ?>
    <input type="button" style="float: right;" onclick="window.location ='/protected/edit_calibration.php?id=<?= $calibration_info['CalibrationID'] ?>'; return false;" value="Edit calibration" />
 <? } ?>
-   <h1>View calibration:  <?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1>
+   <h1><?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1>
 </p>
 
 <p class="featured-information" style="overflow: hidden;">
@@ -92,18 +92,33 @@ require('header.php');
 <?=$calibration_info['FullReference']?>
 <?php if($calibration_info['DOI']!="NULL") { echo '<br><font class="small_text">[<a href="http://dx.doi.org/'.$calibration_info['DOI'].'" target="_blank">View electronic resource]</font></a>'; } ?></p>
 
-<p><h2><?=$calibration_info['NodeName']?></h2></p>
-
 <table width="100%">
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node name</i><br><b><?=$calibration_info['NodeName']?></b> 
-<font class="small_blue"><?=$calibration_info['NodeName']?> in <a href="http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=<?=$calibration_info['NodeName']?>" target="_blank">NCBI</a> <a href="http://en.wikipedia.org/wiki/<?=$calibration_info['NodeName']?>" target="_blank">Wikipedia</a> <a href="http://animaldiversity.ummz.umich.edu/site/accounts/information/<?=$calibration_info['NodeName']?>.html" target="_blank">Animal Diversity Web</a></font></td><td width="10%">&nbsp;</td></tr>
+&nbsp; &nbsp; <font class="small_blue">Look for this name in 
+	<a href="http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=<?=$calibration_info['NodeName']?>" target="_blank">NCBI</a> 
+	&nbsp;
+	<a href="http://en.wikipedia.org/wiki/<?=$calibration_info['NodeName']?>" target="_blank">Wikipedia</a> 
+	&nbsp;
+	<a href="http://animaldiversity.ummz.umich.edu/site/accounts/information/<?=$calibration_info['NodeName']?>.html" target="_blank">Animal Diversity Web</a></font>
+</td><td width="10%">&nbsp;</td></tr>
 
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">publication</i><br><b><?=$calibration_info['ShortName']?></b>
-<font class="small_blue">all nodes from <?=$calibration_info['ShortName']?></font></td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top">
+	<i class="small_orange">recommended citations</i><br><b><?=$calibration_info['ShortName']?></b>
+</td><td width="10%">&nbsp;</td></tr>
 
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node min age </i><br><b><?=$FossMinAge['Min']?> mya</b> <font style="font-size:10px">(min age of oldest fossil)</font></td><td width="10%">&nbsp;</td></tr>
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node max age </i><br><b><?=$calibration_info['MaxAge']?> mya</b><font style="font-size:10px"> (<?=$calibration_info['MaxAgeExplanation']?>)</font></td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top">
+	<i class="small_orange">node minimum age </i><br><b><?=$FossMinAge['Min']?> Ma</b> 
+      <?php if ($calibration_info['MinAgeExplanation']) { ?>
+	<font style="font-size:10px"><br/><?=$calibration_info['MinAgeExplanation']?></font>
+      <?php } ?>
+</td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top">
+	<i class="small_orange">node maximum age </i><br><b><?=$calibration_info['MaxAge']?> Ma</b>
+      <?php if ($calibration_info['MaxAgeExplanation']) { ?>
+	<font style="font-size:10px"><br/><?=$calibration_info['MaxAgeExplanation']?></font>
+      <?php } ?>
+</td><td width="10%">&nbsp;</td></tr>
 
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">fossils used to date this node</i></td><td width="10%">&nbsp;</td></tr>
@@ -115,12 +130,18 @@ while ($row = mysql_fetch_array($fossil_results)) {
 <tr><td width="10%">&nbsp;</td><td><blockquote class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
 							 <b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b><br />
 						 	 <?php if($row['PBDBTaxonNum']>0) {?><a href="http://pbdb.org/cgi-bin/bridge.pl?a=checkTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>&is_real_user=1" target="_new"><i><b><?=$row['Species']?></i></a>, <?=$row['TaxonAuthor']?></b><?php } else { ?><i><b><?=$row['Species']?>, <?=$row['TaxonAuthor']?></b></i><?php } ?><br />
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b><?=$row['LocalityName']?>, <?=$row['Country']?></b> <i>Stratum:</i> <b><?=$row['Stratum']?></b><br />
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b>
+				<?=$row['LocalityName']?><?php if ($row['LocalityName'] && $row['Country']) { ?>, <?php } ?> 
+				<?=$row['Country']?>
+			     </b> <br />
+                           <?php if($row['Stratum']>0) { ?>
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Stratum:</i> <b><?=$row['Stratum']?></b><br />
+			   <?php } ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Geological age:</i> <b><?=$row['Age']?>, <?=$row['Epoch']?>, <?=$row['Period']?>, <?=$row['System']?></b><br />
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Minimum age:</i> <b><?=$row['MinAge']?> mya</b> <i>Maximum age:</i> <b><?=$row['MaxAge']?> mya</b><br />
-                             <?php if($row['PBDBCollectionNum']>0) { ?>
+                             <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Minimum age:</i> <b><?=$row['MinAge']?> Ma</b> <i>Maximum age:</i> <b><?=$row['MaxAge']?> Ma</b><br /> -->
+                           <?php if($row['PBDBCollectionNum']>0) { ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://pbdb.org/cgi-bin/bridge.pl?action=basicCollectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
-									<?php } ?>
+			   <?php } ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font></blockquote></td><td width="10%">&nbsp;</td></tr>
 
 

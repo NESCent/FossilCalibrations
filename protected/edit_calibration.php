@@ -1082,7 +1082,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
                     </td>
                 </tr>
                 <tr>
-                  <td width="21%" align="right" valign="middle"><strong>higher taxon</strong></td>
+                  <td width="21%" align="right" valign="middle"><strong>node in clade:</strong></td>
                   <td width="79%"><select name="HigherTaxon">
                   <?php
 			$currentTaxon = testForProp($calibration_data, 'HigherTaxon', '');
@@ -1098,7 +1098,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
                   </select> &nbsp;(choose the most specific applicable group)</td>
                 </tr>
                 <tr>
-                  <td width="21%" align="right" valign="middle"><strong>minimum age (mya)</strong></td>
+                  <td width="21%" align="right" valign="middle"><strong>minimum age (Ma)</strong></td>
                   <td width="79%"><input type="text" name="MinAge" id="MinAge" size=4 style="text-align: right;" value="<?= testForProp($calibration_data, 'MinAge', '') ?>"></td>
                 </tr>
                 <tr>
@@ -1106,7 +1106,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
                   <td><textarea name="MinAgeJust" id="MinAgeJust" cols="50" rows="5"><?= testForProp($calibration_data, 'MinAgeExplanation', '') ?></textarea></td>
                 </tr>
                 <tr>
-                  <td align="right" valign="top"><strong>maximum age (mya)</strong></td>
+                  <td align="right" valign="top"><strong>maximum age (Ma)</strong></td>
                   <td><input type="text" name="MaxAge" id="MaxAge" size=4 style="text-align: right;" value="<?= testForProp($calibration_data, 'MaxAge', '') ?>"></td>
                 </tr>
                 <tr>
