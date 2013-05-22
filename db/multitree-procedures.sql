@@ -559,7 +559,7 @@ SET @sql = CONCAT('CREATE TEMPORARY TABLE hints ENGINE=memory AS (
 	FROM ', hintTableName ,'
 	GROUP BY source_tree, source_node_id
 );');
-SELECT @sql as "";
+-- SELECT @sql as "";
 PREPARE cmd FROM @sql;
 EXECUTE cmd;
 DEALLOCATE PREPARE cmd;
@@ -582,6 +582,7 @@ OPEN hint_cursor;
       SET NCBI_depth = (SELECT COUNT(*) FROM v_path)
       WHERE source_tree = the_hint_source_tree AND source_node_id = the_hint_node_id;
 
+    SET no_more_rows = FALSE; -- in case this was bumped by call to stored procedure
   END LOOP;
 
 CLOSE hint_cursor;
@@ -621,6 +622,7 @@ OPEN hint_cursor;
 	--   (eg, as a side effect of excluding another nearby)
 	IF isExplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id) THEN
 	    -- IF YES, ignore this hint and move to the next hint
+	    SET no_more_rows = FALSE; -- reset if needed
 	    ITERATE the_loop;
 	END IF;
    
@@ -628,6 +630,7 @@ OPEN hint_cursor;
 	CALL isImplicitlyIncludedInTreeDescription (the_hint_source_tree, the_hint_node_id, @isIncluded);
 	IF @isIncluded THEN
 	    -- IF YES, ignore this hint and move to the next hint
+	    SET no_more_rows = FALSE; -- reset if needed
 	    ITERATE the_loop;
 	END IF;
    
