@@ -223,7 +223,7 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 			FROM View_Fossils V
 			JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
 		) AS J
-		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
+		RIGHT JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 		WHERE C.CalibrationID IN (". implode(",", $calibrationIDs) .");
 	       ";
