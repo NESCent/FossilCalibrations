@@ -225,7 +225,7 @@ $NCBIStatus = $site_status['NCBI_status'];
             // this operation depends on an up-to-date multitree...
 	    if (multitreeStatus === 'Up to date') {
                isDisabled = false;
-               msg = "Needs update (requires ~35 minutes)";
+               msg = "Needs update (requires ~5 minutes)";
             } else {
                isDisabled = true;
                msg = "Needs update (but update the multitree first!)";
