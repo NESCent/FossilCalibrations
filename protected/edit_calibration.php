@@ -195,7 +195,7 @@ $query='SELECT FossilID, Species, CollectionAcro, CollectionNumber, LocalityID, 
 // TODO: where is this used?
 
 //Retrieve list of localities
-$query='SELECT * FROM View_Localities ORDER BY StratumMinAge';
+$query='SELECT * FROM View_Localities ORDER BY LocalityName';
 $locality_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 //Retrieve list of age types

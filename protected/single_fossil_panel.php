@@ -94,7 +94,7 @@
       $totalFossils = isset($_POST['totalFossils']) ? $_POST['totalFossils'] : 1;
 
       //Retrieve list of localities
-      $query='SELECT * FROM View_Localities ORDER BY StratumMinAge';
+      $query='SELECT * FROM View_Localities ORDER BY LocalityName';
       $locality_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
       // list of all collection acronyms
@@ -369,14 +369,6 @@ if(mysql_num_rows($country_list)==0){
 }
 ?>
 </select>
-</tr>
-<tr>
-<td width="30%" align="right" valign="top"><b>top age of stratum</b></td>
-<td width="70%" ><input type="text" name="StratumMinAge-<?= $i ?>" id="StratumMinAge-<?=$i?>"></td>
-</tr>
-<tr>
-<td width="30%" align="right" valign="top"><b>bottom age of stratum</b></td>
-<td width="70%" ><input type="text" name="StratumMaxAge-<?= $i ?>" id="StratumMaxAge-<?=$i?>"></td>
 </tr>
 <tr>
 <td align="right" valign="top"><strong>geological age</strong></td>

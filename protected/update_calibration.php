@@ -149,8 +149,6 @@ foreach($fossil_positions as $pos) {
          $query="INSERT INTO localities SET
                 LocalityName = '". mysql_real_escape_string($_POST["LocalityName-$pos"]) ."'
                ,Stratum = '". mysql_real_escape_string($_POST["Stratum-$pos"]) ."'
-               ,MinAge = '". mysql_real_escape_string($_POST["StratumMinAge-$pos"]) ."'
-               ,MaxAge = '". mysql_real_escape_string($_POST["StratumMaxAge-$pos"]) ."'
                ,GeolTime = '". mysql_real_escape_string($_POST["GeolTime-$pos"]) ."'
                ,Country = '". mysql_real_escape_string($_POST["Country-$pos"]) ."'
                ,LocalityNotes = '". mysql_real_escape_string($_POST["LocalityNotes-$pos"]) ."'

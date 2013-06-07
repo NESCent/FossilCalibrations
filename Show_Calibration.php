@@ -108,7 +108,7 @@ require('header.php');
 </td><td width="10%">&nbsp;</td></tr>
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top">
-	<i class="small_orange">node minimum age </i><br><b><?=$FossMinAge['Min']?> Ma</b> 
+	<i class="small_orange">node minimum age </i><br><b><?=$calibration_info['MinAge']?> Ma</b> 
       <?php if ($calibration_info['MinAgeExplanation']) { ?>
 	<font style="font-size:10px"><br/><?=$calibration_info['MinAgeExplanation']?></font>
       <?php } ?>
