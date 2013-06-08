@@ -310,13 +310,18 @@ if (filterIsActive('FilterByGeologicalTime')) {
 		$possibleMatches++;
 
 		/* 
-		 * Check for calibrations from the specified time
+		 * Check for calibrations from the specified time period (or a more specific time)
+		 * EXAMPLE: Searching for 'Quaternary,Holocene,' will match 'Quaternary,,'
+		 * EXAMPLE: Searching for 'Quaternary,Holocene,' will match 'Quaternary,Holocene,'
+		 * EXAMPLE: Searching for 'Quaternary,Holocene,Modern' will NOT match 'Quaternary,Holocene,' [SHOULD IT?]
+		 * EXAMPLE: Searching for 'Neogene,Miocene,' will NOT match 'Neogene,Pliocene,'
+		 * EXAMPLE: Searching for 'Neogene,Miocene,Langhian' will NOT match 'Neogene,Miocen,Tortonian'
 		 */
 		$matching_calibration_ids = array();
 		$query="SELECT CalibrationID FROM Link_CalibrationFossil WHERE FossilID IN 
 			    (SELECT FossilID FROM fossils WHERE LocalityID IN
-				(SELECT LocalityID FROM localities WHERE GeolTime = 
-				    (SELECT GeolTimeID FROM geoltime WHERE Age = '". $search['FilterByGeologicalTime'] ."')));";
+				(SELECT LocalityID FROM localities WHERE GeolTime IN 
+				    (SELECT GeolTimeID FROM geoltime WHERE CONCAT_WS(',', Period,Epoch,Age) LIKE '". $search['FilterByGeologicalTime'] ."%')));";
 ?><div class="search-details"><?= $query ?></div><?
 		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 
@@ -327,6 +332,10 @@ if (filterIsActive('FilterByGeologicalTime')) {
 		if (count($matching_calibration_ids) > 0) {
 			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '01-MATCHES-GEOTIME', 'relevance' => 1.0) );
 		}
+
+		/*
+  		 * TODO: Give "partial credit" (0.5 relevance) for calibrations that match using a more broad geo-time (eg, Quaternary or Holocene, vs. Modern)?
+		 */
 	}
 }
 

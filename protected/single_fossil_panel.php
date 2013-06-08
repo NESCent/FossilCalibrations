@@ -109,8 +109,8 @@
       $query='SELECT * FROM L_PhyloTypes ORDER BY PhyloJustType';
       $phyjusttype_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
-      //Retrieve list of geological times
-      $query='SELECT GeolTimeID, Age, Period, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY StartAge';
+      //Retrieve list of geological times (hierarchy is Period, Epoch, Age)
+      $query='SELECT DISTINCT GeolTimeID, Period, Epoch, Age, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY StartAge DESC, Age, Epoch;';
       $geoltime_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
       //Retrieve list of countries
@@ -381,7 +381,14 @@ if(mysql_num_rows($geoltime_list)==0){
 } else {
 	mysql_data_seek($geoltime_list,0);
 	while($row=mysql_fetch_assoc($geoltime_list)) {
-		echo "<option value=\"".$row['GeolTimeID']."\">".$row['Age'].", ".$row['Period'].", ".$row['ShortName']."</option>";
+		echo "<option value=\"".$row['GeolTimeID']."\">".$row['Period'];
+		if ($row['Epoch']) {
+			echo " / ".$row['Epoch'];
+			if ($row['Age']) {
+				echo " / ".$row['Age'];
+			};
+		};
+		echo "</option>";
 	}
 
 }

@@ -206,8 +206,13 @@ $agetypes_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql
 $query='SELECT * FROM L_PhyloTypes ORDER BY PhyloJustType';
 $phyjusttype_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
-//Retrieve list of geological times
-$query='SELECT GeolTimeID, Age, Period, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY StartAge';
+//Retrieve list of geological times (hierarchy is Period, Epoch, Age)
+//$query='SELECT DISTINCT GeolTimeID, Period, Epoch, Age, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY StartAge, EndAge, Epoch, Period';
+	// initial sort order, kind of a jumble
+//$query='SELECT DISTINCT GeolTimeID, Period, Epoch, Age, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY EndAge, StartAge DESC, Age, Epoch';
+	// this shows modern periods first, then (within each period) new to old and general to specific
+$query='SELECT DISTINCT GeolTimeID, Period, Epoch, Age, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY StartAge DESC, Age, Epoch;';
+	// this shows old to new, general to specific (nice and consistent)
 $geoltime_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 //Retrieve list of countries

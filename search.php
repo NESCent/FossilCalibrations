@@ -10,6 +10,10 @@ require('header.php');
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
+//Retrieve list of geological times (hierarchy is Period, Epoch, Age)
+$query='SELECT DISTINCT GeolTimeID, Period, Epoch, Age, t.ShortName, StartAge FROM geoltime g, L_timescales t WHERE g.Timescale=t.TimescaleID ORDER BY StartAge DESC, Age, Epoch;';
+$geoltime_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+
 // build search object from GET vars or other inputs (eg, a saved-query ID)
 $search = null;
 include('build-search-query.php'); 
@@ -139,15 +143,37 @@ $nonce = md5('salt'.microtime());
 			<dd style="margin-left:8px;">
 <div style="text-align: center; margin: 4px 0 2px; padding-right: 12px;">
 <select name="FilterByGeologicalTime" id="FilterByGeologicalTime">
-	<!-- TODO: Build this list on-the-fly from live 'geoltime' table? (Is 30 values too many for a drop-down? maybe autocomplete?) -->
-	<option value="" 		<?= ($search['FilterByGeologicalTime'] == '') ? 'selected="selected"' : '' ?> >Choose any period</option>
-	<option value="Modern" 		<?= ($search['FilterByGeologicalTime'] == 'Modern') ? 'selected="selected"' : '' ?> >Modern, Quaternary, GSA 1999</option>
-	<option value="Calabrian" 	<?= ($search['FilterByGeologicalTime'] == 'Calabrian') ? 'selected="selected"' : '' ?> >Calabrian, Quaternary, GSA 1999</option>
-	<option value="Zanclean" 	<?= ($search['FilterByGeologicalTime'] == 'Zanclean') ? 'selected="selected"' : '' ?> >Zanclean, Neogene, GSA 1999</option>
-	<option value="Tortonian" 	<?= ($search['FilterByGeologicalTime'] == 'Tortonian') ? 'selected="selected"' : '' ?> >Tortonian, Neogene, GSA 1999</option>
-	<option value="Serravallian" 	<?= ($search['FilterByGeologicalTime'] == 'Serravallian') ? 'selected="selected"' : '' ?> >Serravallian, Neogene, GSA 1999</option>
-	<option value="Bartonian" 	<?= ($search['FilterByGeologicalTime'] == 'Bartonian') ? 'selected="selected"' : '' ?> >Bartonian, Paleogene, GSA 1999</option>
-	<option value="Danian" 		<?= ($search['FilterByGeologicalTime'] == 'Danian') ? 'selected="selected"' : '' ?> >Danian, Paleogene, GSA 1999</option>		     
+<?php
+if(mysql_num_rows($geoltime_list)==0){
+	?>
+		<option value="0">No geological time in database</option>
+		<?php
+} else {
+	?>
+	<option value="" <?= ($search['FilterByGeologicalTime'] == '') ? 'selected="selected"' : '' ?> >Choose any period</option>
+	<?
+	mysql_data_seek($geoltime_list,0);
+	while($row=mysql_fetch_assoc($geoltime_list)) {
+		// gather all non-empty names to build the values and display strings
+		$geoNames = array_filter(array($row['Period'], $row['Epoch'], $row['Age']));
+		$optionValue = implode(',', $geoNames);
+
+		echo "<option value=\"". $optionValue ."\"";
+		if ($search['FilterByGeologicalTime'] == $optionValue) {
+			echo "selected=\"selected\"";
+		}
+		echo ">";
+		if ($row['Age']) {
+			echo " &nbsp; &nbsp; &nbsp; &nbsp; ".$row['Age'];
+		} elseif ($row['Epoch']) {
+			echo " &nbsp; &nbsp; ".$row['Epoch'];
+		} else {
+			echo $row['Period'];
+		};
+		echo "</option>";
+	}
+}
+?>
 </select>
 </div>
 			</dd>
