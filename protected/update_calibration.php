@@ -346,6 +346,7 @@ foreach($fossil_positions as $pos) {
          ,MaxAge = '". mysql_real_escape_string($_POST["FossilMaxAge-$pos"]) ."'
          ,MaxAgeType = '". mysql_real_escape_string($_POST["MaxAgeType-$pos"]) ."'
          ,MaxAgeTypeOtherDetails = '". mysql_real_escape_string($_POST["MaxAgeTypeOtherDetails-$pos"]) ."'
+         ,TieDatesToGeoTimeScaleBoundary = '". isset($_POST["TieDatesToGeoTimeScaleBoundary-$pos"]) ."'
          ,PhyJustificationType = '". mysql_real_escape_string($_POST["PhyJustType-$pos"]) ."'
          ,PhyJustification = '". mysql_real_escape_string($_POST["PhyJustification-$pos"]) ."'
          ,PhyloPub = '". mysql_real_escape_string($finalFossilPhyloPubIDs[$pos]) ."'

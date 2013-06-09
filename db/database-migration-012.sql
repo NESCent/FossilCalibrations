@@ -12,3 +12,6 @@ ALTER TABLE Link_CalibrationFossil
 
 ALTER TABLE Link_CalibrationFossil
   ADD COLUMN MaxAgeTypeOtherDetails varchar(300) DEFAULT '' AFTER MaxAgeType;
+
+ALTER TABLE Link_CalibrationFossil
+  ADD COLUMN TieDatesToGeoTimeScaleBoundary tinyint(1) DEFAULT 0 AFTER MaxAgeTypeOtherDetails;

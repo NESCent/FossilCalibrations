@@ -628,6 +628,16 @@ if(mysql_num_rows($geoltime_list)==0){
        style="margin-top: 2px;" value="<?= testForProp($fossil_data, 'MaxAgeTypeOtherDetails', '') ?>"></td>
 </td>
 </tr>
+<tr>
+<td align="right" valign="top">&nbsp;</td>
+<td>
+	<label for="TieDatesToGeoTimeScaleBoundary-<?= $i ?>">
+		<input type="checkbox" id="TieDatesToGeoTimeScaleBoundary-<?= $i ?>" name="TieDatesToGeoTimeScaleBoundary-<?= $i ?>" 
+			<? if (testForProp($fossil_data, 'TieDatesToGeoTimeScaleBoundary', '0') == '1') { ?>checked="checked"<? } ?>> 
+		Tie date to geological time scale boundary <i>(currently unused)</i>
+	</label>
+</td>
+</tr>
 
 <tr>
 <td align="right" valign="top"><strong>phylogenetic justification type</strong></td>
