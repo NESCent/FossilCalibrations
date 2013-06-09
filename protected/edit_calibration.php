@@ -626,6 +626,10 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		$('[id^=newPhylogenyPublication-], [id^=existingPhylogenyPublication-], [id^=repeatFossilPublication-]')
          .unbind('click').click(updatePhylogenyPublicationWidgets);
 
+      // bind 
+      $('[id^=MinAgeType-], [id^=MaxAgeType-]')
+         .unbind('keyup change').bind('keyup change', updateFossilAgeWidgets);
+
       // bind fossil-identifier widgets to update its visible name
       // (also triggered from updateCollectionAcronymWidgets)
 		$('[id^=CollectionNum-], [id^=CollectionAcro-], [id^=NewAcro-]')
@@ -774,6 +778,17 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
             $panel.find('[id^=AssignedMaxAge-]').attr('disabled', 'disabled');
             $panel.find('[id^=FossilMaxAge-]').removeAttr('disabled');
          }		
+	// show (hide) details fields if 'other' is (not) selected
+	if ($panel.find('[id^=MinAgeType-] option:last-child').is(':selected')) {
+            $panel.find('[id^=MinAgeTypeOtherDetails-]').show();
+	} else {
+            $panel.find('[id^=MinAgeTypeOtherDetails-]').hide();
+	}
+	if ($panel.find('[id^=MaxAgeType-] option:last-child').is(':selected')) {
+            $panel.find('[id^=MaxAgeTypeOtherDetails-]').show();
+	} else {
+            $panel.find('[id^=MaxAgeTypeOtherDetails-]').hide();
+	}
       });
 	}
 

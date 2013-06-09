@@ -577,7 +577,11 @@ if(mysql_num_rows($geoltime_list)==0){
 									}			
 								}
 							} ?>
-</select>
+							</select>
+							<br/>
+							<input type="text" name="MinAgeTypeOtherDetails-<?= $i ?>" id="MinAgeTypeOtherDetails-<?=$i?>" maxlength="300" size="52"
+							       style="margin-top: 2px;" value="<?= testForProp($fossil_data, 'MinAgeTypeOtherDetails', '') ?>"></td>
+							</td>
 </tr>
 <tr>
 <td align="right" valign="top" width="30%"><strong>maximum age (Ma)</strong></td>
@@ -619,6 +623,10 @@ if(mysql_num_rows($geoltime_list)==0){
 		}
 	} ?>
 </select>
+<br/>
+<input type="text" name="MaxAgeTypeOtherDetails-<?= $i ?>" id="MaxAgeTypeOtherDetails-<?=$i?>" maxlength="300" size="52"
+       style="margin-top: 2px;" value="<?= testForProp($fossil_data, 'MaxAgeTypeOtherDetails', '') ?>"></td>
+</td>
 </tr>
 
 <tr>
