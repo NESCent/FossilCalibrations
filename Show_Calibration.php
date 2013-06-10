@@ -128,8 +128,18 @@ while ($row = mysql_fetch_array($fossil_results)) {
 	$rowNumber++;
 	?>
 <tr><td width="10%">&nbsp;</td><td><blockquote class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
-							 <b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b><br />
-						 	 <?php if($row['PBDBTaxonNum']>0) {?><a href="http://pbdb.org/cgi-bin/bridge.pl?a=checkTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>&is_real_user=1" target="_new"><i><b><?=$row['Species']?></i></a>, <?=$row['TaxonAuthor']?></b><?php } else { ?><i><b><?=$row['Species']?>, <?=$row['TaxonAuthor']?></b></i><?php } ?><br />
+
+<?php if($row['PBDBTaxonNum']>0) {?>
+	<a href="http://pbdb.org/cgi-bin/bridge.pl?a=checkTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>&is_real_user=1" target="_new">
+		<b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
+	</a>
+<?php } else { ?>
+	<b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
+<?php } ?>
+
+<br />
+	<b><i><?=$row['Species']?></i>, <?=$row['TaxonAuthor']?></b>
+<br />
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b>
 				<?=$row['LocalityName']?><?php if ($row['LocalityName'] && $row['Country']) { ?>, <?php } ?> 
 				<?=$row['Country']?>
