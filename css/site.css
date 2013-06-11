@@ -305,6 +305,34 @@ dl.filter-list dd.blocked-filter {
 	border-bottom: none;
 }
 
+.directly-related-calibrations {
+	overflow: hidden;
+	margin-bottom: 1em;
+}
+.directly-related-calibrations .search-result {
+	width: 200px; 
+	margin: 0 10px 0 0;
+	padding: 0 8px 8px;
+	border: 1px solid #ddd;
+}
+.directly-related-calibrations .search-result:first-child {
+	margin-left: 0;
+}
+.directly-related-calibrations .search-result:last-child {
+	border-bottom: 1px solid #ddd;
+	margin-right: 0;
+}
+.directly-related-calibrations .search-result.placeholder {
+	border: none;
+}
+.directly-related-calibrations .search-result .qualifiers {
+	margin: 0 -8px 4px;
+	width: 216px;
+}
+.directly-related-calibrations .search-result .placeholder {
+	padding: 0px 50px;
+}
+
 .search-result {
 	padding-bottom: 12px;
 	overflow: hidden;
@@ -515,11 +543,20 @@ blockquote.odd, tr.odd td {
 	overflow: hidden; /* prevents margin collapse */
 }
 
+.ancestor-path {
+	margin-top: 1em;
+}
 .ancestor-path, .child-listing {
 	margin-bottom: 1em;
 }
 .ancestor-path a, .child-listing a {
 	text-decoration: none;
+}
+.child-listing {
+	list-style: none;
+}
+.child-listing li {
+	padding: 3px 0;
 }
 .child-listing .no-calibrations {
 	font-weight: normal;
@@ -543,6 +580,9 @@ blockquote.odd, tr.odd td {
 
 .diagnostic {
 	color: #d88;
+}
+.discreet {
+	color: #bbb;
 }
 
 div.tagit-label {
