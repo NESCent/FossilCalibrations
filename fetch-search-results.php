@@ -376,8 +376,15 @@ function getRelationshipFromResult( $result, $relType ) {
 }
 
 // still here? then build HTML markup for the results
-if (count($searchResults) == 0) {
-	?><p style="font-style: italic;">No matching calibrations found. To see more results, simplify your search by removing text above or hiding filters.</p><?
+if (count($searchResults) == 0) { 
+?>
+	<p style="font-style: italic;">No matching calibrations found. To see more results, simplify your search by removing text above or hiding filters.</p>
+	<? $usingCladisticFilters = (filterIsActive('FilterByTipTaxa') && !(empty($search['FilterByTipTaxa']['TaxonA']) && empty($search['FilterByTipTaxa']['TaxonB'])))
+				 || (filterIsActive('FilterByClade') && !(empty($search['FilterByClade'])));
+
+	   if (!$usingCladisticFilters) { // ie, the only search was on "simple text" ?>
+	<p style="color: #c44; font-style: italic;">IMPORTANT: To search by <b>clade</b> or <b>taxa</b>, use the filters at left .</p>
+	<? }
 } else {
 
 	// Each result may contain multiple qualifiers (for "hits" on
