@@ -48,7 +48,6 @@ $row = mysqli_fetch_array($results);
 $nodeMultitreeID = $row['mID'];
 //var_dump($row);
 
-
 /*
  * fetch information on the current node's ancestor path (NCBI only)
  */
@@ -75,7 +74,7 @@ while ($row = mysqli_fetch_array($ancestors_info_results)) {
 	$ancestors[]=$row;
 }
 
-// grab target node information from tip of ancestors array
+// Grab target node information from tip of ancestors array.
 switch(count($ancestors)) {
 	case 0:
 		break;
@@ -87,6 +86,16 @@ switch(count($ancestors)) {
 		break;
 }
 
+/*
+ * NOTE that if we've come here from a simple search of an un-interesting
+ * taxon, we were just shifted to the nearest interesting ancestor!
+ * Make sure to update vars so we get the right descendants below..
+ */
+$shiftedToInterestingAncestor = false;
+if ($nodeMultitreeID != $targetNodeInfo['multitree_node_id']) {
+	$nodeMultitreeID = $targetNodeInfo['multitree_node_id'];
+	$shiftedToInterestingAncestor = true;
+}
 
 /*
  * Fetch information on the current node's nearest "interesting" descendants in the NCBI tree. This means
@@ -187,7 +196,12 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
     } ?>
 </div><!-- end of .ancestor-path -->
 
-<p><h1><!-- Browsing the tree, at node -->
+<? if ($shiftedToInterestingAncestor) { ?>
+	<p style="color: #c44; font-style: italic;">There were no calibrations found in your requested clade '<strong><?= $_GET['SimpleSearch'] ?></strong>'. This is the nearest enclosing clade with calibrations.</p>
+<? } ?>
+
+<p>
+<h1><!-- Browsing the tree, at node -->
 <?= htmlspecialchars($targetNodeInfo['uniquename']) ?> <span style="display: none;">(<?= $nodeSource ?>:<?= $nodeSourceID ?>, mID:<?= $nodeMultitreeID ?>)</span></h1></p>
 
 <!--

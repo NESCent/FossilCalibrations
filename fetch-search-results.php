@@ -383,7 +383,7 @@ if (count($searchResults) == 0) {
 				 || (filterIsActive('FilterByClade') && !(empty($search['FilterByClade'])));
 
 	   if (!$usingCladisticFilters) { // ie, the only search was on "simple text" ?>
-	<p style="color: #c44; font-style: italic;">IMPORTANT: To search by <b>clade</b> or <b>taxa</b>, use the filters at left .</p>
+	<p style="color: #c44; font-style: italic;">IMPORTANT: To search by <b>clade</b> or <b>taxa</b>, use the filters at left.</p>
 	<? }
 } else {
 
