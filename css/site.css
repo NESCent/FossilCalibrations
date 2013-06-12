@@ -66,7 +66,7 @@ h2.results-heading {
 	padding-top: 4px;
 	padding-left: 15px;
 }
-#simple-search-header {
+#simple-search-header, #browse-header {
 	clear: both;
 	float: none;
 	width: 665px;
@@ -76,6 +76,18 @@ h2.results-heading {
 	margin-top: 0px -15px 8px -15px;
 	padding: 6px 10px 7px;
 	overflow: visible; /* to avoid margin collapsing */
+}
+#browse-header .title-and-alt-nav {
+	margin-bottom: 0;
+}
+
+.title-and-alt-nav {
+	font-family: Helvetica,Arial,sans-serif; 
+	font-size: 1.1em;
+	margin-bottom: 4px;
+}
+.title-and-alt-nav a {
+	font-weight: bold; 
 }
 .left-column {
 	width: 240px; 

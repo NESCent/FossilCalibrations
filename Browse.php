@@ -167,11 +167,14 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 ?>
 <!--
 <h3 class="contentheading">Lineage 
--->
-<!--
 	<a id="lineage-toggle" href="#" title="">&nbsp;</a>
--->
 </h3>
+-->
+<div id="browse-header" style="">
+	<div class="title-and-alt-nav">
+		<strong>Browse the NCBI taxonomy</strong> &mdash; you can also <a href="/search.php">search for calibrations in the database</a>
+	</div>
+</div>
 <div class="ancestor-path">
 	<strong>Lineage</strong>: 
 <?

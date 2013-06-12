@@ -25,8 +25,10 @@ $nonce = md5('salt'.microtime());
 <form id="advanced-search" Xstyle="border: 1px dashed green;" autocomplete="off">
 <input type="hidden" name="nonce" value="<?= $nonce ?>" />
 
-<div id="simple-search-header" 
-     style="">
+<div id="simple-search-header" style="">
+	<div class="title-and-alt-nav">
+		<strong>Search for calibrations in the database</strong> &mdash; you can also <a href="/Browse.php">browse the NCBI taxonomy</a>
+	</div>
 	<select name="SortResultsBy" id="SortResultsBy" style="float: right; margin-top: 3px;">
 		<option value="RELEVANCE_DESC" 		<?= ($search['SortResultsBy'] == 'RELEVANCE_DESC') ? 'selected="selected"' : '' ?> >Sort by relevance</option>
 		<option value="RELATIONSHIP" 		<?= ($search['SortResultsBy'] == 'RELATIONSHIP') ? 'selected="selected"' : '' ?> >Sort by relationship</option>
@@ -186,7 +188,7 @@ if(mysql_num_rows($geoltime_list)==0){
 </div>
 </form><!-- end of form#advanced-search -->
 
-<div class="right-column" style="margin-top: -37px;">
+<div class="right-column" style="margin-top: -63px;">
 <?php require('site-announcement.php'); ?>
 <!-- news
 	<div id="site-news">
