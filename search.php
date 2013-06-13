@@ -22,6 +22,23 @@ include('build-search-query.php');
 $nonce = md5('salt'.microtime());
 ?>
 
+<div class="right-column" style="">
+<?php require('site-announcement.php'); ?>
+
+	<div id="site-news">
+		<h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">Raising the Standard in Fossil Calibration
+		</h3>
+		<p>
+			The Fossil Calibration Database is a curated
+			collection of well-justified calibrations, including many published in the
+			journal <a href="#">Palaeontologia Electronica</a>. We also promote best practices for
+			<a href="#">justifying fossil calibrations</a> and <a href="#">citing calibrations</a> 
+			properly.
+		</p>
+	</div>
+
+</div>
+
 <form id="advanced-search" Xstyle="border: 1px dashed green;" autocomplete="off">
 <input type="hidden" name="nonce" value="<?= $nonce ?>" />
 
@@ -187,67 +204,6 @@ if(mysql_num_rows($geoltime_list)==0){
 	</div>
 </div>
 </form><!-- end of form#advanced-search -->
-
-<div class="right-column" style="margin-top: -63px;">
-<?php require('site-announcement.php'); ?>
-<!-- news
-	<div id="site-news">
-		<h3 class="contentheading" style="margin-top: 0;">Site News</h3>
-		<div class="news-item">
-			<div class="dateline">
-				Jan 1, 2013
-			</div>
-			<div class="headline">
-				<a href="#">This is a Headline</a>
-			</div>
-			<div class="excerpt">
-				This is an excerpt of the news item, just
-				enough to encourage clicking for the full
-				story... <a href="#">more</a>
-			</div>
-		</div>
-		<div class="news-item">
-			<div class="dateline">
-				Dec 29, 2012
-			</div>
-			<div class="headline">
-				<a href="#">And This is a Second, Longer Headline</a>
-			</div>
-			<div class="excerpt">
-				This is an excerpt of the news item, just
-				enough to encourage clicking for the full
-				story... <a href="#">more</a>
-			</div>
-		</div>
-		<div class="news-item">
-			<div class="dateline">
-				Nov 28, 2012
-			</div>
-			<div class="headline">
-				<a href="#">Yet Another Headline</a>
-			</div>
-			<div class="excerpt">
-				This is an excerpt of the news item, just
-				enough to encourage clicking for the full
-				story... <a href="#">more</a>
-			</div>
-		</div>
-	</div>
--->
-
-	<div id="site-news">
-		<h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">Raising the Standard in Fossil Calibration
-		</h3>
-		<p>
-			The Fossil Calibration Database is a curated
-			collection of well-justified calibrations, including many published in the
-			journal <a href="#">Palaeontologia Electronica</a>. We also promote best practices for
-			<a href="#">justifying fossil calibrations</a> and <a href="#">citing calibrations</a> 
-			properly.
-		</p>
-	</div>
-
-</div>
 
 <div class="center-column" style="">
 <div id="search-results" Xstyle="border: 1px dashed pink;">

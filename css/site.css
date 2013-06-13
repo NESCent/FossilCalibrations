@@ -67,7 +67,6 @@ h2.results-heading {
 	padding-left: 15px;
 }
 #simple-search-header, #browse-header {
-	clear: both;
 	float: none;
 	width: 665px;
 	background-color: #EBEBEB;
