@@ -158,8 +158,11 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
  <form id="simple-search-form" action="/search.php"
        style="height: 160px; text-align: center; padding-top: 60px;">
 		<div id="simple-search" style="float: none; text-align: center; margin: 3px auto 10px;">
-			<input type="submit" style="float: right;" value="Go" />
-			<input id="simple-search-input" name="SimpleSearch" type="text" style="width: 80%;" placeholder="Search by author, clade, publication, species,etc." value="" />
+			<!--<input type="submit" style="float: right;" value="Go" />-->
+			<input type="image" id="" class="search-button" value="Go" src="/images/search-button.png" title="Show search results" 
+			       style="float: right; background-color: #27292B; padding: 2px; border-radius: 6px;" />
+			<input id="simple-search-input" name="SimpleSearch" type="text" placeholder="Search by author, clade, publication, species,etc." value="" 
+			       style="width: 360px; font-size: 120%; padding: 2px;" />
 		</div>
 		<p>
 			<a id="browse-link" href="/Browse.php">Browse calibrations</a> &nbsp;|&nbsp; <a id="adv-search-link" href="/search.php">Advanced search</a> <!-- &nbsp;|&nbsp; <a href="#">Example searches</a> -->

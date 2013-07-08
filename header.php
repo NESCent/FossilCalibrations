@@ -41,7 +41,7 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 		// TODO: add basic search form here ?>
 	<form id="simple-search" action="/search.php">
 	    <!--<input type="submit" class="search-button" style="" value="Search" />-->
-	    <input type="image" class="search-button" style="" value="Search" src="/images/search-button.png" />
+	    <input type="image" class="search-button" style="" value="Search" src="/images/search-button.png" title="Show search results" />
 	    <input id="header-search-input" name="SimpleSearch" type="text" class="search-field" style="" placeholder="Search by author, clade, publication, species, etc." value="" />
         </form>
 	<script type="text/javascript">

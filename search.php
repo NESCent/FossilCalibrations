@@ -56,7 +56,7 @@ $nonce = md5('salt'.microtime());
 <!--
 	<h3 style="display: inline-block; font-size: 1em; font-family: Helvetica,Arial,sans-serif;">Search</h3>
 -->
-	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px;" placeholder="Search by author, clade, publication, species,etc." value="<?= htmlspecialchars($search['SimpleSearch']) ?>"/>
+	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px; padding: 2px;" placeholder="Search by author, clade, publication, species,etc." value="<?= htmlspecialchars($search['SimpleSearch']) ?>"/>
 	<input type="submit" style="" value="Update" />
 </div>
 
