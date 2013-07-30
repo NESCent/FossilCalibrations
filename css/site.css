@@ -565,6 +565,7 @@ blockquote.odd, tr.odd td {
 }
 .child-listing {
 	list-style: none;
+	padding-left: 20px;
 }
 .child-listing li {
 	padding: 3px 0;
@@ -587,6 +588,31 @@ blockquote.odd, tr.odd td {
 }
 .nlevel-option.selected {
 	text-decoration: none !important;
+}
+.listed-calibrations {
+	/* border: 1px dashed pink; */
+	margin: 4px 0px 0px 20px;
+}
+.listed-calibrations a {
+	display: inline-block;
+	padding: 2px 8px;
+	margin-right: 0.75em;
+	margin-bottom: 4px;
+	background-color: #f5f5f5;
+	color: #333;
+	font-size: 0.8em;
+	font-weight: normal;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	text-decoration: none !important;
+}
+.listed-calibrations a .citation {
+	color: #999;
+}
+.listed-calibrations a:hover,
+.listed-calibrations a.matching {
+	background-color: #fed;
+	border: 1px solid #c96;
 }
 
 .diagnostic {

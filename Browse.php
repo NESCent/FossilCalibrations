@@ -192,7 +192,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 		// show each ancestor as a breadcrumb/link in chain of ancestry ?>
 		
 		<? if ($nthAncestor > 1) { ?><span class="path-divider">&raquo;</span><? } ?>
-		<a href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+		<a title="Browse to ancestor clade" href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
 		<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
 
       <? }
@@ -210,7 +210,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 <!--
 <h3 class="contentheading">Directly related calibrations</h3>
 -->
-<p>
+<p style="margin-bottom: 6px;">
 	<? switch(count($calibrationsInThisTaxon)) {
 		case 0: ?>
 	<i>There are no calibrations directly attached to <strong><?= htmlspecialchars($targetNodeInfo['uniquename']) ?></strong>.</i>
@@ -227,12 +227,13 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 </p>
 
 <? if (count($calibrationsInThisTaxon) > 0) { ?>
-<div class="featured-calibrations directly-related-calibrations">
+<div class="listed-calibrations">
 <?php 
 // list all calibration in this taxon
 $featuredPos = 0;
 
-// connect to mySQL server and select the Fossil Calibration database
+// fetch all related calibrations
+// TODO: Simplify this query if all we need is node name and display URL!
 $query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
 	FROM (
 		SELECT CF.CalibrationID, V . *
@@ -250,51 +251,16 @@ $calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$que
 while ($row = mysqli_fetch_array($calibration_list)) {
 	$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
 	 ?>
-	<div class="search-result" style="">
-		<table class="qualifiers" border="0" Xstyle="width: 120px; float: right;">
-			<tr>
-				<td width="120">
-				<!--Added Dec 28, 2012-->
-				Added <?= date("M d, Y", strtotime($row['DateCreated'])) ?>
-				</td>
-			</tr>
-		</table>
-		<a class="calibration-link" href="<?= $calibrationDisplayURL ?>">
-			<span class="name"><?= $row['NodeName'] ?></span>
-			<span class="citation">&ndash; from <?= $row['ShortName'] ?></span>
-		</a>
-		<? // if there's an image mapped to this publication, show it
-		   if ($row['image']) { ?>
-		<div class="optional-thumbnail" style="height: 60px;">
-		    <a href="<?= $calibrationDisplayURL ?>">
-			<img src="/publication_image.php?id=<?= $row['PublicationID'] ?>" style="height: 60px;"
-			alt="<?= $row['image_caption'] ?>" title="<?= $row['image_caption'] ?>"
-			/></a>
-		</div>
-		<? } ?>
-		<div class="details">
-			<?= $row['FullReference'] ?>
-			&nbsp;
-			<a class="more" style="display: block; text-align: right;" href="<?= $calibrationDisplayURL ?>">more &raquo;</a>
-		</div>
-	</div>
-	<?
-	$featuredPos++;
-}
-
-// fill any remaining slots with a placeholder
-for (;$featuredPos < 3; $featuredPos++) { ?>
-	<div class="search-result placeholder">
-		<div class="placeholder" style="background-color: #fff;">
-		&nbsp;
-		</div>
-	</div>
+	<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?>">
+		<?= $row['NodeName'] ?>
+		<span class="citation">&ndash; <?= $row['ShortName'] ?></span>
+	</a>
 <? } ?>
 
-</div><!-- END of .featured-calibrations -->
+</div><!-- END of .listed-calibrations -->
 <? } ?>
 
-<h3 class="contentheading" style="clear: left;">Clade members with more calibrations
+<h3 class="contentheading" style="clear: left; margin-top: 0.8em;">Calibrations within clade members
 <!--
 	<a id="full-sparse-toggle" href="#" title="">&nbsp;</a>
 	&nbsp;&mdash;&nbsp;
@@ -326,23 +292,60 @@ for (;$featuredPos < 3; $featuredPos++) { ?>
 	//if ($row['query_depth'] != 1) continue; // show immediate children only!
 	// try a more specific count
 	$calibrationsInThisClade = getAllCalibrationsInClade($more_info['multitree_node_id']); // TODO: remove this?
+	$directlyAssociatedCalibrations = getDirectCalibrationsInCladeRoot($row['multitree_node_id']);
+	$allCalibrationsDirectlyAssociated = count($directlyAssociatedCalibrations) == count($calibrationsInThisClade);
 	$isImmediateChildNode = $row['is_immediate_NCBI_child'];
+
+	// fetch all related calibrations
+	// TODO: Simplify this query if all we need is node name and display URL!
+	$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
+		FROM (
+			SELECT CF.CalibrationID, V . *
+			FROM View_Fossils V
+			JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
+		) AS J
+		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
+					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
+		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+		ORDER BY DateCreated DESC';
+	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+
 ?>
 
     <li class="<?= (count($calibrationsInThisClade) > 0) ? 'has-calibrations' : 'no-calibrations' ?> node-id-<?= $row['multitree_node_id'] ?> parent-id-<?= $row['parent_multitree_node_id'] ?> <?= $isImmediateChildNode ? 'immediate-child' : 'distant-descendant' ?>">	
 
 	<? if (!$isImmediateChildNode) { ?> <span class="discreet">&hellip;</span> <? } ?>
-	<a title="Click to see clade members" class="node-link" href="/Browse.php?node=<?= $more_info['source_tree'] ?>:<?= $more_info['source_node_id'] ?>"><?= htmlspecialchars($more_info['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
-        <? if (count($calibrationsInThisClade) > 0) { ?> 
-		<span class="discreet">&mdash;</span> <a target="_blank" title="Click to see calibrations" style="font-weight: normal;"
-			  href="/search.php?SortResultsBy=DATE_ADDED_DESC&SimpleSearch=&HiddenFilters[]=FilterByTipTaxa&BlockedFilters[]=FilterByTipTaxa&TaxonA=&TaxonB=&FilterByClade=<?= htmlspecialchars($more_info['uniquename']) ?>&HiddenFilters[]=FilterByAge&MinAge=&MaxAge=&HiddenFilters[]=FilterByGeologicalTime&FilterByGeologicalTime=">
-			show <span class="calibration-count"><?= count($calibrationsInThisClade) ?></span> calibration<? if (count($calibrationsInThisClade) != 1) { ?>s<? } ?>
-		</a>
-<!-- START ghosted calibration IDs
-		&nbsp; <? foreach($calibrationsInThisClade as $calID) { ?> &nbsp; <a style="font-weight: normal; color: #ccc;" 
-			href="/Show_Calibration.php?CalibrationID=<?= $calID ?>"><?= $calID ?></a><? } ?>
-END ghosted calibration IDs -->
+	<? if ($allCalibrationsDirectlyAssociated) {
+		// all calibrations are directly associated with this member  ?>
+		<span title="There are no clade members with calibrations"><?= htmlspecialchars($more_info['uniquename']) ?></span>
+	<? } else { 
+		// some descendants have their own calibrations  ?>
+		<a title="Browse to clade members with calibrations" class="node-link" href="/Browse.php?node=<?= $more_info['source_tree'] ?>:<?= $more_info['source_node_id'] ?>"><?= htmlspecialchars($more_info['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
 	<? } ?>
+	<span class="discreet" style="font-weight: normal;">&mdash; (<span class="calibration-count" style="color: #333;"><?= count($calibrationsInThisClade) ?></span>)</span> 
+	<a target="_blank" style="font-weight: normal;"
+		  href="/search.php?SortResultsBy=DATE_ADDED_DESC&SimpleSearch=&HiddenFilters[]=FilterByTipTaxa&BlockedFilters[]=FilterByTipTaxa&TaxonA=&TaxonB=&FilterByClade=<?= htmlspecialchars($more_info['uniquename']) ?>&HiddenFilters[]=FilterByAge&MinAge=&MaxAge=&HiddenFilters[]=FilterByGeologicalTime&FilterByGeologicalTime=">
+		show as search results
+	</a>
+<!-- START ghosted calibration IDs
+	&nbsp; <? foreach($calibrationsInThisClade as $calID) { ?> &nbsp; <a style="font-weight: normal; color: #ccc;" 
+		href="/Show_Calibration.php?CalibrationID=<?= $calID ?>"><?= $calID ?></a><? } ?>
+END ghosted calibration IDs -->
+
+
+	<div class="listed-calibrations">
+	     <? // mysql_num_rows($calibration_list) 
+		while ($row = mysqli_fetch_array($calibration_list)) {
+		$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
+		 ?>
+		<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?>">
+			<?= $row['NodeName'] ?>
+			<span class="citation">&ndash; <?= $row['ShortName'] ?></span>
+		</a>
+	     <? } ?>
+	</div>
+
+
 	<!-- <em>depth=<?= $row['query_depth'] ?></em> -->
 	<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
     </li>
@@ -430,6 +433,19 @@ END ghosted calibration IDs -->
 
 			$link.attr('href', url);
 		});
+
+		// light up matching calibration links (on hover), wherever they appear
+		$('.listed-calibrations a').hover(
+			function() {
+				var $link = $(this);
+				var itsCalibrationID = $link.attr('class').split('matches-')[1];
+				var matchSelector = '.listed-calibrations a.matches-'+ itsCalibrationID; 
+				$(matchSelector).addClass('matching');
+			},
+			function() {
+				$('.listed-calibrations a').removeClass('matching');
+			}
+		);
 
 		$('ul.child-listing').show();
 	}
