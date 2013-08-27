@@ -325,7 +325,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	<span class="discreet" style="font-weight: normal;">&mdash; (<span class="calibration-count" style="color: #333;"><?= count($calibrationsInThisClade) ?></span>)</span> 
 	<a target="_blank" style="font-weight: normal;"
 		  href="/search.php?SortResultsBy=DATE_ADDED_DESC&SimpleSearch=&HiddenFilters[]=FilterByTipTaxa&BlockedFilters[]=FilterByTipTaxa&TaxonA=&TaxonB=&FilterByClade=<?= htmlspecialchars($more_info['uniquename']) ?>&HiddenFilters[]=FilterByAge&MinAge=&MaxAge=&HiddenFilters[]=FilterByGeologicalTime&FilterByGeologicalTime=">
-		show as search results
+		show as search result<?= count($calibrationsInThisClade) == 1 ? '' : 's' ?>
 	</a>
 <!-- START ghosted calibration IDs
 	&nbsp; <? foreach($calibrationsInThisClade as $calID) { ?> &nbsp; <a style="font-weight: normal; color: #ccc;" 

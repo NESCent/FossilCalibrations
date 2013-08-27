@@ -414,4 +414,15 @@ function multiStrnatcmp($a, $b) {
     return $result;
 }
 
+function getCurrentScheme() {
+	if( isset($_SERVER['HTTPS'] )  && $_SERVER['HTTPS'] != 'off' ) 
+	{
+	    echo 'https';
+	}
+	else
+	{
+	    echo 'http';
+	}
+}
+
 ?>
