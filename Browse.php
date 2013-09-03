@@ -90,6 +90,8 @@ switch(count($ancestors)) {
  * NOTE that if we've come here from a simple search of an un-interesting
  * taxon, we were just shifted to the nearest interesting ancestor!
  * Make sure to update vars so we get the right descendants below..
+ *
+ * TODO: If the un-interesting taxon was marked to always appear, stay there!?
  */
 $shiftedToInterestingAncestor = false;
 if ($nodeMultitreeID != $targetNodeInfo['multitree_node_id']) {
@@ -102,6 +104,7 @@ if ($nodeMultitreeID != $targetNodeInfo['multitree_node_id']) {
  * the nearest descendant nodes that include either:
  * 	- one or more directly-related calibrations, or
  *  	- two or more children with calibrations in their clades
+ *      - special marking as an always-visible NCBI taxon
  *
  * Rather than trying to calculate this on-the-fly, use the "pre-baked" table 'calibration_browsing_tree'
  */
@@ -164,6 +167,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 
 <?php
     $calibrationsInThisTaxon = getDirectCalibrationsInCladeRoot($nodeMultitreeID);
+    // TODO: Add any dupes resulting from basal split at this node?
 ?>
 <!--
 <h3 class="contentheading">Lineage 
@@ -273,13 +277,18 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	level<?= ($levels != '1') ? 's' : '' ?>
 -->
 </h3>
+<!--
 <p>Note that the number of calibrations shown for a node below may not match the total number for its clade members. This is due to differences between phylogeny and the NCBI taxonomy.</p>
+-->
 <ul class="child-listing" style="display: none;">
 <?  if ((count($descendants) == 0) ||
 	((count($descendants) == 1 && $descendants[0]['multitree_node_id'] == $nodeMultitreeID))
        ) { ?>
 	<li class="" style="font-style: italic;">There are no more calibrations within this clade.</li>
 <?  }
+    // keep track of duplicate calibrations
+    $calibrationIDsFoundSoFar = array();
+    $duplicateCalibrations = array();
     foreach ($descendants as $row) {
 	// $row is a record from calibration_browsing_tree
 	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
@@ -309,6 +318,20 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 		ORDER BY DateCreated DESC';
 	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+
+/* IGNORE THIS (would need to test against each individual CALIBRATION ... and we're doing it wrong. We need to build 
+ * the soure table 'calibration_browsing_tree' differently.
+ *
+	if (in_array($row['multitree_node_id'], $calibrationIDsFoundSoFar)) {
+            // this is a dupe, skip to the next one
+	    if (!in_array($row, $duplicateCalibrations)) {
+		// store this dupe for special handling later
+		$duplicateCalibrations[ ] = $row;
+	    }
+	    continue;
+	}
+	$calibrationIDsFoundSoFar[ ] = $row['multitree_node_id'];
+*/
 
 ?>
 
@@ -351,6 +374,9 @@ END ghosted calibration IDs -->
     </li>
 <?  } ?>
 </ul><!-- end of .child-listing -->
+<!--
+<p><i>There are <?= count($duplicateCalibrations) ?> duplicate calibrations remaining</i></p>
+-->
 
 
 </div><!-- END OF center-column -->

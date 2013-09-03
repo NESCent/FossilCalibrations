@@ -97,6 +97,7 @@ DECLARE ancestor_NCBI_id MEDIUMINT(8) UNSIGNED;
 DECLARE related_calibration_count INT(11);
 DECLARE last_calibration_count INT(11);
 DECLARE last_interesting_multitree_node_id MEDIUMINT(8);
+DECLARE is_a_landmark_node TINYINT;
 
 -- a flag terminates the loop when no more records are found
 DECLARE no_more_rows INT DEFAULT FALSE;
@@ -105,9 +106,12 @@ DECLARE no_more_rows INT DEFAULT FALSE;
 DECLARE debug INT DEFAULT FALSE;
 
 -- a cursor to fetch these fields
+DECLARE landmark_node_cursor CURSOR FOR 
+  SELECT node_NCBI_id FROM NCBI_browsing_landmarks;
+
 DECLARE direct_relationship_cursor CURSOR FOR 
   SELECT clade_root_NCBI_id, clade_root_multitree_id, calibration_id, publication_status 
-  FROM tmp_calibrations_by_NCBI_clade WHERE is_direct_relationship = 1;
+  FROM tmp_calibrations_by_NCBI_clade WHERE is_direct_relationship = 1;  
 
 DECLARE ancestor_cursor CURSOR FOR
   SELECT node_id, parent_node_id, depth
@@ -165,7 +169,7 @@ OPEN direct_relationship_cursor;
     END IF;
 
     -- pick a test calibration and debug its ancestors
-    SET debug = FALSE; -- (the_calibration_id = '123');
+    SET debug = TRUE; -- (the_calibration_id = '123');
     
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
@@ -244,20 +248,185 @@ INSERT INTO tmp_calibration_browsing_tree SET
   clade_includes_published_calibrations = FALSE,
   is_browsing_landmark = TRUE;
 
+-- use a cursor to add "landmark" nodes and their interesting ancestors, as in the block below
+SET no_more_rows = FALSE;
+OPEN landmark_node_cursor;
+  IF debug THEN
+    SELECT "=== before (L)  loop ===";
+  END IF;
+  SET no_more_rows = FALSE;
 
--- add any "landmark" nodes listed in NCBI_browsing_landmarks
-INSERT INTO tmp_calibration_browsing_tree 
-  (node_NCBI_id, multitree_node_id, parent_node_NCBI_id, parent_multitree_node_id, is_immediate_NCBI_child, clade_includes_published_calibrations, is_browsing_landmark)
-SELECT 
-  taxonid, 
-  IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = taxonid AND source_tree = 'NCBI'), taxonid), 
-  parenttaxonid, 
-  IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = parenttaxonid AND source_tree = 'NCBI'), parenttaxonid), 
-  FALSE, 
-  FALSE,
-  TRUE
-FROM NCBI_nodes 
-  WHERE taxonid IN (SELECT node_NCBI_id FROM NCBI_browsing_landmarks);
+  the_loop: LOOP
+    IF debug THEN
+      SELECT "=== inside (L)  loop ===";
+    END IF;
+
+    FETCH landmark_node_cursor INTO the_ncbi_id; 
+    -- TODO: reckon values for:  the_calibration_id, the_publication_status?
+    SET the_multitree_id = IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = the_ncbi_id AND source_tree = 'NCBI'), the_ncbi_id);
+    SET the_publication_status = FALSE;
+
+    IF no_more_rows THEN 
+      LEAVE the_loop;
+    END IF;
+
+    IF EXISTS (SELECT * FROM tmp_calibration_browsing_tree WHERE node_NCBI_id = the_ncbi_id) THEN
+      -- this node is already here (added by another directly related calibration), ignore it and move on
+      SET no_more_rows = FALSE; -- reset if needed
+      ITERATE the_loop;
+    END IF;
+
+    -- pick a test calibration and debug its ancestors
+    SET debug = FALSE;  -- (the_multitree_id = '123');
+
+    INSERT INTO tmp_calibration_browsing_tree SET 
+      node_NCBI_id = the_ncbi_id, 
+      multitree_node_id = the_multitree_id, 
+      parent_node_NCBI_id = @root_node_NCBI_id, 
+      parent_multitree_node_id = @root_multitree_node_id, 
+      is_immediate_NCBI_child = NULL, 
+      clade_includes_published_calibrations = FALSE,
+      is_browsing_landmark = TRUE;
+
+    -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
+    -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
+    CALL getAllAncestors( the_multitree_id, "v_ancestors", 'NCBI' );
+
+    IF debug THEN
+      SELECT "=== v_ancestors (L) ===";
+      SELECT * FROM v_ancestors;
+
+      SELECT "=== cursor preview (sorted) ===";
+      SELECT node_id, parent_node_id, depth
+        FROM v_ancestors
+        ORDER BY depth DESC;
+    END IF;
+
+    -- walk its ancestors to find the nearest one that has interesting
+    -- information (a directly related calibration, or others in its clade, or landmark status)
+    SET last_calibration_count = NULL;
+    SET last_interesting_multitree_node_id = the_multitree_id;
+    SET no_more_rows = FALSE;
+    OPEN ancestor_cursor;
+      ancestor_loop: LOOP
+
+        IF debug THEN
+          SELECT "=== ... looping, try to fetch ancestor_cursor (forcing no_more_rows to FALSE) ===";
+        END IF;
+        SET no_more_rows = FALSE;
+
+        FETCH ancestor_cursor INTO the_node_id, the_parent_node_id, the_depth;
+        IF no_more_rows THEN 
+          LEAVE ancestor_loop;
+        END IF;
+
+        IF debug THEN
+          SELECT "=== testing this ancestor (the_node_id, the_parent_node_id, the_depth)===";
+          SELECT the_node_id, the_parent_node_id, the_depth;
+        END IF;
+
+        -- does this ancestor have a different number of related calibrations than its child? if so, it's interesting!
+        SET related_calibration_count = (SELECT COUNT(*) FROM tmp_calibrations_by_NCBI_clade WHERE clade_root_multitree_id = the_node_id);
+
+	-- it's also interesting if it's a "landmark" node
+	SET is_a_landmark_node = EXISTS (SELECT 1 FROM tmp_calibration_browsing_tree WHERE multitree_node_id = the_node_id AND is_browsing_landmark = 1);
+
+        IF debug THEN
+          SELECT "=== related_calibration_count ===";
+          SELECT related_calibration_count;
+
+          SELECT "=== last_calibration_count (should skip if NULL) ===";
+          SELECT last_calibration_count;
+        END IF;
+
+        IF last_calibration_count IS NOT NULL THEN
+          -- skip this for the first ancestor (has direct relationship, already "interesting")
+
+          IF debug THEN
+            SELECT "=== comparing (related_calibration_count, last_calibration_count, not-equals?)  ===";
+            SELECT related_calibration_count, last_calibration_count, (related_calibration_count != last_calibration_count);
+          END IF;
+
+          IF related_calibration_count != last_calibration_count OR is_a_landmark_node THEN
+            -- voila! it's interesting
+            IF debug THEN
+              SELECT "=== it's INTERESTING! ===";
+            END IF;
+
+            -- is this node pinned or un-pinned? either way, figure out its NCBI and multitree IDs
+            SET ancestor_NCBI_id = (SELECT source_node_id FROM node_identity WHERE source_tree = 'NCBI' AND multitree_node_id = the_node_id);
+            IF ancestor_NCBI_id IS NULL THEN
+              SET ancestor_NCBI_id = the_node_id;
+            END IF;
+
+            -- IF this ancestor isn't already listed as "interesting", add it now
+            IF EXISTS (SELECT 1 FROM tmp_calibration_browsing_tree WHERE multitree_node_id = the_node_id) THEN
+              -- it's already here! just tweak the publication-status flag if the current calibration is public
+              UPDATE tmp_calibration_browsing_tree
+                SET clade_includes_published_calibrations = clade_includes_published_calibrations OR the_publication_status
+                WHERE multitree_node_id = the_node_id;
+
+            ELSE
+              -- add a new record for this interesting ancestor
+              INSERT INTO tmp_calibration_browsing_tree SET 
+                node_NCBI_id = ancestor_NCBI_id,
+                multitree_node_id = the_node_id, 
+                parent_node_NCBI_id = @root_node_NCBI_id, 
+                parent_multitree_node_id = @root_multitree_node_id, 
+                is_immediate_NCBI_child = 0, 
+                clade_includes_published_calibrations = the_publication_status;
+
+            END IF;
+
+            -- update the current calibrated node to point to this record as its ancestor
+            UPDATE tmp_calibration_browsing_tree SET 
+              parent_node_NCBI_id = ancestor_NCBI_id,
+              parent_multitree_node_id = the_node_id,
+              is_immediate_NCBI_child = (the_depth = '-1')
+            WHERE multitree_node_id = last_interesting_multitree_node_id;
+
+            -- keep going through all ancestors! adding any other interesting nodes we find along the way...
+            SET last_interesting_multitree_node_id = the_node_id;
+
+          ELSE 
+
+            IF debug THEN
+              SELECT "=== it's NOT interesting! ===";
+            END IF;
+
+          END IF; -- if count has changed
+
+        ELSE 
+
+            IF debug THEN
+              SELECT "=== SKIPPING (previous count was NULL) ===";
+            END IF;
+
+        END IF; -- if last count is not NULL
+
+        SET last_calibration_count = related_calibration_count;
+
+        IF debug THEN
+          SELECT "=== NEW last_calibration_count ===";
+          SELECT last_calibration_count;
+        END IF;
+
+        SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
+      END LOOP;
+    CLOSE ancestor_cursor;
+    SET no_more_rows = FALSE;
+
+  END LOOP;
+
+CLOSE landmark_node_cursor;
+SET no_more_rows = FALSE;
+
+
+
+
+
+
+
 
 
 SET no_more_rows = FALSE;
@@ -336,6 +505,9 @@ OPEN direct_relationship_cursor;
         -- does this ancestor have a different number of related calibrations than its child? if so, it's interesting!
         SET related_calibration_count = (SELECT COUNT(*) FROM tmp_calibrations_by_NCBI_clade WHERE clade_root_multitree_id = the_node_id);
 
+	-- it's also interesting if it's a "landmark" node
+	SET is_a_landmark_node = EXISTS (SELECT 1 FROM tmp_calibration_browsing_tree WHERE multitree_node_id = the_node_id AND is_browsing_landmark = 1);
+
         IF debug THEN
           SELECT "=== related_calibration_count ===";
           SELECT related_calibration_count;
@@ -352,7 +524,7 @@ OPEN direct_relationship_cursor;
             SELECT related_calibration_count, last_calibration_count, (related_calibration_count != last_calibration_count);
           END IF;
 
-          IF related_calibration_count != last_calibration_count THEN
+          IF related_calibration_count != last_calibration_count OR is_a_landmark_node THEN
             -- voila! it's interesting
             IF debug THEN
               SELECT "=== it's INTERESTING! ===";
