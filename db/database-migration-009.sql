@@ -29,11 +29,28 @@ ALTER TABLE site_status
 
  */
 
+/* 
+ * Add a table that lists some NCBI nodes as familiar "landmark" taxa, so that they
+ * always appear in the Browsing UI.
+ */
+DROP TABLE IF EXISTS NCBI_browsing_landmarks;
+CREATE TABLE NCBI_browsing_landmarks (
+  node_NCBI_id MEDIUMINT(8) UNSIGNED
+);
+INSERT INTO NCBI_browsing_landmarks ( node_NCBI_id ) VALUES 
+  -- ADD MORE HERE
+  (8782),  -- Aves
+  (40674), -- Mammalia
+  (9255)   -- Monotremata
+;
+  
+
 /*
  * Add a second table with abbrieviated hierarchy of "interesting" NCBI taxa that will actually appear
  * in the browse UI. These are taxa that either
  *  - have at least one directly related calibration
  *  - OR have more than one sub-clade with calibrations inside
+ *  - OR have been marked as an always-visible "landmark" in NCBI_nodes
  */
 DROP TABLE IF EXISTS calibration_browsing_tree;
 CREATE TABLE calibration_browsing_tree (
@@ -44,7 +61,8 @@ CREATE TABLE calibration_browsing_tree (
   parent_multitree_node_id MEDIUMINT(8),
 
   is_immediate_NCBI_child TINYINT,  -- if false, it's in a descendant
-  clade_includes_published_calibrations TINYINT,  -- if false, show only to admins
+  clade_includes_published_calibrations TINYINT,  -- if false and NOT a landmark, show this only to admins
+  is_browsing_landmark TINYINT,  -- these taxa should ALWAYS appear in the browsing UI, even if empty
 
   KEY (parent_node_NCBI_id),
   KEY (parent_multitree_node_id)
@@ -223,7 +241,24 @@ INSERT INTO tmp_calibration_browsing_tree SET
   parent_node_NCBI_id = @root_node_NCBI_id, 
   parent_multitree_node_id = @root_multitree_node_id, 
   is_immediate_NCBI_child = FALSE, 
-  clade_includes_published_calibrations = TRUE;
+  clade_includes_published_calibrations = FALSE,
+  is_browsing_landmark = TRUE;
+
+
+-- add any "landmark" nodes listed in NCBI_browsing_landmarks
+INSERT INTO tmp_calibration_browsing_tree 
+  (node_NCBI_id, multitree_node_id, parent_node_NCBI_id, parent_multitree_node_id, is_immediate_NCBI_child, clade_includes_published_calibrations, is_browsing_landmark)
+SELECT 
+  taxonid, 
+  IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = taxonid AND source_tree = 'NCBI'), taxonid), 
+  parenttaxonid, 
+  IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = parenttaxonid AND source_tree = 'NCBI'), parenttaxonid), 
+  FALSE, 
+  FALSE,
+  TRUE
+FROM NCBI_nodes 
+  WHERE taxonid IN (SELECT node_NCBI_id FROM NCBI_browsing_landmarks);
+
 
 SET no_more_rows = FALSE;
 OPEN direct_relationship_cursor;
@@ -258,7 +293,8 @@ OPEN direct_relationship_cursor;
       parent_node_NCBI_id = @root_node_NCBI_id, 
       parent_multitree_node_id = @root_multitree_node_id, 
       is_immediate_NCBI_child = NULL, 
-      clade_includes_published_calibrations = the_publication_status;  -- TODO: correct this?
+      clade_includes_published_calibrations = the_publication_status,  -- TODO: correct this?
+      is_browsing_landmark = EXISTS (SELECT 1 FROM NCBI_browsing_landmarks WHERE node_NCBI_id = the_ncbi_id);
 
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
