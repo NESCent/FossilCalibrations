@@ -39,6 +39,7 @@ CREATE TABLE NCBI_browsing_landmarks (
 );
 INSERT INTO NCBI_browsing_landmarks ( node_NCBI_id ) VALUES 
   -- ADD MORE HERE
+  (8459),  -- Testudines  	
   (8782),  -- Aves
   (40674), -- Mammalia
   (9255)   -- Monotremata
