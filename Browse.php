@@ -167,7 +167,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 
 <?php
     $calibrationsInThisTaxon = getDirectCalibrationsInCladeRoot($nodeMultitreeID);
-    // TODO: Add any dupes resulting from basal split at this node?
+    $calibrationsInCustomChildNodes = getCalibrationsInCustomChildNodes($nodeMultitreeID);
 ?>
 <!--
 <h3 class="contentheading">Lineage 
@@ -281,14 +281,50 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 <p>Note that the number of calibrations shown for a node below may not match the total number for its clade members. This is due to differences between phylogeny and the NCBI taxonomy.</p>
 -->
 <ul class="child-listing" style="display: none;">
-<?  if ((count($descendants) == 0) ||
-	((count($descendants) == 1 && $descendants[0]['multitree_node_id'] == $nodeMultitreeID))
-       ) { ?>
+<?  if (((count($descendants) == 0) ||
+	 (count($descendants) == 1 && $descendants[0]['multitree_node_id'] == $nodeMultitreeID))
+        && (count($calibrationsInCustomChildNodes) == 0)) { ?>
 	<li class="" style="font-style: italic;">There are no more calibrations within this clade.</li>
 <?  }
-    // keep track of duplicate calibrations
-    $calibrationIDsFoundSoFar = array();
-    $duplicateCalibrations = array();
+    if (count($calibrationsInCustomChildNodes) > 0) {
+	// fetch details on these calibrations
+	$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
+		FROM (
+			SELECT CF.CalibrationID, V . *
+			FROM View_Fossils V
+			JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
+		) AS J
+		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
+					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInCustomChildNodes) .')
+		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+		ORDER BY DateCreated DESC';
+	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+
+	// "wrap" each of these calibrations in a custom node of the same name
+	while ($row = mysqli_fetch_array($calibration_list)) {
+?>
+	    <li class="has-calibrations immediate-child">	
+		<span title="This calibrated node is not part of the NCBI taxonomy" style="font-style: italic;"><?= htmlspecialchars($row['NodeName']) ?></span>
+		<span class="discreet" style="font-weight: normal;">&mdash; (<span class="calibration-count" style="color: #333;">1</span>)</span> 
+		<a target="_blank" style="font-weight: normal;"
+			  href="/search.php?SortResultsBy=DATE_ADDED_DESC&SimpleSearch=&HiddenFilters[]=FilterByTipTaxa&BlockedFilters[]=FilterByTipTaxa&TaxonA=&TaxonB=&FilterByClade=<?= htmlspecialchars($row['NodeName']) ?>&HiddenFilters[]=FilterByAge&MinAge=&MaxAge=&HiddenFilters[]=FilterByGeologicalTime&FilterByGeologicalTime=">
+			show as search result
+		</a>
+
+		<div class="listed-calibrations">
+		     <? // just one calibration in each custom node (for now)
+			$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
+			 ?>
+			<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?>">
+				<?= $row['NodeName'] ?>
+				<span class="citation">&ndash; <?= $row['ShortName'] ?></span>
+			</a>
+		</div>
+	    </li>
+<?	 }
+    }
+
+
     foreach ($descendants as $row) {
 	// $row is a record from calibration_browsing_tree
 	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
@@ -313,26 +349,18 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 			FROM View_Fossils V
 			JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
 		) AS J
-		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
+		RIGHT JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+		WHERE C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
 		ORDER BY DateCreated DESC';
 	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
-/* IGNORE THIS (would need to test against each individual CALIBRATION ... and we're doing it wrong. We need to build 
- * the soure table 'calibration_browsing_tree' differently.
- *
-	if (in_array($row['multitree_node_id'], $calibrationIDsFoundSoFar)) {
-            // this is a dupe, skip to the next one
-	    if (!in_array($row, $duplicateCalibrations)) {
-		// store this dupe for special handling later
-		$duplicateCalibrations[ ] = $row;
-	    }
-	    continue;
-	}
-	$calibrationIDsFoundSoFar[ ] = $row['multitree_node_id'];
+/*
+<pre>$query:
+<? print_r($query) ?>
+</pre>
 */
-
 ?>
 
     <li class="<?= (count($calibrationsInThisClade) > 0) ? 'has-calibrations' : 'no-calibrations' ?> node-id-<?= $row['multitree_node_id'] ?> parent-id-<?= $row['parent_multitree_node_id'] ?> <?= $isImmediateChildNode ? 'immediate-child' : 'distant-descendant' ?>">	
@@ -361,6 +389,11 @@ END ghosted calibration IDs -->
 		while ($row = mysqli_fetch_array($calibration_list)) {
 		$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
 		 ?>
+<!--
+<pre>$row:
+<? print_r($row) ?>
+</pre>
+-->
 		<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?>">
 			<?= $row['NodeName'] ?>
 			<span class="citation">&ndash; <?= $row['ShortName'] ?></span>
@@ -374,9 +407,6 @@ END ghosted calibration IDs -->
     </li>
 <?  } ?>
 </ul><!-- end of .child-listing -->
-<!--
-<p><i>There are <?= count($duplicateCalibrations) ?> duplicate calibrations remaining</i></p>
--->
 
 
 </div><!-- END OF center-column -->

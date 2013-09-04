@@ -13,6 +13,7 @@ CREATE TABLE calibrations_by_NCBI_clade (
   clade_root_multitree_id MEDIUMINT(8) NOT NULL,
   calibration_id INT(11) NOT NULL,
   is_direct_relationship TINYINT NOT NULL,  -- if false, it's in a descendant
+  is_custom_child_node TINYINT NOT NULL,  -- if false, it's in a descendant
   publication_status INT(11) DEFAULT NULL,
 
   KEY (clade_root_NCBI_id),
@@ -90,6 +91,16 @@ DECLARE the_multitree_id MEDIUMINT(8);
 DECLARE the_calibration_id INT(11);
 DECLARE the_publication_status INT(11);
 
+-- extra vars for calibration_info_cursor
+DECLARE this_is_direct_relationship TINYINT;
+DECLARE this_is_custom_child_node TINYINT;
+-- two multitree IDs to find MRCA for custom-node parent
+DECLARE the_custom_tree_id MEDIUMINT(8);
+DECLARE the_custom_tree_name VARCHAR(20);
+DECLARE the_lowest_related_multitree_id MEDIUMINT(8);
+DECLARE the_highest_related_multitree_id MEDIUMINT(8);
+-- TODO: replace this with a more thorough (tedious) procedure, to compare ALL related nodes?
+
 DECLARE the_node_id MEDIUMINT(8);
 DECLARE the_parent_node_id MEDIUMINT(8);
 DECLARE the_depth INT(11);
@@ -99,6 +110,8 @@ DECLARE related_calibration_count INT(11);
 DECLARE last_calibration_count INT(11);
 DECLARE last_interesting_multitree_node_id MEDIUMINT(8);
 DECLARE is_a_landmark_node TINYINT;
+DECLARE has_multiple_NCBI_parents TINYINT;
+
 
 -- a flag terminates the loop when no more records are found
 DECLARE no_more_rows INT DEFAULT FALSE;
@@ -107,11 +120,28 @@ DECLARE no_more_rows INT DEFAULT FALSE;
 DECLARE debug INT DEFAULT FALSE;
 
 -- a cursor to fetch these fields
+DECLARE calibration_info_cursor CURSOR FOR
+  SELECT
+    pinned_nodes.target_node_id,  -- NCBI ID for a node that is identical to FCD nodes in FCD-tree for a given calibration
+    node_identity.multitree_node_id,  -- its corresponding multitree ID
+    c.CalibrationID,
+    1,  -- these are DIRECT relationships
+    (SELECT COUNT(*) FROM FCD_nodes WHERE parent_node_id = FCD_trees.root_node_id) > 1,
+    c.PublicationStatus
+  FROM
+    calibrations AS c
+  JOIN FCD_trees ON FCD_trees.calibration_id = c.CalibrationID
+  JOIN FCD_nodes ON FCD_nodes.parent_node_id = FCD_trees.root_node_id
+  JOIN pinned_nodes ON pinned_nodes.target_tree = 'NCBI' AND pinned_nodes.pinned_node_id = FCD_nodes.node_id
+  JOIN node_identity ON node_identity.source_tree = 'NCBI' AND node_identity.source_node_id = pinned_nodes.target_node_id;
+
+
 DECLARE landmark_node_cursor CURSOR FOR 
   SELECT node_NCBI_id FROM NCBI_browsing_landmarks;
 
 DECLARE direct_relationship_cursor CURSOR FOR 
-  SELECT clade_root_NCBI_id, clade_root_multitree_id, calibration_id, publication_status 
+  SELECT clade_root_NCBI_id, clade_root_multitree_id, calibration_id AS test_cal_id, publication_status,
+    ((SELECT COUNT(*) FROM tmp_calibrations_by_NCBI_clade WHERE is_direct_relationship AND calibration_id = test_cal_id) > 1) AS has_multiple_parents
   FROM tmp_calibrations_by_NCBI_clade WHERE is_direct_relationship = 1;  
 
 DECLARE ancestor_cursor CURSOR FOR
@@ -140,20 +170,59 @@ CREATE TABLE tmp_calibrations_by_NCBI_clade LIKE calibrations_by_NCBI_clade;
 DROP TABLE IF EXISTS tmp_calibration_browsing_tree;
 CREATE TABLE tmp_calibration_browsing_tree LIKE calibration_browsing_tree;
 
--- initial records will be on those clades that are *directly* related to each calibration
-INSERT INTO tmp_calibrations_by_NCBI_clade (clade_root_NCBI_id, clade_root_multitree_id, calibration_id, is_direct_relationship, publication_status)
-SELECT
-  pinned_nodes.target_node_id,  -- NCBI ID for a node that is identical to FCD nodes in FCD-tree for a given calibration
-  node_identity.multitree_node_id,  -- its corresponding multitree ID
-  c.CalibrationID,
-  1,  -- these are DIRECT relationships
-  c.PublicationStatus
-FROM
-  calibrations AS c
-JOIN FCD_trees ON FCD_trees.calibration_id = c.CalibrationID
-JOIN FCD_nodes ON FCD_nodes.parent_node_id = FCD_trees.root_node_id
-JOIN pinned_nodes ON pinned_nodes.target_tree = 'NCBI' AND pinned_nodes.pinned_node_id = FCD_nodes.node_id
-JOIN node_identity ON node_identity.source_tree = 'NCBI' AND node_identity.source_node_id = pinned_nodes.target_node_id;
+-- initial records will be on the node/clade that is *directly* related to each calibration (or a custom node under the MRCA, if there's more than one)
+
+-- For a cleaner tree, consolidate each calibration into a single context, under the clade of its MRCA
+-- find the MRCA of all related NCBI nodes (incl. landmarks) and designate this as the browsing "parent"
+-- create a new entry for this calibration, under a custom node (node_NCBI_id = NULL, multitree_node_id = ??)
+-- decrement tallies on its ancestors (remove if tally drops to zero)
+-- NOTE that we need to modify both calibrations_by_NCBI_clade and calibration_browsing_tree!
+SET no_more_rows = FALSE;
+OPEN calibration_info_cursor;
+
+  the_loop: LOOP
+    FETCH calibration_info_cursor INTO the_ncbi_id, the_multitree_id, the_calibration_id, this_is_direct_relationship, this_is_custom_child_node, the_publication_status;
+
+    IF no_more_rows THEN 
+      LEAVE the_loop;
+    END IF;
+
+    IF EXISTS(SELECT 1 FROM tmp_calibrations_by_NCBI_clade WHERE calibration_id = the_calibration_id) THEN
+      -- this calibration is already here, probably a basal-split
+      ITERATE the_loop;
+    END IF;
+
+    IF this_is_custom_child_node THEN
+      -- this is the result of a basal split, modify parent IDs before adding it
+      SET the_custom_tree_id = (SELECT MIN(tree_id) FROM FCD_trees WHERE calibration_id = the_calibration_id);
+      SET the_custom_tree_name = CONCAT('FCD-', the_custom_tree_id);
+      SET the_lowest_related_multitree_id = (SELECT MIN(node_id) FROM FCD_nodes WHERE tree_id = the_custom_tree_id AND parent_node_id IS NOT NULL);
+      SET the_highest_related_multitree_id = (SELECT MAX(node_id) FROM FCD_nodes WHERE tree_id = the_custom_tree_id AND parent_node_id IS NOT NULL);
+      -- convert these to proper multitree IDs
+      SET the_lowest_related_multitree_id = getMultitreeNodeID( the_custom_tree_name, the_lowest_related_multitree_id);
+      SET the_highest_related_multitree_id = getMultitreeNodeID( the_custom_tree_name, the_highest_related_multitree_id);
+      CALL getMostRecentCommonAncestor( the_lowest_related_multitree_id, the_highest_related_multitree_id, "mostRecentCommonAncestor_ids", 'NCBI' );
+      CALL getFullNodeInfo( "mostRecentCommonAncestor_ids", "mostRecentCommonAncestor_info" );
+      -- SELECT * FROM mostRecentCommonAncestor_info;
+      SET the_ncbi_id = (SELECT MIN(source_node_id) FROM mostRecentCommonAncestor_info WHERE source_tree = 'NCBI');
+      -- SELECT the_ncbi_id AS ">>>>>>>>> the_ncbi_id";
+      SET the_multitree_id = (SELECT MIN(multitree_node_id) FROM mostRecentCommonAncestor_info);
+      -- SELECT the_multitree_id AS ">>>>>>>>> the_multitree_id";
+    END IF;
+
+    INSERT INTO tmp_calibrations_by_NCBI_clade SET
+      clade_root_NCBI_id = the_ncbi_id, 
+      clade_root_multitree_id = the_multitree_id, 
+      calibration_id = the_calibration_id, 
+      is_direct_relationship = this_is_direct_relationship, 
+      is_custom_child_node = this_is_custom_child_node, 
+      publication_status = the_publication_status;
+
+    SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
+  END LOOP;
+
+CLOSE calibration_info_cursor;
+SET no_more_rows = FALSE;
 
 -- for each of the calibration/clade pairs above, add *indirect* relationships with all ancestor clades
 -- this will give us tallies to show in a compact tree format
@@ -163,7 +232,7 @@ SET no_more_rows = FALSE;
 OPEN direct_relationship_cursor;
 
   the_loop: LOOP
-    FETCH direct_relationship_cursor INTO the_ncbi_id, the_multitree_id, the_calibration_id, the_publication_status;
+    FETCH direct_relationship_cursor INTO the_ncbi_id, the_multitree_id, the_calibration_id, the_publication_status, has_multiple_NCBI_parents;
 
     IF no_more_rows THEN 
       LEAVE the_loop;
@@ -423,13 +492,7 @@ CLOSE landmark_node_cursor;
 SET no_more_rows = FALSE;
 
 
-
-
-
-
-
-
-
+-- sweep again with the same cursor, adding direct relationships?
 SET no_more_rows = FALSE;
 OPEN direct_relationship_cursor;
   IF debug THEN
@@ -442,7 +505,7 @@ OPEN direct_relationship_cursor;
       SELECT "=== inside (B)  loop ===";
     END IF;
 
-    FETCH direct_relationship_cursor INTO the_ncbi_id, the_multitree_id, the_calibration_id, the_publication_status;
+    FETCH direct_relationship_cursor INTO the_ncbi_id, the_multitree_id, the_calibration_id, the_publication_status, has_multiple_NCBI_parents;
 
     IF no_more_rows THEN 
       LEAVE the_loop;

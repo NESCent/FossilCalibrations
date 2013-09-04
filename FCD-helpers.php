@@ -323,7 +323,21 @@ function getDirectCalibrationsInCladeRoot($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."' AND is_direct_relationship = 1;";
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."' AND is_direct_relationship = 1 AND is_custom_child_node != 1;";
+?><div class="search-details">QUERY:<br/><?= $query ?></div><?
+	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+	while($row=mysqli_fetch_assoc($result)) {
+		$calibrationIDs[] = $row['calibration_id'];
+	}
+	return $calibrationIDs;
+}
+
+function getCalibrationsInCustomChildNodes($clade_root_source_id) {
+	// this one returns only those calibrations of a custom child node under the clade-root node
+	global $mysqli;
+	$calibrationIDs = array();
+
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."' AND is_custom_child_node = 1;";
 ?><div class="search-details">QUERY:<br/><?= $query ?></div><?
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	while($row=mysqli_fetch_assoc($result)) {
