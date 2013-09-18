@@ -39,11 +39,54 @@ CREATE TABLE NCBI_browsing_landmarks (
   node_NCBI_id MEDIUMINT(8) UNSIGNED
 );
 INSERT INTO NCBI_browsing_landmarks ( node_NCBI_id ) VALUES 
-  -- ADD MORE HERE
-  (8459),  -- Testudines  	
-  (8782),  -- Aves
-  (40674), -- Mammalia
-  (9255)   -- Monotremata
+  -- ADD MORE AS NEEDED
+  (2759),  -- Eukaryota		
+  (3193),	            -- Embryophyta
+  (4751),	            -- fungi   (uniquename = fungi<preferred>)
+  (33208),	            -- Metazoa
+  (6040),		            -- Porifera
+  (6073),		            -- Cnidaria
+  (33213),		            -- Bilateria
+  (33317),			            -- Protostomia
+  (1206794),				            -- Ecdysozoa
+  (6656),					            -- Arthropoda
+  (6843),						            -- Chelicerata
+  (6657),						            -- Crustacea
+  (50557),						            -- Insecta
+  (6961),							            -- Odonata
+  (7041),							            -- Coleoptera
+  (7147),							            -- Diptera
+  (7399),							            -- Hymenoptera
+  (33342),							            -- Paraneoptera
+  (1206795),				            -- Lophotrochozoa
+  (6340),					            -- Annelida
+  (6447),					            -- mollusks
+  (33511),			            -- Deuterostomia
+  (7586),				            -- Echinodermata
+  (7711),				            -- Chordata
+  (7742),					            -- Vertebrata (uniquename = Vertebrata <Metazoa>)
+  (7898),						            -- Actinopterygii
+  (8287),						            -- Sarcopterygii
+  (32523),							            -- Tetrapoda
+  (8292),								            -- Amphibia
+  (40674),								            -- Mammalia
+  (9255),									            -- Monotremata	
+  (9263),									            -- Metatheria
+  (9347),									            -- Eutheria
+  (311790),										            -- Afrotheria
+  (314146),										            -- Euarchontoglires
+  (314145),										            -- Laurasiatheria
+  (9348),										            -- Xenarthra
+  (8457),								            -- Sauropsida
+  (8504),									            -- Lepidosauria
+  (8492),									            -- Archosauria
+  (8493),										            -- Crocodylia
+  (8782),										            -- Aves
+  (8783),											            -- Palaeognathae
+  (8825),											            -- Neognathae
+  (8459),									            -- Testudines
+  (8464),										            -- Cryptodira
+  (8460)										            -- Pleurodira
 ;
   
 

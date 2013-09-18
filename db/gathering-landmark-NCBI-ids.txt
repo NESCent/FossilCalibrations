@@ -1,0 +1,103 @@
+-- initial query to gather all NCBI names, ids, uniquenames (as need to disambiguate) from NCBI_names
+
+SELECT taxonid, name, uniquename FROM `NCBI_names` WHERE name in (
+	'Eukaryota', 
+	'Embryophyta', 
+	'Fungi', 
+	'Metazoa', 
+	'Porifera', 
+	'Cnidaria', 
+	'Bilateria', 
+	'Protostomia', 
+	'Ecdysozoa', 
+	'Arthropoda', 
+	'Chelicerata', 
+	'Crustacea', 
+	'Insecta', 
+	'Odonata', 
+	'Coleoptera', 
+	'Diptera', 
+	'Hymenoptera', 
+	'Paraneoptera', 
+	'Lophotrochozoa', 
+	'Annelida', 
+	'Mollusks', 
+	'Deuterostomia', 
+	'Echinodermata', 
+	'Chordata', 
+	'Vertebrata', 
+	'Actinopterygii', 
+	'Sarcopterygii', 
+	'Tetrapoda', 
+	'Amphibia', 
+	'Mammalia', 
+	'Monotremata	', 
+	'Metatheria', 
+	'Eutheria', 
+	'Afrotheria', 
+	'Euarchontoglires', 
+	'Laurasiatheria', 
+	'Xenarthra', 
+	'Sauropsida', 
+	'Lepidosauria', 
+	'Archosauria', 
+	'Crocodylia', 
+	'Aves', 
+	'Palaeognathae', 
+	'Neognathae', 
+	'Testudines', 
+	'Cryptodira', 
+	'Pleurodira' 
+) LIMIT 100;
+
+
+-- result as CSV (compare count and resolve any ambiguities!)
+
+	"7898";"Actinopterygii";
+	"311790";"Afrotheria";
+	"8292";"Amphibia";
+	"6340";"Annelida";
+	"8492";"Archosauria";
+	"6656";"Arthropoda";
+	"8782";"Aves";
+	"33213";"Bilateria";
+	"6843";"Chelicerata";
+	"7711";"Chordata";
+	"6073";"Cnidaria";
+	"7041";"Coleoptera";
+	"8493";"Crocodylia";
+	"6657";"Crustacea";
+	"8464";"Cryptodira";
+	"33511";"Deuterostomia";
+	"7147";"Diptera";
+	"1206794";"Ecdysozoa";
+	"7586";"Echinodermata";
+	"3193";"Embryophyta";
+	"314146";"Euarchontoglires";
+	"2759";"Eukaryota";
+	"9347";"Eutheria";
+	"4751";"fungi";"fungi<preferred>"
+	"7399";"Hymenoptera";
+	"50557";"Insecta";
+	"314145";"Laurasiatheria";
+	"8504";"Lepidosauria";
+	"1206795";"Lophotrochozoa";
+	"40674";"Mammalia";
+	"9263";"Metatheria";
+	"33208";"Metazoa";
+	"6447";"mollusks";
+	"9255";"Monotremata";
+	"8825";"Neognathae";
+	"6961";"Odonata";
+	"8783";"Palaeognathae";
+	"33342";"Paraneoptera";
+	"8460";"Pleurodira";
+	"6040";"Porifera";
+	"33317";"Protostomia";
+	"8287";"Sarcopterygii";
+	"8457";"Sauropsida";
+	"8459";"Testudines";
+	"32523";"Tetrapoda";
+	"7742";"Vertebrata";"Vertebrata <Metazoa>"
+	"9348";"Xenarthra";
+
