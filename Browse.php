@@ -238,7 +238,7 @@ $featuredPos = 0;
 
 // fetch all related calibrations
 // TODO: Simplify this query if all we need is node name and display URL!
-$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
+$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
 	FROM (
 		SELECT CF.CalibrationID, V . *
 		FROM View_Fossils V
@@ -247,7 +247,7 @@ $query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
 	JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 				 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisTaxon) .')
 	LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-	ORDER BY DateCreated DESC';
+	ORDER BY NodeName, ShortName';
 $calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 
@@ -292,7 +292,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 <? */ }
     if (count($calibrationsInCustomChildNodes) > 0) {
 	// fetch details on these calibrations
-	$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
+	$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
 		FROM (
 			SELECT CF.CalibrationID, V . *
 			FROM View_Fossils V
@@ -301,7 +301,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInCustomChildNodes) .')
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-		ORDER BY DateCreated DESC';
+		ORDER BY NodeName, ShortName';
 	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 	// "wrap" each of these calibrations in a custom node of the same name
@@ -340,24 +340,30 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 
 	//if ($row['query_depth'] != 1) continue; // show immediate children only!
 	// try a more specific count
+	$calibrationsInThisClade = null; // TODO: remove this?
 	$calibrationsInThisClade = getAllCalibrationsInClade($more_info['multitree_node_id']); // TODO: remove this?
 	$directlyAssociatedCalibrations = getDirectCalibrationsInCladeRoot($row['multitree_node_id']);
 	$allCalibrationsDirectlyAssociated = count($directlyAssociatedCalibrations) == count($calibrationsInThisClade);
 	$isImmediateChildNode = $row['is_immediate_NCBI_child'];
+
+// diagnostic information for each descendant clade
 /* ?>
+<!-- 
 	<hr />
-	<li class="" style="font-style: italic;"><b><?= htmlspecialchars($more_info['uniquename']) ?></b></li>
+	<li class="" style="font-style: italic;"><b><?= htmlspecialchars($more_info['uniquename']) ?> - <?= $more_info['multitree_node_id'] ?></b></li>
 	<li class="" style="font-style: italic;">$calibrationsInThisClade: <? print_r($calibrationsInThisClade) ?></li>
 	<li class="" style="font-style: italic;">$directlyAssociatedCalibrations: <? print_r($directlyAssociatedCalibrations) ?>.</li>
 	<li class="" style="font-style: italic;">$allCalibrationsDirectlyAssociated: <?= $allCalibrationsDirectlyAssociated ?>.</li>
 	<li class="" style="font-style: italic;">$isImmediateChildNode: <?= $isImmediateChildNode ?></li>
+-->
 <? */
 
 	// NOTE that a "landmark" taxon might not have any calibrations inside (show it anyway?)
+	$calibration_list2 = null;
 	if (count($calibrationsInThisClade) > 0) {
 		// fetch all related calibrations
 		// TODO: Simplify this query if all we need is node name and display URL!
-		$query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
+		$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
 			FROM (
 				SELECT CF.CalibrationID, V . *
 				FROM View_Fossils V
@@ -367,7 +373,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 						 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
 			LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 			WHERE C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
-			ORDER BY DateCreated DESC';
+			ORDER BY NodeName, ShortName';
 		$calibration_list2=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	}
 
@@ -404,22 +410,32 @@ END ghosted calibration IDs -->
 <? if (isset($calibration_list2)) { ?>
 	<div class="listed-calibrations">
 	     <? 
+		$maxCalibrationsToShow = 10;
+		$counter = 0;
 		while ($row = mysqli_fetch_array($calibration_list2)) {
-		$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
+			$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
 		 ?>
 <!--
 <pre>$row:
 <? print_r($row) ?>
 </pre>
 -->
-		<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?>">
+		<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?> <?= ($counter > $maxCalibrationsToShow) ? "hidden-clutter" : "" ?>">
 			<?= $row['NodeName'] ?>
 			<span class="citation">&ndash; <?= $row['ShortName'] ?></span>
 		</a>
-	     <? } ?>
+	     <? 	$counter++;
+		}
+ ?>
 	</div>
-<? } ?>
+<? 
+	        if ($counter > $maxCalibrationsToShow) {
+ ?>
+			<a class="show-hidden-clutter" href="#">show all</a>
+<?              } 
 
+   }
+?>
 
 	<!-- <em>depth=<?= $row['query_depth'] ?></em> -->
 	<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
@@ -477,9 +493,10 @@ END ghosted calibration IDs -->
 				if ($('li.has-calibrations').length === 0 && $('li.no-calibrations').length > 0) {
 					$('ul.child-listing:eq(0)').prepend(
 						'<li class="empty-warning" style="font-style: italic;">'
-						+ 'There are no calibrations in this part of the tree. '
-						+ '<a href="#" onclick="$(\'#full-sparse-toggle\').click(); return false;">'
-						+ 'Switch to the full tree view</a> to see nodes in this area.</li>');
+						+ 'There are no calibrations in this part of the tree.</li>'
+						// + '<a href="#" onclick="$(\'#full-sparse-toggle\').click(); return false;">'
+						// + 'Switch to the full tree view</a> to see nodes in this area.</li>'
+					);
 				} else {
 					$('ul.child-listing .empty-warning').remove();
 				}
@@ -582,6 +599,12 @@ END ghosted calibration IDs -->
 			} else {
 				return true;
 			}
+		});
+		$('.show-hidden-clutter').unbind('click').click(function() {
+			var $clicked = $(this);
+			// N.B. we can't simply use .show() here, or the links will be shown 'inline'
+			$clicked.closest('li.has-calibrations').find('.listed-calibrations a.hidden-clutter').css('display','inline-block');
+			$clicked.hide();
 		});
 
 		updateView();

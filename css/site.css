@@ -606,6 +606,14 @@ blockquote.odd, tr.odd td {
 	border-radius: 8px;
 	text-decoration: none !important;
 }
+.listed-calibrations a.hidden-clutter {
+	display: none;
+}
+a.show-hidden-clutter {
+	display: block; 
+	font-weight: normal;
+	margin: 0 0 0 24px; 
+}
 .listed-calibrations a .citation {
 	color: #999;
 }
