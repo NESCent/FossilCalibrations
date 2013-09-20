@@ -368,7 +368,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 			LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 			WHERE C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
 			ORDER BY DateCreated DESC';
-		$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+		$calibration_list2=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	}
 
 /*
@@ -401,9 +401,10 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 END ghosted calibration IDs -->
 
 
+<? if (isset($calibration_list2)) { ?>
 	<div class="listed-calibrations">
-	     <? // mysql_num_rows($calibration_list) 
-		while ($row = mysqli_fetch_array($calibration_list)) {
+	     <? 
+		while ($row = mysqli_fetch_array($calibration_list2)) {
 		$calibrationDisplayURL = "/Show_Calibration.php?CalibrationID=". $row['CalibrationID'];
 		 ?>
 <!--
@@ -417,6 +418,7 @@ END ghosted calibration IDs -->
 		</a>
 	     <? } ?>
 	</div>
+<? } ?>
 
 
 	<!-- <em>depth=<?= $row['query_depth'] ?></em> -->
