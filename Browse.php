@@ -247,7 +247,7 @@ $query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS Short
 	JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 				 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisTaxon) .')
 	LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-	ORDER BY NodeName, ShortName';
+	ORDER BY HigherTaxon, NodeName, ShortName';
 $calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 
@@ -301,7 +301,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInCustomChildNodes) .')
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-		ORDER BY NodeName, ShortName';
+		ORDER BY HigherTaxon, NodeName, ShortName';
 	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 	// "wrap" each of these calibrations in a custom node of the same name
@@ -373,7 +373,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 						 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
 			LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 			WHERE C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
-			ORDER BY NodeName, ShortName';
+			ORDER BY HigherTaxon, NodeName, ShortName';
 		$calibration_list2=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	}
 
