@@ -46,7 +46,6 @@ DROP TEMPORARY TABLE IF EXISTS tmp;
 
 -- we'll use prepared statements (dynamic SQL) to copy data between specified tables and "local" scratch tables
 SET @sql = CONCAT('CREATE TEMPORARY TABLE src ENGINE=memory AS (SELECT * FROM ', sourceTableName ,');');
-SELECT @sql as "";
 PREPARE cmd FROM @sql;
 EXECUTE cmd;
 DEALLOCATE PREPARE cmd;
@@ -246,10 +245,10 @@ DROP TEMPORARY TABLE IF EXISTS v_pathB;
 
 -- gather both paths for analysis
 CALL getAllAncestors( p_multitree_nodeA_id, "v_pathA", treeFilter );
-			SELECT * FROM v_pathA;
+-- SELECT * FROM v_pathA;
 
 CALL getAllAncestors( p_multitree_nodeB_id, "v_pathB", treeFilter );
-			SELECT * FROM v_pathB;
+-- SELECT * FROM v_pathB;
 
 -- walk the paths "backwards" in depth (from 0) to get the most recent common ancestor
 -- use a simple, one-shot query if possible

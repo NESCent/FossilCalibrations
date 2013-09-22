@@ -30,6 +30,21 @@ ALTER TABLE site_status
 
  */
 
+/*
+ * Build another xref table to tally landmarks under different NCBI taxa
+ */
+DROP TABLE IF EXISTS landmarks_by_NCBI_clade;
+CREATE TABLE landmarks_by_NCBI_clade (
+  -- NOTE that this uses NCBI node IDs! vs. multitree IDs
+  clade_root_NCBI_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  clade_root_multitree_id MEDIUMINT(8) NOT NULL,
+  landmark_NCBI_id MEDIUMINT(8) UNSIGNED NOT NULL,
+  is_immediate_child TINYINT NOT NULL,  -- if false, it's in a descendant
+
+  KEY (clade_root_NCBI_id),
+  KEY (clade_root_multitree_id)
+) ENGINE=InnoDB;
+
 /* 
  * Add a table that lists some NCBI nodes as familiar "landmark" taxa, so that they
  * always appear in the Browsing UI.
@@ -89,13 +104,12 @@ INSERT INTO NCBI_browsing_landmarks ( node_NCBI_id ) VALUES
   (8460)										            -- Pleurodira
 ;
   
-
 /*
- * Add a second table with abbrieviated hierarchy of "interesting" NCBI taxa that will actually appear
+ * Add another table with abbrieviated hierarchy of "interesting" NCBI taxa that will actually appear
  * in the browse UI. These are taxa that either
  *  - have at least one directly related calibration
- *  - OR have more than one sub-clade with calibrations inside
  *  - OR have been marked as an always-visible "landmark" in NCBI_nodes
+ *  - OR have more than one (sub-clade with calibrations OR landmark) inside
  */
 DROP TABLE IF EXISTS calibration_browsing_tree;
 CREATE TABLE calibration_browsing_tree (
@@ -134,6 +148,10 @@ DECLARE the_multitree_id MEDIUMINT(8);
 DECLARE the_calibration_id INT(11);
 DECLARE the_publication_status INT(11);
 
+DECLARE the_landmark_ncbi_id MEDIUMINT(8) UNSIGNED;
+DECLARE the_landmark_multitree_id MEDIUMINT(8);
+DECLARE the_landmark_parent_multitree_id MEDIUMINT(8);
+
 -- extra vars for calibration_info_cursor
 DECLARE this_is_direct_relationship TINYINT;
 DECLARE this_is_custom_child_node TINYINT;
@@ -151,6 +169,10 @@ DECLARE ancestor_NCBI_id MEDIUMINT(8) UNSIGNED;
 
 DECLARE related_calibration_count INT(11);
 DECLARE last_calibration_count INT(11);
+
+DECLARE related_landmark_count INT(11);
+DECLARE last_landmark_count INT(11);
+
 DECLARE last_interesting_multitree_node_id MEDIUMINT(8);
 DECLARE is_a_landmark_node TINYINT;
 DECLARE has_multiple_NCBI_parents TINYINT;
@@ -207,11 +229,71 @@ UPDATE site_status SET
 --
 DROP TEMPORARY TABLE IF EXISTS tmp_ancestors;
 
+DROP TABLE IF EXISTS tmp_landmarks_by_NCBI_clade;
+CREATE TABLE tmp_landmarks_by_NCBI_clade LIKE landmarks_by_NCBI_clade;
+
 DROP TABLE IF EXISTS tmp_calibrations_by_NCBI_clade;
 CREATE TABLE tmp_calibrations_by_NCBI_clade LIKE calibrations_by_NCBI_clade;
 
 DROP TABLE IF EXISTS tmp_calibration_browsing_tree;
 CREATE TABLE tmp_calibration_browsing_tree LIKE calibration_browsing_tree;
+
+-- start by build up the table of landmark tallies
+SET no_more_rows = FALSE;
+OPEN landmark_node_cursor;
+
+  the_loop: LOOP
+    FETCH landmark_node_cursor INTO the_landmark_ncbi_id;
+
+    IF no_more_rows THEN 
+      LEAVE the_loop;
+    END IF;
+
+    -- walk its ancestors and add a record for each (marking the first "ancestor" as immediate-child relationship)
+    SET the_landmark_multitree_id = IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = the_landmark_ncbi_id AND source_tree = 'NCBI'), the_landmark_ncbi_id);
+    CALL getAllAncestors( the_landmark_multitree_id, "v_ancestors", 'NCBI' );
+    SET no_more_rows = FALSE; -- just in case
+
+    DROP TABLE IF EXISTS tmp_ancestors2;
+    CREATE TEMPORARY TABLE tmp_ancestors2 ENGINE=memory SELECT * FROM v_ancestors;
+    /* see http://dev.mysql.com/doc/refman/5.0/en/temporary-table-problems.html */
+
+    SET the_landmark_parent_multitree_id = (SELECT parent_node_id FROM tmp_ancestors2 WHERE depth = 0);
+
+    IF EXISTS (SELECT 1 FROM tmp_ancestors2) THEN
+
+      -- first pass, to gather indirect relationships on pinned nodes
+      INSERT INTO tmp_landmarks_by_NCBI_clade  (clade_root_NCBI_id, clade_root_multitree_id, landmark_NCBI_id, is_immediate_child)
+      SELECT
+        node_identity.source_node_id,
+        node_identity.multitree_node_id,
+        the_landmark_ncbi_id, 
+        (node_identity.multitree_node_id = the_landmark_parent_multitree_id)
+      FROM
+        node_identity
+      WHERE node_identity.source_tree = 'NCBI' 
+        AND node_identity.multitree_node_id IN (SELECT node_id FROM tmp_ancestors2);
+
+      -- second pass, to gather indirect relationships on UN-pinned nodes
+      INSERT INTO tmp_landmarks_by_NCBI_clade  (clade_root_NCBI_id, clade_root_multitree_id, landmark_NCBI_id, is_immediate_child)
+      SELECT
+        multitree.node_id,  -- NCBI ID for an un-pinned NCBI node
+        multitree.node_id,  -- its corresponding multitree ID (unchanged for un-pinned nodes!)
+        the_landmark_ncbi_id, 
+        (multitree.node_id = the_landmark_parent_multitree_id)
+      FROM
+        multitree 
+      WHERE multitree.node_id IN (SELECT node_id FROM tmp_ancestors2);
+
+    END IF;
+
+    SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
+  END LOOP;
+
+CLOSE landmark_node_cursor;
+SET no_more_rows = FALSE;
+
+
 
 -- initial records will be on the node/clade that is *directly* related to each calibration (or a custom node under the MRCA, if there's more than one)
 
@@ -282,7 +364,8 @@ OPEN direct_relationship_cursor;
     END IF;
 
     -- pick a test calibration and debug its ancestors
-    SET debug = TRUE; -- (the_calibration_id = '123');
+    SET debug = FALSE; -- (the_calibration_id = '123');
+    -- SET debug = (the_multitree_id = '117571'); -- Sarcopterygii
     
     -- reckon its depth by counting its (source-tree) ancestors, and save to scratch hints
     -- (currently the source tree is always 'NCBI', since all taxa are chosen from there)
@@ -375,7 +458,6 @@ OPEN landmark_node_cursor;
     END IF;
 
     FETCH landmark_node_cursor INTO the_ncbi_id; 
-    -- TODO: reckon values for:  the_calibration_id, the_publication_status?
     SET the_multitree_id = IFNULL((SELECT multitree_node_id FROM node_identity WHERE source_node_id = the_ncbi_id AND source_tree = 'NCBI'), the_ncbi_id);
     SET the_publication_status = FALSE;
 
@@ -391,6 +473,7 @@ OPEN landmark_node_cursor;
 
     -- pick a test calibration and debug its ancestors
     SET debug = FALSE;  -- (the_multitree_id = '123');
+    SET debug = (the_multitree_id = '117571'); -- Sarcopterygii
 
     INSERT INTO tmp_calibration_browsing_tree SET 
       node_NCBI_id = the_ncbi_id, 
@@ -418,6 +501,7 @@ OPEN landmark_node_cursor;
     -- walk its ancestors to find the nearest one that has interesting
     -- information (a directly related calibration, or others in its clade, or landmark status)
     SET last_calibration_count = NULL;
+    SET last_landmark_count = 0;
     SET last_interesting_multitree_node_id = the_multitree_id;
     SET no_more_rows = FALSE;
     OPEN ancestor_cursor;
@@ -444,12 +528,21 @@ OPEN landmark_node_cursor;
 	-- it's also interesting if it's a "landmark" node
 	SET is_a_landmark_node = EXISTS (SELECT 1 FROM tmp_calibration_browsing_tree WHERE multitree_node_id = the_node_id AND is_browsing_landmark = 1);
 
+	-- ... or if it contains more than one interesting node, whether multiple landmarks or one landmark + populated node
+        SET related_landmark_count = (SELECT COUNT(*) FROM tmp_landmarks_by_NCBI_clade WHERE clade_root_multitree_id = the_node_id);
+
         IF debug THEN
           SELECT "=== related_calibration_count ===";
           SELECT related_calibration_count;
 
           SELECT "=== last_calibration_count (should skip if NULL) ===";
           SELECT last_calibration_count;
+
+          SELECT "=== related_landmark_count ===";
+          SELECT related_landmark_count;
+
+          SELECT "=== last_landmark_count ===";
+          SELECT last_landmark_count;
         END IF;
 
         IF last_calibration_count IS NOT NULL THEN
@@ -460,7 +553,7 @@ OPEN landmark_node_cursor;
             SELECT related_calibration_count, last_calibration_count, (related_calibration_count != last_calibration_count);
           END IF;
 
-          IF related_calibration_count != last_calibration_count OR is_a_landmark_node THEN
+          IF (related_calibration_count != last_calibration_count) OR (related_landmark_count != last_landmark_count) OR is_a_landmark_node THEN
             -- voila! it's interesting
             IF debug THEN
               SELECT "=== it's INTERESTING! ===";
@@ -518,10 +611,14 @@ OPEN landmark_node_cursor;
         END IF; -- if last count is not NULL
 
         SET last_calibration_count = related_calibration_count;
+        SET last_landmark_count = related_landmark_count;
 
         IF debug THEN
           SELECT "=== NEW last_calibration_count ===";
           SELECT last_calibration_count;
+
+          SELECT "=== NEW last_landmark_count ===";
+          SELECT last_landmark_count;
         END IF;
 
         SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
@@ -562,6 +659,7 @@ OPEN direct_relationship_cursor;
 
     -- pick a test calibration and debug its ancestors
     SET debug = FALSE;  -- (the_calibration_id = '123');
+    -- SET debug = (the_multitree_id = '117571'); -- Sarcopterygii
 
     INSERT INTO tmp_calibration_browsing_tree SET 
       node_NCBI_id = the_ncbi_id, 
@@ -589,6 +687,7 @@ OPEN direct_relationship_cursor;
     -- walk its ancestors to find the nearest one that has interesting
     -- information (a directly related calibration, or others in its clade)
     SET last_calibration_count = NULL;
+    SET last_landmark_count = 0;
     SET last_interesting_multitree_node_id = the_multitree_id;
     SET no_more_rows = FALSE;
     OPEN ancestor_cursor;
@@ -615,12 +714,21 @@ OPEN direct_relationship_cursor;
 	-- it's also interesting if it's a "landmark" node
 	SET is_a_landmark_node = EXISTS (SELECT 1 FROM tmp_calibration_browsing_tree WHERE multitree_node_id = the_node_id AND is_browsing_landmark = 1);
 
+	-- ... or if it contains more than one interesting node, whether multiple landmarks or one landmark + populated node
+        SET related_landmark_count = (SELECT COUNT(*) FROM tmp_landmarks_by_NCBI_clade WHERE clade_root_multitree_id = the_node_id);
+
         IF debug THEN
           SELECT "=== related_calibration_count ===";
           SELECT related_calibration_count;
 
           SELECT "=== last_calibration_count (should skip if NULL) ===";
           SELECT last_calibration_count;
+
+          SELECT "=== related_landmark_count ===";
+          SELECT related_landmark_count;
+
+          SELECT "=== last_landmark_count ===";
+          SELECT last_landmark_count;
         END IF;
 
         IF last_calibration_count IS NOT NULL THEN
@@ -631,7 +739,7 @@ OPEN direct_relationship_cursor;
             SELECT related_calibration_count, last_calibration_count, (related_calibration_count != last_calibration_count);
           END IF;
 
-          IF related_calibration_count != last_calibration_count OR is_a_landmark_node THEN
+          IF (related_calibration_count != last_calibration_count) OR (related_landmark_count != last_landmark_count) OR is_a_landmark_node THEN
             -- voila! it's interesting
             IF debug THEN
               SELECT "=== it's INTERESTING! ===";
@@ -689,10 +797,14 @@ OPEN direct_relationship_cursor;
         END IF; -- if last count is not NULL
 
         SET last_calibration_count = related_calibration_count;
+        SET last_landmark_count = related_landmark_count;
 
         IF debug THEN
           SELECT "=== NEW last_calibration_count ===";
           SELECT last_calibration_count;
+
+          SELECT "=== NEW last_landmark_count ===";
+          SELECT last_landmark_count;
         END IF;
 
         SET no_more_rows = FALSE;  -- just in case it's been corrupted by procedure calls
@@ -711,6 +823,9 @@ IF testOrFinal = 'FINAL' THEN
   -- TRUNCATE TABLE AC_names_nodes;
   -- INSERT INTO AC_names_nodes SELECT * FROM tmp_AC_names_nodes;
   RENAME TABLE calibrations_by_NCBI_clade TO doomed, tmp_calibrations_by_NCBI_clade TO calibrations_by_NCBI_clade;
+  DROP TABLE doomed;
+
+  RENAME TABLE landmarks_by_NCBI_clade TO doomed, tmp_landmarks_by_NCBI_clade TO landmarks_by_NCBI_clade;
   DROP TABLE doomed;
 
   RENAME TABLE calibration_browsing_tree TO doomed, tmp_calibration_browsing_tree TO calibration_browsing_tree;
