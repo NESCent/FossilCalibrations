@@ -130,7 +130,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
 <tr><td width="10%">&nbsp;</td><td><blockquote class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
 
 <?php if($row['PBDBTaxonNum']>0) {?>
-	<a href="http://pbdb.org/cgi-bin/bridge.pl?a=checkTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>&is_real_user=1" target="_new">
+	<a href="http://fossilworks.org/?a=taxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>" target="_new">
 		<b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
 	</a>
 <?php } else { ?>
@@ -150,7 +150,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Geological age:</i> <b><?=$row['Age']?>, <?=$row['Epoch']?>, <?=$row['Period']?>, <?=$row['System']?></b><br />
                              <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Minimum age:</i> <b><?=$row['MinAge']?> Ma</b> <i>Maximum age:</i> <b><?=$row['MaxAge']?> Ma</b><br /> -->
                            <?php if($row['PBDBCollectionNum']>0) { ?>
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://pbdb.org/cgi-bin/bridge.pl?action=basicCollectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://fossilworks.org/?a=collectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
 			   <?php } ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font></blockquote></td><td width="10%">&nbsp;</td></tr>
 
