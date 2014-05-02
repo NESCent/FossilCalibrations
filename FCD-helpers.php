@@ -91,7 +91,9 @@ function nameToSourceNodeInfo( $taxonName ) {
 	// show un-published names only to logged-in admins/reviewers
 	// returns a simple object with 'source' and 'taxonid' properties
 	// 
-	// TODO: Handle ambiguous names and homonyms? should we be taking IDs in to start with?
+	// Handle ambiguous names and homonyms? should we be taking IDs in to start with?
+	//
+	// In case of failure (incl. query error), return null instead of error message!
 	global $mysqli;
 
 	$query="SELECT taxonid, 'NCBI' AS source
@@ -113,8 +115,10 @@ function nameToSourceNodeInfo( $taxonName ) {
 		    " AND FCD_names.is_public_name = 1"
 		)
 		." LIMIT 1;";
-	    $match_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
-	    $node_data = mysqli_fetch_assoc($match_list);
+	    $match_list=mysqli_query($mysqli, $query) or null;  /// WAS die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+            if($match_list) {
+	        $node_data = mysqli_fetch_assoc($match_list);
+	    }
 	}
 
 ?><div class="search-details">nameToSourceNodeInfo('<?= $taxonName ?>') return this node_data:<br/><? print_r($node_data) ?></div><?
@@ -127,7 +131,7 @@ function nameToMultitreeID( $taxonName ) {
 	// check list of names against this query
 	// show un-published names only to logged-in admins/reviewers
 	// 
-	// TODO: Handle ambiguous names and homonyms? should we be taking IDs in to start with?
+	// Handle ambiguous names and homonyms? should we be taking IDs in to start with?
 	global $mysqli;
 
 	$node_data = nameToSourceNodeInfo( $taxonName );

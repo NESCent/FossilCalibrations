@@ -44,7 +44,7 @@ $nonce = md5('salt'.microtime());
 
 <div id="simple-search-header" style="">
 	<div class="title-and-alt-nav">
-		<strong>Search for calibrations in the database</strong> &mdash; you can also <a href="/Browse.php">browse the NCBI taxonomy</a>
+		<strong>Search for calibrations in the database</strong> &mdash; you can also <a id="browse-link" href="/Browse.php">browse the NCBI taxonomy</a>
 	</div>
 	<select name="SortResultsBy" id="SortResultsBy" style="float: right; margin-top: 3px;">
 		<option value="RELEVANCE_DESC" 		<?= ($search['SortResultsBy'] == 'RELEVANCE_DESC') ? 'selected="selected"' : '' ?> >Sort by relevance</option>
@@ -56,7 +56,7 @@ $nonce = md5('salt'.microtime());
 <!--
 	<h3 style="display: inline-block; font-size: 1em; font-family: Helvetica,Arial,sans-serif;">Search</h3>
 -->
-	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px; padding: 2px;" placeholder="Search by author, clade, publication, species,etc." value="<?= htmlspecialchars($search['SimpleSearch']) ?>"/>
+	<input name="SimpleSearch" id="SimpleSearch" type="text" style="width: 420px; padding: 2px;" placeholder="Search by author, publication, species name, etc." value="<?= htmlspecialchars($search['SimpleSearch']) ?>"/>
 	<input type="submit" style="" value="Update" />
 </div>
 
@@ -396,6 +396,12 @@ $(document).ready(function() {
 	// bind sort menu and submit buttons to refresh results list (via AJAX?)
 	$('#SortResultsBy').unbind('change').change(function() {
 		 $('form#advanced-search').submit();
+	});
+
+	// bounce to Browse page should forward any chosen taxa (browse page will choose one)
+	$('#browse-link').unbind('click').click(function() {
+		$('form#advanced-search').attr('action','/Browse.php').submit();
+		return false;
 	});
 });
 

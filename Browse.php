@@ -2,6 +2,7 @@
 // open and load site variables
 require('Site.conf');
 
+$skipHeaderSearch = true;
 // open and print header template
 require('header.php');
 
@@ -19,16 +20,40 @@ $mysqli = new mysqli($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['p
 // fetch the multitree ID (if any) for the specified node (source+ID, eg "NCBI:4321"
 // NOTE that we'll query on the multitree ID, but it never appears to the user or in the URL
 $defaultNodeSpec = 'NCBI:1';
+// Note that we might be coming here from the Home or Search pages, so a valid
+// clade/taxon name could be in any of several fields. We'll check each in turn
+$incomingCladeName = '';
 if (isset($_GET['node'])) {
 	// we have an explicit target node (probably browsing the tree already)
 	$nodeValues = $_GET['node'];
-} else if (isset($_GET['SimpleSearch'])) {
-	// we jumped here from the home page; try to find a taxon using TNRS (use first guess)
-	$multitree_id = nameToMultitreeID($_GET['SimpleSearch']);
-	$nodeValues = 'mID:'.$multitree_id;
 } else {
-	// if no node-spec was submitted, default to (NCBI root node "Life")
-	$nodeValues = $defaultNodeSpec;
+	// try a series of possible incoming fields, searching for a valid clade name
+	$incomingFields = array('SimpleSearch', 'FilterByClade', 'TaxonA', 'TaxonB');
+	foreach ($incomingFields as $testField) {  
+		if (!isset($_GET[ $testField ])) {
+			// no such incoming field
+			continue;
+		}
+		$testValue = $_GET[ $testField ];
+		if (empty($testValue)) {
+			// skip empty fields
+			continue;
+		}
+		if (isset($_GET['BlockedFilters']) && in_array($testField, $_GET['BlockedFilters'])) {
+			// this field was inactive in the search page
+			continue;
+		}
+		if (isset($_GET['HiddenFilters']) && in_array($testField, $_GET['HiddenFilters'])) {
+			// this field was inactive in the search page
+			continue;
+		}
+		$multitree_id = nameToMultitreeID($_GET[ $testField ]);
+		if ($multitree_id) {
+			$nodeValues = 'mID:'.$multitree_id;
+			$incomingCladeName = $_GET[ $testField ];
+			break;
+		}
+	}
 }
 if (empty($nodeValues) || !strpos($nodeValues, ':')) {
 	// if invalid node-spec was submitted, default to (NCBI root node "Life")
@@ -175,9 +200,13 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 </h3>
 -->
 <div id="browse-header" style="">
+    <form id="browse-form" action="Browse.php">
 	<div class="title-and-alt-nav">
-		<strong>Browse the NCBI taxonomy</strong> &mdash; you can also <a href="/search.php">search for calibrations in the database</a>
+		<strong>Browse the NCBI taxonomy</strong> &mdash; you can also <a id="adv-search-link" href="/search.php">search for calibrations in the database</a>
 	</div>
+	<input id="simple-search-input" name="SimpleSearch" type="text" style="width: 420px; padding: 2px;" placeholder="Enter a starting clade or taxon" value="<?= htmlspecialchars($incomingCladeName) ?>"/>
+	<input type="submit" style="" value="Browse nearest clade" />
+    </form id="simple-search-form">
 </div>
 <div class="ancestor-path">
 	<strong>Lineage</strong>: 
@@ -577,6 +606,42 @@ END ghosted calibration IDs -->
 			}
 		});
 */
+		$('#simple-search-input').autocomplete({
+			source: '/autocomplete_species.php',
+			autoSelect: true,  // recognizes typed-in values if they match an item
+			autoFocus: true,
+			delay: 20,
+			minLength: 3,
+			minChars: 3,
+			// CLEAR field if no taxon selected
+			change: function(event, ui) {
+				if (!ui.item) {
+					// widget was blurred with invalid value; clear ALL 
+					// related (stale) values from the UI!
+					$(this).val('');
+				} else {
+					console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
+				}
+			}
+		});
+		// bounce to Search should forward the chosen taxon, if any
+		$('#adv-search-link').unbind('click').click(function() {
+			// pass the current search terms to the full search page
+			var $simpleSearchField = $('#browse-form [name=SimpleSearch]');
+			if ($.trim($simpleSearchField.val()) !== '') {
+				// transfer main search field's value to a dedicated clade field for Advanced Search
+				$('#browse-form').append('<input type="hidden" name="FilterByClade" value="'+ $simpleSearchField.val() +'" />');
+				// force immediate use+display of the clade filter in Advanced Search
+				$('#browse-form').append('<input type="hidden" name="HiddenFilters[]" value="FilterByTipTaxa" />');
+				$('#browse-form').append('<input type="hidden" name="HiddenFilters[]" value="FilterByAge" />');
+				$('#browse-form').append('<input type="hidden" name="HiddenFilters[]" value="FilterByGeologicalTime" />');
+				$('#browse-form').append('<input type="hidden" name="BlockedFilters[]" value="FilterByTipTaxa" />');
+				// clear the main field (doesn't do a proper clade search in Adv. Search page)
+				$simpleSearchField.val('');  
+			}
+			$('#browse-form').attr('action','/search.php').submit();
+			return false;
+		});
 		
 		// view options for browsing UI
 		$('#lineage-toggle').unbind('click').click(function() {
