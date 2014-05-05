@@ -94,7 +94,7 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 		<a href="/Browse.php">Browse Calibrations</a>
 	    </li>
 	    <li>
-		<a href="http://palaeo-electronica.org/guide2011.pdf">Submit to PE</a>
+		<a href="http://palaeo-electronica.org/content/files/guide2014.pdf">Submit to PE</a>
 	    </li>
 	    <li>
 		<a href="/help.php">Help</a> 
