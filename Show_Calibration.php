@@ -114,9 +114,12 @@ require('header.php');
       <?php } ?>
 </td><td width="10%">&nbsp;</td></tr>
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top">
-	<i class="small_orange">node maximum age </i><br><b><?=$calibration_info['MaxAge']?> Ma</b>
+	<i class="small_orange">node maximum age </i><br>
       <?php if ($calibration_info['MaxAgeExplanation']) { ?>
+	<b><?=$calibration_info['MaxAge']?> Ma</b>
 	<font style="font-size:10px"><br/><?=$calibration_info['MaxAgeExplanation']?></font>
+      <?php } else { ?>
+	<b>Infinity</b>
       <?php } ?>
 </td><td width="10%">&nbsp;</td></tr>
 
