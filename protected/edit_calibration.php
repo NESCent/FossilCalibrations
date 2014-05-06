@@ -229,8 +229,22 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 			heightStyle: 'content'  // conform to contents of each panel
 		});
 
-      // set up the fossils accordion UI
-      updateFossilAccordion( 'COLLAPSE ALL' );
+		// set up the fossils accordion UI
+		updateFossilAccordion( 'COLLAPSE ALL' );
+
+		// any change in the editor (any field) should activate the safety net
+		$('body').on('change', 'input, select, textarea', function() {
+			if ($(this).attr('id') === 'header-search-input') {
+				// ignore changes in the search field!
+				return false;
+			};
+			addPageExitWarning();
+		});
+		$('input[value="Save Calibration"]').click(function() {
+			// remove warning if we're really saving now
+			removePageExitWarning();
+			return true;
+		});
 
 		// prepare auto-complete widgets
 		$('#AC_PubID-display').autocomplete({
@@ -979,6 +993,55 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
              }
 	});
    }
+
+
+	/*
+	 * Cross-browser (as of 2013) support for a "safety net" when trying to leave a
+	 * page with unsaved changes. This should also protect against the Back button,
+	 * swipe gestures in Chrome, etc.
+	 *
+	 * Call addPageExitWarning(), removePageExitWarning() to add/remove this
+	 * protection as needed.
+	 *
+	 *
+	 * Adapted from
+	 * http://stackoverflow.com/questions/1119289/how-to-show-the-are-you-sure-you-want-to-navigate-away-from-this-page-when-ch/1119324#1119324
+	 */
+	// TODO: when any change is made:
+	//   addPageExitWarning( "WARNING: This study has unsaved changes! To preserve your work, you should save this study before leaving or reloading the page." );
+	// TODO: after any successful save
+	//   removePageExitWarning();
+
+	var pageExitWarning = "WARNING: This page contains unsaved changes.";
+
+	var confirmOnPageExit = function (e)
+	{
+	    // If we haven't been passed the event get the window.event
+	    e = e || window.event;
+
+	    var message = pageExitWarning;
+
+	    // For IE6-8 and Firefox prior to version 4
+	    if (e)
+	    {
+		e.returnValue = message;
+	    }
+
+	    // For Chrome, Safari, IE8+ and Opera 12+
+	    return message;
+	};
+
+	function addPageExitWarning( warningText ) {
+	    // Turn it on - assign the function that returns the string
+	    if (warningText) {
+		pageExitWarning = warningText;
+	    }
+	    window.onbeforeunload = confirmOnPageExit;
+	}
+	function removePageExitWarning() {
+	    // Turn it off - remove the function entirely
+	    window.onbeforeunload = null;
+	}
 </script>
 
 <form action="update_calibration.php" method="post" id="edit-calibration" autocomplete="off">
