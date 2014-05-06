@@ -609,7 +609,11 @@ if (count($searchResults) == 0) {
 					// TODO: match other icons
 					//$icon = 'result-tip.jpg';  // tip taxon
 					$icon = 'result-neutral.jpg';
-					$label = $displayedRelationship;
+					if (preg_match('/03-MATCHES-TERM-(\d+)/', $displayedRelationship, $matches)) {
+						$label = 'Matches search term '. $matches[1];
+					} else {
+						$label = $displayedRelationship;
+					}
 			   }
 			  ?>
 			  <img class="qualifier-icon" title="<?= $label ?>" src="/images/<?= $icon ?>" alt="<?= $label ?>" />
@@ -618,6 +622,7 @@ if (count($searchResults) == 0) {
 				&nbsp;	
 			<? } ?>
 			</td>
+<!--
 			<td width="*" title="Relevance based on all filters used">
 			<? if ($displayedRelevance) { ?>
 				<?= intval($displayedRelevance * 100) ?>% match
@@ -625,6 +630,7 @@ if (count($searchResults) == 0) {
 				&nbsp;	
 			<? } ?>
 			</td>
+-->
 			<td width="100" title="Calibrated age range">
 			<? if(abs($minAge-$maxAge) < $epsilon) { ?>
 				<?= $minAge ?> Ma
