@@ -71,25 +71,6 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 	<h3 class="pe-title"><a href="http://palaeo-electronica.org/">Palaeontologia Electronica</a></h3>
 	<h2 class="fc-title"><a href="/">Fossil Calibration Database</a></h2>
 	<ul id="top-menu">
-<? if (userIsAdmin()) { ?>
-	    <li>
-		<a href="/protected/index.php" style="color: #fcc;" >Admin Dashboard</a> 
-	    </li>
-<!--
-	    <li>
-		<a href="/logout.php" style="color: #fcc;" >Logout</a> 
-	    </li>
--->
-<? } else if (userIsReviewer()) { ?>
-<!--
-	    <li>
-		<a href="/logout.php" style="color: #ccf;" >Logout (Reviewer)</a> 
-	    </li>
--->
-<? } ?>
-	    <li>
-		<a href="/about.php">About Us</a> 
-	    </li>
 	    <li>
 		<a href="/Browse.php">Browse Calibrations</a>
 	    </li>
@@ -97,8 +78,25 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 		<a href="http://palaeo-electronica.org/content/files/guide2014.pdf">Submit to PE</a>
 	    </li>
 	    <li>
-		<a href="/help.php">Help</a> 
+		<a href="/faq.php">FAQ</a> 
 	    </li>
+	    <li>
+		<a href="/about.php">About</a> 
+	    </li>
+<? if (userIsAdmin()) { ?>
+	    <li>
+		<a href="/protected/index.php" style="color: #fcc;" >Admin Dashboard</a> 
+	    </li>
+<!-- TODO: } else if (userIsReviewer()) {
+	    <li>
+		<a href="/logout.php" style="color: #ccf;" >Logout (Reviewer)</a> 
+	    </li>
+-->
+<? } else { ?>
+	    <li>
+		<a href="mailto:contact@palaeontologia-electronica.org?subject=FCD%20feedback">Contact Us</a>
+	    </li>
+<? } ?>
 	</ul>
     </div>
 </div>

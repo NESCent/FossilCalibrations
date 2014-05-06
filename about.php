@@ -11,6 +11,7 @@ require('header.php');
 		<a href="#fcd-mission">Mission</a>
 		<a href="#fcd-history">History</a>
 		<a href="#fcd-people">People</a>
+		<a href="mailto:contact@palaeontologia-electronica.org?subject=FCD%20feedback">Contact Us</a>
 	</div>
 </div>
 

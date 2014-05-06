@@ -698,5 +698,21 @@ textarea {
 	font-size: 10px;
 	margin-bottom: 8px;
 }
+dl.frequently-asked {
+	padding: 0 5%;
+}
+dl.frequently-asked dt {
+	font-size: 120%;
+	font-weight: bold;
+	color: #d19e69;
+	margin-top: 1.0em;
+	cursor: pointer;
+}
+dl.frequently-asked dd {
+	color: #000;
+	margin-top: 0.5em;
+	margin-left: 20px;
+	display: none;
+}
 
 
