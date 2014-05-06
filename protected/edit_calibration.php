@@ -320,27 +320,27 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 		minLength: 3,
 		// ASSUMES simplest case (value = label)
 		change: function(event, ui) {
-			console.log("CHANGED TO ITEM > "+ ui.item);
+			///console.log("CHANGED TO ITEM > "+ ui.item);
 			if (!ui.item) {
 				// widget was blurred with invalid value; clear ALL 
 				// related (stale) values from the UI!
 				$(this).val('');
 				$(this).parent().find('[id^=hintNodeSource_], [id^=hintNodeID_]').val('');
-                // TODO: clear corresponding node source/ID?
+				// TODO: clear corresponding node source/ID?
 			} else {
-                console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
-                /* do we ever need this?
-                var $selector = $(this); // SELECT element
-                updateHintTaxonValues($selector, ui);
-                */
-            }
+				///console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
+				/* do we ever need this?
+				var $selector = $(this); // SELECT element
+				updateHintTaxonValues($selector, ui);
+				*/
+			}
 		},
 		select: function(event, ui) {
-			console.log("CHOSEN ITEM > "+ ui.item);
-			console.log("...ITS VALUE > "+ ui.item.value);
-            // AJAX fetch of corresponding node source/ID?
-            var $selector = $(this); // SELECT element
-            updateHintTaxonValues($selector, ui);
+			///console.log("CHOSEN ITEM > "+ ui.item);
+			///console.log("...ITS VALUE > "+ ui.item.value);
+			// AJAX fetch of corresponding node source/ID?
+			var $selector = $(this); // SELECT element
+			updateHintTaxonValues($selector, ui);
 		},
 		minChars: 3
 	};

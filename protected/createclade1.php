@@ -31,17 +31,17 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 			minLength: 3,
 			response: function(event, ui) {
 				// another place to manipulate returned matches
-				console.log("RESPONSE > "+ ui.content);
+				///console.log("RESPONSE > "+ ui.content);
 			},
 			focus: function(event, ui) {
-				console.log("FOCUSED > "+ ui.item.FullReference);
+				///console.log("FOCUSED > "+ ui.item.FullReference);
 				// clobber any existing hidden value!?
 				$('#AC_PubID').val('');
 				// override normal display (would show numeric ID!)
 				return false;
 			},
 			change: function(event, ui) {
-				console.log("CHANGED TO ITEM > "+ ui.item);
+				///console.log("CHANGED TO ITEM > "+ ui.item);
 				if (!ui.item) {
 					// widget blurred with invalid value; clear any 
 					// stale values from the UI
@@ -51,7 +51,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 				}
 			},
 			select: function(event, ui) {
-				console.log("CHOSEN > "+ ui.item.FullReference);
+				///console.log("CHOSEN > "+ ui.item.FullReference);
 				$('#AC_PubID-display').val(ui.item.label);
 				$('#AC_PubID').val(ui.item.value);
 				$('#AC_PubID-more-info').html(ui.item.FullReference);
@@ -59,7 +59,7 @@ $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 				return false;
 			},
 			close: function(event, ui) {
-				console.log("CLOSING VALUE > "+ this.value);
+				///console.log("CLOSING VALUE > "+ this.value);
 			},
 /*
 			onFindValue: function() {console.log('onFindValue!');},

@@ -78,7 +78,7 @@ $NCBIStatus = $site_status['NCBI_status'];
             url: '/protected/remote_operation.php',
             data: {'operation': 'REBUILD_ALL_CALIBRATION_TREES'},
             success: function(data) {
-               console.log('success! from initial call to REBUILD_ALL_CALIBRATION_TREES');
+               ///console.log('success! from initial call to REBUILD_ALL_CALIBRATION_TREES');
                checkRemoteUpdateStatus();
             },
             dataType: 'json',
@@ -92,7 +92,7 @@ $NCBIStatus = $site_status['NCBI_status'];
             url: '/protected/remote_operation.php',
             data: {'operation': 'UPDATE_MULTITREE'},
             success: function(data) {
-               console.log('success! from initial call to UPDATE_MULTITREE');
+               ///console.log('success! from initial call to UPDATE_MULTITREE');
                checkRemoteUpdateStatus();
             },
             dataType: 'json',
@@ -106,7 +106,7 @@ $NCBIStatus = $site_status['NCBI_status'];
             url: '/protected/remote_operation.php',
             data: {'operation': 'UPDATE_CALIBRATIONS_BY_CLADE'},
             success: function(data) {
-               console.log('success! from initial call to UPDATE_CALIBRATIONS_BY_CLADE');
+               ///console.log('success! from initial call to UPDATE_CALIBRATIONS_BY_CLADE');
                checkRemoteUpdateStatus();
             },
             dataType: 'json',
@@ -120,7 +120,7 @@ $NCBIStatus = $site_status['NCBI_status'];
             url: '/protected/remote_operation.php',
             data: {'operation': 'UPDATE_AUTOCOMPLETE'},
             success: function(data) {
-               console.log('success! from initial call to UPDATE_AUTOCOMPLETE');
+               ///console.log('success! from initial call to UPDATE_AUTOCOMPLETE');
                checkRemoteUpdateStatus();
             },
             dataType: 'json',
@@ -149,7 +149,7 @@ $NCBIStatus = $site_status['NCBI_status'];
          url: '/protected/remote_operation.php',
          data: {'operation': 'CHECK_UPDATE_STATUS'},
          success: function(data) {
-             // console.log('success! from call to CHECK_UPDATE_STATUS');
+             ///console.log('success! from call to CHECK_UPDATE_STATUS');
              autoCompleteStatus = data.autocomplete_status;
              multitreeStatus = data.multitree_status;
              calibrationsByCladeStatus = data.cladeCalibration_status;

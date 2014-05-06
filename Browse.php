@@ -620,7 +620,7 @@ END ghosted calibration IDs -->
 					// related (stale) values from the UI!
 					$(this).val('');
 				} else {
-					console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
+					///console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
 				}
 			}
 		});

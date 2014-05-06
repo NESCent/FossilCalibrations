@@ -352,7 +352,6 @@ $(document).ready(function() {
 
 	// bind individual search filters in all filters
 	$filterArea.find('input:text, select').unbind('click keyup change').bind('click keyup change', function() {
-		console.log('TEST');
 		updateFilterList('ENFORCE FILTER RULES');
 	});
 
@@ -365,7 +364,7 @@ $(document).ready(function() {
 		minLength: 3,
 		// ASSUMES simplest case (value = label)
 		change: function(event, ui) {
-			console.log("CHANGED TO ITEM > "+ ui.item);
+			///console.log("CHANGED TO ITEM > "+ ui.item);
 			if (!ui.item) {
 				// widget was blurred with invalid value; clear ALL 
 				// related (stale) values from the UI!
@@ -373,7 +372,7 @@ $(document).ready(function() {
 				$(this).parent().find('[id^=hintNodeSource_], [id^=hintNodeID_]').val('');
 				updateFilterList('ENFORCE FILTER RULES');
 			} else {
-				console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
+				///console.log("FINAL VALUE (not pinging) > "+ ui.item.value);
 				/* do we ever need this?
 				var $selector = $(this); // SELECT element
 				updateHintTaxonValues($selector, ui);
@@ -381,8 +380,8 @@ $(document).ready(function() {
 			}
 		},
 		select: function(event, ui) {
-			console.log("CHOSEN ITEM > "+ ui.item);
-			console.log("...ITS VALUE > "+ ui.item.value);
+			///console.log("CHOSEN ITEM > "+ ui.item);
+			///console.log("...ITS VALUE > "+ ui.item.value);
 			/* AJAX fetch of corresponding node source/ID?
 			var $selector = $(this); // SELECT element
 			updateHintTaxonValues($selector, ui);
