@@ -75,7 +75,7 @@ require('header.php');
    <input type="button" style="float: right;" onclick="window.location ='/protected/edit_calibration.php?id=<?= $calibration_info['CalibrationID'] ?>'; return false;" value="Edit calibration" />
 <? } else { ?>
    <a style="float: right;" href="mailto:feedback@fossilcalibrations.org?subject=Comment%20on%20calibration%20<?= $calibration_info['CalibrationID'] ?>">
-	<img src="/images/flag-icon.png" title="" valign="middle" style="padding-right: 2px;"/>corrections or updates for this calibration?
+	<img src="/images/flag-icon.png" title="" valign="middle" style="padding-right: 2px;"/>comment on this calibration
    </a>
 <? } ?>
    <h1><?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1>
