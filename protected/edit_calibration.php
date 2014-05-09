@@ -1165,7 +1165,7 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
                     </td>
                 </tr>
                 <tr>
-                  <td width="21%" align="right" valign="middle"><strong>node in clade:</strong></td>
+                  <td width="21%" align="right" valign="middle"><strong>nearest parent clade:</strong></td>
                   <td width="79%"><select name="HigherTaxon">
                   <?php
 			$currentTaxon = testForProp($calibration_data, 'HigherTaxon', '');
