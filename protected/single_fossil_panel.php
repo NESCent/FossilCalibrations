@@ -460,10 +460,10 @@ if(mysql_num_rows($geoltime_list)==0){
 						<? } ?>
 
 						<p><input type="radio" name="newOrExistingFossilSpecies-<?= $i ?>" value="EXISTING" id="existingFossilSpecies-<?=$i?>" <?= $showPreviouslyAssignedValues ? '' : 'checked="checked"' ?>> 
-						<label for="existingFossilSpecies-<?=$i?>">Choose an <b>existing species</b></label></input></p>
+						<label for="existingFossilSpecies-<?=$i?>">Choose an <b>existing species</b> or lower taxon</label></input></p>
 						<table id="pick-existing-fossil-species-<?=$i?>" width="100%" border="0">
 						<tr style="background-color: #eee;">
-						<td align="right" valign="top" width="30%" style="background-color: #eee; color: #888;"><strong>search all existing species...</strong></td>
+						<td align="right" valign="top" width="30%" style="background-color: #eee; color: #888;"><strong>search all existing taxa...</strong></td>
 						<td align="left" width="70%" style="background-color: #eee;">
 						<!-- <input type="text" name="SpeciesName" id="SpeciesName" style="width: 280px;" value=""> -->
 						<input type="text" name="AC_FossilSpeciesID-display-<?= $i ?>" id="AC_FossilSpeciesID-display-<?=$i?>" value="<?= testForProp($fossil_data, 'Species', '') ?>" style="width: 45%;"/>
@@ -519,10 +519,10 @@ if(mysql_num_rows($geoltime_list)==0){
 						</tr>
 						</table>
 
-						<p><input type="radio" name="newOrExistingFossilSpecies-<?= $i ?>" value="NEW" id="newFossilSpecies-<?=$i?>"> <label for="newFossilSpecies-<?=$i?>">... <b>or</b> enter a new species into the database</label></input></p>
+						<p><input type="radio" name="newOrExistingFossilSpecies-<?= $i ?>" value="NEW" id="newFossilSpecies-<?=$i?>"> <label for="newFossilSpecies-<?=$i?>">... <b>or</b> enter a new taxon into the database</label></input></p>
 						<table id="enter-new-fossil-species-<?=$i?>" class="add-form" width="100%" border="0">
 						<tr>
-						<td width="30%" align="right" valign="top">Species name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesName-<?= $i ?>" type="text" /></td>
+						<td width="30%" align="right" valign="top">Species (taxon) name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesName-<?= $i ?>" type="text" /></td>
 						</tr>
 						<tr>
 						<td width="30%" align="right" valign="top">Common name</td><td width="70%" align="left" valign="top"><input name="NewSpeciesCommonName-<?= $i ?>" type="text" /></td>
