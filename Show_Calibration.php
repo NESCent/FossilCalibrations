@@ -146,7 +146,20 @@ while ($row = mysql_fetch_array($fossil_results)) {
 
 <br />
 <i>Location relative to the calibrated node:</i>
-	<b><?=$row['FossilLocationRelativeToNode'] == null ? '???' : $row['FossilLocationRelativeToNode'] ?></b>
+
+<? if ($row['FossilLocationRelativeToNode'] == null) { ?>
+	<b>???</b>
+<? } else { 
+	// describe the relative location of this fossil
+        $query = "SELECT * FROM  `L_FossilRelativeLocation` 
+		  WHERE 
+			RelLocationID = '". mysql_real_escape_string($row['FossilLocationRelativeToNode']) ."'";
+
+	$result = mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$matching_location = mysql_fetch_assoc($result);
+	mysql_free_result($result);
+   } ?>
+	<b><?= $matching_location['RelLocation'] ?></b>
 <br />
 	<b><i><?=$row['Species']?></i>, <?=$row['TaxonAuthor']?></b>
 <br />
@@ -170,6 +183,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
 ?>
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
 	
+<? /*
 <tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">calibrated-node definition (used to place this calibration in the NBCI taxonomy)</i></td><td width="10%"></td></tr>
 <tr><td width="10%"></td><td>
 <blockquote style="overflow: hidden;">
@@ -209,6 +223,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
 	</table>
 </blockquote>
 </td><td width="10%"></td></tr>
+*/ ?>
   
 <tr><td width="10%"></td><td align="left" valign="top"><p></p></td><td width="10%"></td></tr>
 </table>
