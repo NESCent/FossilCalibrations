@@ -15,3 +15,23 @@ ALTER TABLE Link_CalibrationFossil
 
 ALTER TABLE Link_CalibrationFossil
   ADD COLUMN TieDatesToGeoTimeScaleBoundary tinyint(1) DEFAULT 0 AFTER MaxAgeTypeOtherDetails;
+
+/*
+ * Adding new field for relative fossil location, and a set of values for this.
+ */
+
+ALTER TABLE Link_CalibrationFossil
+  ADD COLUMN FossilLocationRelativeToNode int(11) DEFAULT NULL COMMENT 'Lookup Field' AFTER DateCreated;
+
+-- create lookup table IF it is not already here
+CREATE TABLE  IF NOT EXISTS  L_FossilRelativeLocation (
+    RelLocationID  INT  NOT NULL  AUTO_INCREMENT,
+    RelLocation  VARCHAR(50)  NOT NULL,
+    PRIMARY KEY(RelLocationID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- populate with initial values
+INSERT INTO L_FossilRelativeLocation VALUES(1, 'Stem');
+INSERT INTO L_FossilRelativeLocation VALUES(2, 'Crown');
+INSERT INTO L_FossilRelativeLocation VALUES(3, 'Unknown');
+

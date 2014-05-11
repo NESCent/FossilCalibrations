@@ -340,6 +340,7 @@ foreach($fossil_positions as $pos) {
    $fossilID = $finalFossilIDs[$pos];
    $newValues = "
           Species = '". mysql_real_escape_string($finalFossilSpeciesNames[$pos]) ."'
+         ,FossilLocationRelativeToNode = '". mysql_real_escape_string($_POST["RelativeLocation-$pos"]) ."'
          ,MinAge = '". mysql_real_escape_string($_POST["FossilMinAge-$pos"]) ."'
          ,MinAgeType = '". mysql_real_escape_string($_POST["MinAgeType-$pos"]) ."'
          ,MinAgeTypeOtherDetails = '". mysql_real_escape_string($_POST["MinAgeTypeOtherDetails-$pos"]) ."'

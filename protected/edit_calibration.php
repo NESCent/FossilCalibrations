@@ -219,6 +219,10 @@ $geoltime_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql
 $query='SELECT name FROM L_countries ORDER BY name';
 $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
+//Retrieve list of relative locations
+$query='SELECT * FROM L_FossilRelativeLocation';
+$relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+
 ?>
 <script type="text/javascript">
 

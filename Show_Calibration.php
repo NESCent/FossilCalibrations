@@ -145,6 +145,9 @@ while ($row = mysql_fetch_array($fossil_results)) {
 <?php } ?>
 
 <br />
+<i>Location relative to the calibrated node:</i>
+	<b><?=$row['FossilLocationRelativeToNode'] == null ? '???' : $row['FossilLocationRelativeToNode'] ?></b>
+<br />
 	<b><i><?=$row['Species']?></i>, <?=$row['TaxonAuthor']?></b>
 <br />
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b>

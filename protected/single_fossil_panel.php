@@ -117,6 +117,10 @@
       $query='SELECT name FROM L_countries ORDER BY name';
       $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
+      //Retrieve list of relative locations
+      $query='SELECT * FROM L_FossilRelativeLocation';
+      $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+
    }
 
 ?>
@@ -539,8 +543,31 @@ if(mysql_num_rows($geoltime_list)==0){
 
 						<table width="100%" border="0">
 						<tr>
-						<td align="right" valign="top" width="30%"><strong>minimum age (Ma)</strong></td>
-						<td align="left" width="70%">
+						<td align="right" valign="top" width="30%"><strong>location relative to node</strong></td>
+						<td align="left" width="70%"><select name="RelativeLocation-<?= $i ?>" id="RelativeLocation-<?=$i?>">
+							<?php
+							if(mysql_num_rows($relative_location_list)==0){
+								?>
+									<option value="0">No relative locations in database</option>
+									<?php
+							} else {
+								mysql_data_seek($relative_location_list,0);
+								$currentRelLocation = testForProp($fossil_data, 'FossilLocationRelativeToNode', '');
+								while($row=mysql_fetch_assoc($relative_location_list)) {
+									$thisRelLocation = $row['RelLocationID'];
+									if ($currentRelLocation == $thisRelLocation) {
+										echo '<option value="'.$row['RelLocationID'].'" selected="selected">'.$row['RelLocation'].'</option>';
+									} else {
+										echo '<option value="'.$row['RelLocationID'].'">'.$row['RelLocation'].'</option>';
+									}			
+								}
+							} ?>
+							</select>
+						</td>
+						</tr>
+						<tr>
+						<td align="right" valign="top"><strong>minimum age (Ma)</strong></td>
+						<td align="left">
 						<? if ($showPreviouslyAssignedValues) { ?>
 							<input type="radio" name="newOrExistingFossilMinAge-<?= $i ?>" value="ASSIGNED" id="assignedFossilMinAge-<?=$i?>" checked="checked" /> 
 								<label for="assignedFossilMinAge-<?=$i?>"><b>Previously assigned</b></label>
