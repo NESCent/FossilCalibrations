@@ -123,7 +123,7 @@ require('header.php');
 	<b><?=$calibration_info['MaxAge']?> Ma</b>
 	<font style="font-size:10px"><br/><?=$calibration_info['MaxAgeExplanation']?></font>
       <?php } else { ?>
-	<b>Infinity</b>
+	<b>None specified</b>
       <?php } ?>
 </td><td width="10%">&nbsp;</td></tr>
 
