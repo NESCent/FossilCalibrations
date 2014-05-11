@@ -69,6 +69,20 @@ $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 // open and print header template
 require('header.php');
 ?>
+<script type="text/javascript">
+function toggleFossilDetails(clicked) {
+	var $toggle = $(clicked);
+	var $details = $toggle.closest('.single-fossil').find('.fossil-details');
+	if ($details.is(':visible')) {
+		$details.slideUp('fast');
+		$toggle.text('show fossil details');
+	} else {
+		$details.slideDown('fast');
+		$toggle.text('hide fossil details');
+	}
+}
+</script>
+
 
 <p>
 <? if (userIsAdmin()) { ?>
@@ -134,7 +148,7 @@ $rowNumber = 0;
 while ($row = mysql_fetch_array($fossil_results)) {
 	$rowNumber++;
 	?>
-<tr><td width="10%">&nbsp;</td><td><blockquote class="<?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
+<tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
 
 <?php if($row['PBDBTaxonNum']>0) {?>
 	<a href="http://fossilworks.org/?a=taxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>" target="_new">
@@ -145,8 +159,11 @@ while ($row = mysql_fetch_array($fossil_results)) {
 <?php } ?>
 
 <br />
-<i>Location relative to the calibrated node:</i>
 
+	<b><i><?=$row['Species']?></i>, <?=$row['TaxonAuthor']?></b>
+<br />
+
+	<i>Location relative to the calibrated node:</i>
 <? if ($row['FossilLocationRelativeToNode'] == null) { ?>
 	<b>???</b>
 <? } else { 
@@ -161,8 +178,9 @@ while ($row = mysql_fetch_array($fossil_results)) {
    } ?>
 	<b><?= $matching_location['RelLocation'] ?></b>
 <br />
-	<b><i><?=$row['Species']?></i>, <?=$row['TaxonAuthor']?></b>
-<br />
+
+<font class="small_blue">[<a href="#" onclick="toggleFossilDetails(this); return false;">show fossil details</a>]</font>
+<div class="fossil-details">
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b>
 				<?=$row['LocalityName']?><?php if ($row['LocalityName'] && $row['Country']) { ?>, <?php } ?> 
 				<?=$row['Country']?>
@@ -176,8 +194,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://fossilworks.org/?a=collectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
 			   <?php } ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font></blockquote></td><td width="10%">&nbsp;</td></tr>
-
-
+</div>
 	<?php
 	}
 ?>
