@@ -1,5 +1,4 @@
-Copyright (c) 2013, Jim Allman
-Copyright (c) 2013, P. David Polly
+Copyright (c) 2013-2014, National Evolutionary Synthesis Center (NESCent)
 
 All rights reserved.
 
