@@ -57,7 +57,7 @@ Frequently Asked Questions
 </h1>
 
 <p>
-	<i>Click any question below to see its answer, and click again to hide it. Click the '<strong>show all answers</strong>' link above to show (or hide) all answers.</i>
+	Click any question below to see its answer, and click again to hide it. Click the '<i>show all answers</i>' link above to show (or hide) all answers.
 </p>
 
 <dl class="frequently-asked">
@@ -84,7 +84,7 @@ How do I find calibrations?
 There several ways to search for calibrations.
 <ul>
 <li>
-Enter your clade of interest in search bar on the <em>Browse Calibration</em> page.
+Enter your clade of interest in search bar on the <em>Browse Calibrations</em> page.
 </li>
 <li>
 Browse the NCBI taxonomic hierarchy by clicking on highlighted taxon names.
@@ -93,7 +93,7 @@ Browse the NCBI taxonomic hierarchy by clicking on highlighted taxon names.
 Advanced Search allows users to enter two taxa using <em>Search by Tip Taxa</em> to find calibrations near the node that unites those taxa. 
 </li>
 <li>
-Advanced search filters also permit searching for calibrations within a range of ages or geological time periods, by a certain author, or containing. 
+Advanced Search filters also permit searching for calibrations within a range of ages or geological time periods, by a certain author, or containing clade. 
 </li>
 </ul>
 </dd>
@@ -102,7 +102,7 @@ Advanced search filters also permit searching for calibrations within a range of
 What if I can't find a calibration for my clade of interest?
 </dt>
 <dd>
-If no results are found, no calibration meeting the best practices standards has been submitted and reviewed. New contributions are welcome! See <em>“How can I contribute?”</em> for more information. If you are looking for a particular calibration, but aren’t in a position to contribute, please leave us feedback (see <em>Contact Us</em>) so that we can try and solicit a publication in that area. 
+If no results are found, no calibration meeting the best practices standards has been submitted and reviewed. New contributions are welcome! See <a href="#how-can-i-contribute">“How can I contribute?”</a> for more information. If you are looking for a particular calibration, but aren’t in a position to contribute, please leave us feedback so that we can try and solicit a publication in that area. (Just click the <em>Contact Us</em> link in the site header, or send an email to <a href="mailto:contact@calibrations.palaeo-electronica.org?subject=FCD%20feedback">contact@calibrations.palaeo-electronica.org</a>)
 </dd>
 
 <dt>
@@ -119,18 +119,18 @@ How do I download data?
 From any page of search results, click the <em>Download</em> button to download a list of results as JSON or text. From any calibration page, click <em>Download</em> to download the entire calibration as JSON or text. An API is coming!
 </dd>
 
-<dt>
+<dt id="how-can-i-contribute">
 How can I contribute?
 </dt>
 <dd>
-If you would like to provide calibration for a clade not already present in the database or propose an updated calibration for an existing clade, we would encourage you to write a manuscript that can be submitted to the Fossil Calibrations Series at the journal <em>Palaeontologia Electronica</em> (PE). See the <em>PE Author Guidelines</em> page for details.
+If you would like to provide calibration for a clade not already present in the database or propose an updated calibration for an existing clade, we would encourage you to write a manuscript that can be submitted to the Fossil Calibrations Series at the journal <em>Palaeontologia Electronica</em> (PE). See the <a href="http://palaeo-electronica.org/content/resources" target="_blank">PE Author Guidelines</a> page for details.
 </dd>
 
 <dt>
 How do I contact the Database Administration?
 </dt>
 <dd>
-Just click the <em>Contact Us</em> link in the site header, or send an email to <em>contact@calibrations.palaeo-electronica.org</em>
+Just click the <em>Contact Us</em> link in the site header, or send an email to <a href="mailto:contact@calibrations.palaeo-electronica.org?subject=FCD%20feedback">contact@calibrations.palaeo-electronica.org</a>
 </dd>
 
 <dt>
@@ -144,14 +144,14 @@ The simplest way is to use the Browse or Search tools in this site. When your re
 How is the Fossil Calibration different than TimeTree?
 </dt>
 <dd>
-TimeTree is a database that stores published divergence time estimates resulting from previous studies. The Fossil Calibrations Database stores vetted fossil calibration points that can be used for new divergence dating analyses and related work.
+<a href="http://www.timetree.org/" target="_blank">TimeTree</a> is a database that stores published divergence time estimates resulting from previous studies. The Fossil Calibrations Database stores vetted fossil calibration points that can be used for new divergence dating analyses and related work.
 </dd>
 
 <dt>
 How is the data licensed?
 </dt>
 <dd>
-All data in the database is provided under a CC0 waiver, meaning that the data is free of any restrictions on use. Copyright does not apply to scientific facts, so the data in this database is not eligible for copyright protection. For more information, please see the CC0 page at Creative Commons or the related FAQ on the Dryad data repository.
+All data in the database is provided under a CC0 waiver, meaning that the data is free of any restrictions on use. Copyright does not apply to scientific facts, so the data in this database is not eligible for copyright protection. For more information, please see the <a href="https://creativecommons.org/choose/zero/" target="_blank">CC0 page at Creative Commons</a> or the <a href="http://datadryad.org/pages/faq#info-cc0" target="_blank">related FAQ</a> on the Dryad data repository.
 </dd>
 
 <dt>
@@ -171,7 +171,7 @@ The preferred citation for the database itself is listed below, but should not b
 In cases where originally reported results have been updated in the database, please cite the original paper and also cite the database as follows:
 </p>
 <pre>
-Fossil Calibrations Database, http://pe_url.org, accessed on MM/DD/YYYY.
+Fossil Calibrations Database, http://pe_url.org/, accessed on MM/DD/YYYY.
 </pre>
 </dd>
 
