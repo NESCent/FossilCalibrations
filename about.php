@@ -39,7 +39,7 @@ the National Evolutionary Synthesis Center (NSF EF-0905606).
 <h3 id="fcd-people" class="contentheading" style="margin-top: 8px; line-height: 1.25em;">People</h3>
 <img src="/images/meeting-0.jpg"/>
 <p class="caption">
-The initial "Fossil Calibrations Meeting," A Biodiversity Synthesis Meeting funded by John D. and Catherine T. MacArthur Foundation funding of the Biodiversity Synthesis Group of the Encyclopedia of Life. The meeting was held at the University of Bristol on September 22nd, 2009. Members include (Front row, left to right) Jason Head, Michael Benton, Tyler Calway, Philip Donoghue, Ken Angielczyk, James Tarver, Jenny Greenwood, Nathan Smith, Peter Makovicky, James Parham (leader). Chris Bell, Jun Inoue; (Back row, left to right): Randall Irmis, Marcel van Tuinen, Christy Hipsley, Ziheng Yang, Daniel Ksepka, Walter Joyce, Patricia Holroyd, Jessica Theodor, Rachel; Warnock, Louis Jacobs.
+The initial "Fossil Calibrations Meeting," A Biodiversity Synthesis Meeting funded by John D. and Catherine T. MacArthur Foundation funding of the Biodiversity Synthesis Group of the Encyclopedia of Life. The meeting was held at the University of Bristol on September 22nd, 2009. Members include (Front row, left to right) Jason Head, Michael Benton, Tyler Calway, Philip Donoghue, Ken Angielczyk, James Tarver, Jenny Greenwood, Nathan Smith, Peter Makovicky, James Parham (leader). Chris Bell, Jun Inoue; (Back row, left to right): Randall Irmis, Marcel van Tuinen, Christy Hipsley, Ziheng Yang, Daniel Ksepka, Walter Joyce, Patricia Holroyd, Jessica Theodor, Rachel Warnock, Louis Jacobs.
 </p>
 <br/>
 <br/>
