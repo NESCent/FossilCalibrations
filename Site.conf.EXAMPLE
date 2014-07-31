@@ -20,10 +20,6 @@ $SITEINFO['AdministratorContact']='REPLACE_ME@EXAMPLE.COM';
 // Path to root directory
 $SITEINFO['docroot']='/var/www/REPLACE_ME/';
 
-// GoogleMaps API key
-$SITEINFO['GoogleMapKey']='AAAAAAA-BBBBBBB-CCCCCCCCCCC-REPLACE_ME';
-
-
 // Standard public-facing domain name and port
 $SITEINFO['hostname_and_port'] = 'EXAMPLE.COM';
 
