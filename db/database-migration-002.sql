@@ -22,7 +22,7 @@ CREATE TABLE NCBI_nodes (
   comments varchar(255) default NULL,
 
   PRIMARY KEY  (taxonid), KEY parenttaxonid (parenttaxonid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 create table NCBI_names (
