@@ -30,6 +30,6 @@ The Fossil Calibrations Database is open source code under the
 
 [Palaeontologia Electronica]: http://palaeo-electronica.org/
 [best practices for publishing fossil calibrations]: http://dx.doi.org/10.1093/sysbio/syr107
-[Synthesizing and databasing fossil calibrations: divergence dating and beyond]: http://nescent.org/science/awards_summary.php?id=259)
+[Synthesizing and databasing fossil calibrations: divergence dating and beyond]: http://nescent.org/science/awards_summary.php?id=259
 [FCD Wiki]: https://github.com/NESCent/FossilCalibrations/wiki
 [BSD License]: http://opensource.org/licenses/BSD-2-Clause
