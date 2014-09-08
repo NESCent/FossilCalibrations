@@ -108,7 +108,7 @@ function toggleFossilDetails(clicked) {
 
 <i>calibration from:</i><br />
 <?=$calibration_info['FullReference']?>
-<?php if($calibration_info['DOI']!="NULL") { echo '<br><font class="small_text">[<a href="http://dx.doi.org/'.$calibration_info['DOI'].'" target="_blank">View electronic resource]</font></a>'; } ?></p>
+<?php if(!empty($calibration_info['DOI'])) { echo '<br><font class="small_text">[<a href="http://dx.doi.org/'.$calibration_info['DOI'].'" target="_blank">View electronic resource]</font></a>'; } ?></p>
 
 <table width="100%">
 
