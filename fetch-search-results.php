@@ -97,33 +97,40 @@ if (!empty($search['SimpleSearch'])) {
 	 *  > fossil publication (f.FossilPub => publications)?
 	 *  > fossil locality (f.LocalityID => localities)?
 	 */
+	$query="SELECT c.CalibrationID FROM calibrations AS c
+		LEFT OUTER JOIN publications AS p ON p.PublicationID = c.NodePub
+		LEFT OUTER JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
+		LEFT OUTER JOIN fossils AS f ON f.FossilID = lcf.FossilID
+		WHERE
+			c.NodeName LIKE CONCAT('%', ?, '%') OR 
+			c.MinAgeExplanation LIKE CONCAT('%', ?, '%') OR 
+			c.MaxAgeExplanation LIKE CONCAT('%', ?, '%') OR 
+			p.ShortName LIKE CONCAT('%', ?, '%') OR 
+			p.FullReference LIKE CONCAT('%', ?, '%') OR 
+			p.DOI LIKE CONCAT('%', ?, '%') OR 
+			lcf.Species LIKE CONCAT('%', ?, '%') OR 
+			lcf.PhyJustification LIKE CONCAT('%', ?, '%') OR 
+			f.CollectionAcro LIKE CONCAT('%', ?, '%') OR 
+			f.CollectionNumber LIKE CONCAT('%', ?, '%')
+	";
+?><div class="search-details">SIMPLE-SEARCH TEMPLATE:<br/><? print_r($query) ?></div><?
+	// use mysqli prepared statement to prevent SQL injection
+	$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
+
 	$matching_calibration_ids = array();
 	$termPosition = 0;
 	foreach($searchTerms as $term) {
 		$possibleMatches++;
 		$termPosition++;
-		$query="SELECT c.CalibrationID FROM calibrations AS c
-			LEFT OUTER JOIN publications AS p ON p.PublicationID = c.NodePub
-			LEFT OUTER JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
-			LEFT OUTER JOIN fossils AS f ON f.FossilID = lcf.FossilID
-			WHERE
-				c.NodeName LIKE '%$term%' OR 
-				c.MinAgeExplanation LIKE '%$term%' OR 
-				c.MaxAgeExplanation LIKE '%$term%' OR 
-				p.ShortName LIKE '%$term%' OR 
-				p.FullReference LIKE '%$term%' OR 
-				p.DOI LIKE '%$term%' OR 
-				lcf.Species LIKE '%$term%' OR 
-				lcf.PhyJustification LIKE '%$term%' OR 
-				f.CollectionAcro LIKE '%$term%' OR 
-				f.CollectionNumber LIKE '%$term%'
-		";
-?><div class="search-details">SIMPLE-SEARCH QUERY:<br/><? print_r($query) ?></div><?
 
-		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
-		while(mysqli_more_results($mysqli)) {
-		     mysqli_next_result($mysqli);
-		}
+		// bind paramter (several times?)
+		mysqli_stmt_bind_param($stmt, "ssssssssss", $term, $term, $term, $term, $term, $term, $term, $term, $term, $term);
+
+		// execute query
+		mysqli_stmt_execute($stmt);
+
+		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
+
 ?><div class="search-details">SIMPLE-SEARCH RESULT:<br/><? print_r($result) ?></div><?
 		// TODO: sort/sift from all the results lists above
 		while($row=mysqli_fetch_assoc($result)) {
@@ -133,7 +140,10 @@ if (!empty($search['SimpleSearch'])) {
 		if (count($matching_calibration_ids) > 0) {
 			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => "03-MATCHES-TERM-$termPosition", 'relevance' => 1.0) );
 		}
+
 	}
+	// close statement (prepare for next time)
+	mysqli_stmt_close($stmt);
 }
 
 // tip-taxon search, using one or two taxa...
