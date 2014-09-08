@@ -262,6 +262,13 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 <? if (count($calibrationsInThisTaxon) > 0) { ?>
 <div class="listed-calibrations">
 <?php 
+
+// loop through and escape each value in $calibrationsInThisTaxon
+foreach ($calibrationsInThisTaxon as &$untrustedVal) {  
+	// NOTE that we grab each result by REFERENCE, so we can modify it in place
+	$untrustedVal = mysql_real_escape_string($untrustedVal);
+}
+
 // list all calibration in this taxon
 $featuredPos = 0;
 
@@ -320,6 +327,13 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	<li class="" style="font-style: italic;">The first descendant's multitree node ID is <?= $descendants[0]['multitree_node_id'] ?>.</li>
 <? */ }
     if (count($calibrationsInCustomChildNodes) > 0) {
+
+	// loop through and escape each value
+	foreach ($calibrationsInCustomChildNodes as &$untrustedVal) {  
+		// NOTE that we grab each result by REFERENCE, so we can modify it in place
+		$untrustedVal = mysql_real_escape_string($untrustedVal);
+	}
+
 	// fetch details on these calibrations
 	$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
 		FROM (
@@ -363,7 +377,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
 
 	// fetch additional node information from getFullNodeInfo
-	$query="SELECT * FROM TEMP_descendants_info WHERE source_tree = 'NCBI' AND multitree_node_id = ". $row['multitree_node_id'];
+	$query="SELECT * FROM TEMP_descendants_info WHERE source_tree = 'NCBI' AND multitree_node_id = ". mysql_real_escape_string($row['multitree_node_id']);
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	$more_info = mysqli_fetch_array($result);
 
@@ -391,6 +405,13 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	$calibration_list2 = null;
 	if (count($calibrationsInThisClade) > 0) {
 		// fetch all related calibrations
+
+		// loop through and escape each value
+		foreach ($calibrationsInThisClade as &$untrustedVal) {  
+			// NOTE that we grab each result by REFERENCE, so we can modify it in place
+			$untrustedVal = mysql_real_escape_string($untrustedVal);
+		}
+
 		// TODO: Simplify this query if all we need is node name and display URL!
 		$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
 			FROM (

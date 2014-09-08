@@ -17,19 +17,19 @@ $value=array_values($_GET);
 //retrieve calibrations when Taxon B is entered
 if($_GET['TaxonB']) {
 $query='SELECT DISTINCT C.* FROM View_CalibrationPair V JOIN View_Calibrations C ON V.CalibrationID=C.CalibrationID 
-WHERE (V.TaxonA LIKE "%'.$_GET['TaxonA'].'%" AND V.TaxonB LIKE "%'.$_GET['TaxonB'].'%") 
-OR (V.TaxonB LIKE "%'.$_GET['TaxonA'].'%" AND V.TaxonA LIKE "%'.$_GET['TaxonB'].'%")
-OR (V.ACommonName LIKE "%'.$_GET['TaxonA'].'%" AND V.BCommonName LIKE "%'.$_GET['TaxonB'].'%")
-OR (V.BCommonName LIKE "%'.$_GET['TaxonA'].'%" AND V.ACommonName LIKE "%'.$_GET['TaxonB'].'%")';
+  WHERE (V.TaxonA LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" AND V.TaxonB LIKE "%'. mysql_real_escape_string($_GET['TaxonB']) .'%") 
+     OR (V.TaxonB LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" AND V.TaxonA LIKE "%'. mysql_real_escape_string($_GET['TaxonB']) .'%")
+OR (V.ACommonName LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" AND V.BCommonName LIKE "%'. mysql_real_escape_string($_GET['TaxonB']) .'%")
+OR (V.BCommonName LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" AND V.ACommonName LIKE "%'. mysql_real_escape_string($_GET['TaxonB']) .'%")';
 $calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 echo '<h1>'. mysql_num_rows($calibration_list) .' calibration'. (mysql_num_rows($calibration_list) == 1 ? '' : 's') .' with tip taxa "'.$_GET['TaxonA'].'" and "'.$_GET['TaxonB'].'"</h1>';
 echo '<p>Click on "Show calibration" to view full calibration information.  Click on node name or publication name to find related calibrations.</p>';
 } else {
 $query='SELECT Distinct C.* FROM View_CalibrationPair V JOIN View_Calibrations C ON V.CalibrationID=C.CalibrationID  
-WHERE V.TaxonA LIKE "%'.$_GET['TaxonA'].'%" 
-OR V.TaxonB LIKE "%'.$_GET['TaxonA'].'%" 
-OR V.ACommonName LIKE "%'.$_GET['TaxonA'].'%" 
-OR V.BCommonName LIKE "%'.$_GET['TaxonA'].'%"';
+  WHERE V.TaxonA LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" 
+     OR V.TaxonB LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" 
+OR V.ACommonName LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%" 
+OR V.BCommonName LIKE "%'. mysql_real_escape_string($_GET['TaxonA']) .'%"';
 $calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 echo '<h1>'. mysql_num_rows($calibration_list) .' calibration'. (mysql_num_rows($calibration_list) == 1 ? '' : 's') .' with tip taxon "'.$_GET['TaxonA'].'" </h1>';
 echo '<p>Click on "Show calibration" to view full calibration information.  Click on node name or publication name to find related calibrations.</p>';

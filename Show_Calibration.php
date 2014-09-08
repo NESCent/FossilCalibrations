@@ -35,7 +35,7 @@ $tippair_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. my
 // retrieve node-definition hints for side A
 $query="SELECT * 
 	FROM node_definitions
-	WHERE calibration_id = '". $calibration_info['CalibrationID'] ."' AND definition_side = 'A'
+	WHERE calibration_id = '". mysql_real_escape_string($calibration_info['CalibrationID']) ."' AND definition_side = 'A'
 	ORDER BY display_order";
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $side_A_hint_data = array();
@@ -47,7 +47,7 @@ mysql_free_result($result);
 // retrieve node-definition hints for side B
 $query="SELECT * 
 	FROM node_definitions
-	WHERE calibration_id = '". $calibration_info['CalibrationID'] ."' AND definition_side = 'B'
+	WHERE calibration_id = '". mysql_real_escape_string($calibration_info['CalibrationID']) ."' AND definition_side = 'B'
 	ORDER BY display_order";
 $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $side_B_hint_data = array();

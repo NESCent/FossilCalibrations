@@ -20,7 +20,7 @@ if (!isset($key[0])) {
 }
 switch($key[0]) {
    case 'Species':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE Species LIKE "%'.$value[0].'%" ORDER BY NodeName';
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE Species LIKE "%'. mysql_real_escape_string($value[0]) .'%" ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
 
@@ -35,7 +35,7 @@ switch($key[0]) {
 	$maxProvided = !empty($trimmedMax);
 	$carefulMaxAge = $maxProvided ? $trimmedMax : " 1000000 ";
 	//
-	$query='Select DISTINCT C.*, J.FossilMinAge, J.FossilMaxAge FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE FossilMinAge>'.$carefulMinAge.' AND FossilMaxAge<'.$carefulMaxAge.' ORDER BY NodeName';
+	$query='Select DISTINCT C.*, J.FossilMinAge, J.FossilMaxAge FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE FossilMinAge>'. mysql_real_escape_string($carefulMinAge) .' AND FossilMaxAge<'. mysql_real_escape_string($carefulMaxAge) .' ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	//
 	// show adaptive prompt, based on which age boundaries were provided
@@ -56,7 +56,7 @@ switch($key[0]) {
 	break;
 	
     case 'HigherTaxon':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\' ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	//
 	// show adaptive prompt
@@ -64,22 +64,22 @@ switch($key[0]) {
 	break;
 
     case 'System':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\' ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
 
     case 'Period':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\' ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
 
     case 'Epoch':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\' ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	break;
 
     case 'Age':
-	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '.$key[0].'=\''.$value[0].'\' ORDER BY NodeName';
+	$query='Select DISTINCT C.* FROM (SELECT CF.CalibrationID, V.* FROM View_Fossils V JOIN Link_CalibrationFossil CF ON CF.FossilID=V.FossilID) AS J JOIN View_Calibrations C ON J.CalibrationID=C.CalibrationID WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\' ORDER BY NodeName';
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	//
 	// show adaptive prompt

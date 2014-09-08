@@ -139,7 +139,7 @@ function nameToMultitreeID( $taxonName ) {
 	if (!$node_data) return null;
 
 	// call stored *function* to retrieve the multitree ID
-	$query="SELECT getMultitreeNodeID( '". $node_data['source'] ."', '". $node_data['taxonid'] ."' )";
+	$query="SELECT getMultitreeNodeID( '". mysql_real_escape_string($node_data['source']) ."', '". mysql_real_escape_string($node_data['taxonid']) ."' )";
 
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 
@@ -221,6 +221,12 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 		return;
 	}
 
+	// loop through and escape each value in $calibrationIDs
+	foreach ($calibrationIDs as &$untrustedVal) {  
+		// NOTE that we grab each result by REFERENCE, so we can modify it in place
+		$untrustedVal = mysql_real_escape_string($untrustedVal);
+	}
+
 	$query="SELECT DISTINCT C . *, img.image, img.caption AS image_caption
 		FROM (
 			SELECT CF.CalibrationID, V . *
@@ -231,6 +237,7 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 		WHERE C.CalibrationID IN (". implode(",", $calibrationIDs) .");
 	       ";
+	// NOTE that in this case, each value in $calibrationIDs was safely escaped using mysql_real_escape_string
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 	while (mysqli_more_results($mysqli)) {
 		mysqli_next_result($mysqli);
@@ -274,6 +281,12 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	if ($multitreeIDs[0] == null) return;
 	//if (empty($multitreeIDs[0])) return;
 
+	// loop through and escape each value in $multitreeIDs
+	foreach ($multitreeIDs as &$untrustedVal) {  
+		// NOTE that we grab each result by REFERENCE, so we can modify it in place
+		$untrustedVal = mysql_real_escape_string($untrustedVal);
+	}
+
 	// TODO: GUARD against visitors seeing unpublished calibrations!
 
 	// test for any UN-pinned FCD nodes; for now, this is a valid test for calibration target nodes!
@@ -287,6 +300,12 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	while ($row=mysqli_fetch_assoc($result)) {
 /* ?><div class="search-details">CALIBRATED NODE: <? print_r($row) ?></div><? */
 		$targetNodeIDs[] = $row['source_node_id'];
+	}
+
+	// loop through and escape each value in $targetNodeIDs
+	foreach ($targetNodeIDs as &$untrustedVal) {  
+		// NOTE that we grab each result by REFERENCE, so we can modify it in place
+		$untrustedVal = mysql_real_escape_string($untrustedVal);
 	}
 
 	if (count($targetNodeIDs) > 0) {
@@ -313,7 +332,7 @@ function getAllCalibrationsInClade($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."';";
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". mysql_real_escape_string($clade_root_source_id) ."';";
 ?><div class="search-details">QUERY:<br/><?= $query ?></div><?
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	while($row=mysqli_fetch_assoc($result)) {
@@ -327,7 +346,7 @@ function getDirectCalibrationsInCladeRoot($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."' AND is_direct_relationship = 1 AND is_custom_child_node != 1;";
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". mysql_real_escape_string($clade_root_source_id) ."' AND is_direct_relationship = 1 AND is_custom_child_node != 1;";
 ?><div class="search-details">QUERY:<br/><?= $query ?></div><?
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	while($row=mysqli_fetch_assoc($result)) {
@@ -341,7 +360,7 @@ function getCalibrationsInCustomChildNodes($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". $clade_root_source_id ."' AND is_custom_child_node = 1;";
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". mysql_real_escape_string($clade_root_source_id) ."' AND is_custom_child_node = 1;";
 ?><div class="search-details">QUERY:<br/><?= $query ?></div><?
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	while($row=mysqli_fetch_assoc($result)) {
@@ -372,7 +391,7 @@ function SLOW_getCalibrationsInClade($clade_root_source_id) {
 		$test_tree_id = $taxon_ids['tree_id'];
 		if (!in_array($test_tree_id, $matching_tree_ids)) {
 /* ?><div class="search-details">Testing node <?= $test_node_id ?> in tree <?= $test_tree_id ?></div><? */
-			$query="CALL isMemberOfClade('NCBI', '$clade_root_source_id', CONCAT('FCD-', '$test_tree_id'), '$test_node_id', @isInClade);";
+			$query="CALL isMemberOfClade('NCBI', '". mysql_real_escape_string($clade_root_source_id) ."', CONCAT('FCD-', '". mysql_real_escape_string($test_tree_id) ."'), '". mysql_real_escape_string($test_node_id) ."', @isInClade);";
 /* ?><div class="search-details"><pre><?= $query ?></pre></div><? */
 			$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 			while(mysqli_more_results($mysqli)) {
@@ -389,6 +408,12 @@ function SLOW_getCalibrationsInClade($clade_root_source_id) {
 /* ?><div class="search-details">First match on node <?= $test_node_id ?>, tree <?= $test_tree_id ?></div><? */
 			}
 		}
+	}
+
+	// loop through and escape each value in $matching_tree_ids
+	foreach ($matching_tree_ids as &$untrustedVal) {  
+		// NOTE that we grab each result by REFERENCE, so we can modify it in place
+		$untrustedVal = mysql_real_escape_string($untrustedVal);
 	}
 
 	if (count($matching_tree_ids) > 0) {
