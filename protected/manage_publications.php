@@ -16,7 +16,7 @@ $value=array_values($_GET);
 
 //retrieve publications
 if($_GET) {
-   $query="SELECT * FROM publications WHERE $key[0]=$value[0] ORDER BY ShortName";
+   $query="SELECT * FROM publications WHERE ". mysql_real_escape_string($key[0]) ."=". mysql_real_escape_string($value[0]) ." ORDER BY ShortName";
    $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 } else {
    $query='SELECT * FROM publications ORDER BY ShortName';

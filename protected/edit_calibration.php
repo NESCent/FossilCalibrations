@@ -45,7 +45,7 @@ $side_B_hint_data = null;
 
 if ($addOrEdit == 'EDIT') {
 	// retrieve the main calibration record (or die trying)
-	$query="SELECT * FROM calibrations WHERE CalibrationID = '".$CalibrationID."'";
+	$query="SELECT * FROM calibrations WHERE CalibrationID = '". mysql_real_escape_string($CalibrationID) ."'";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	$calibration_data = mysql_fetch_assoc($result);
 	if ($calibration_data == false) die("ERROR: Sorry, there's no calibration with this ID: ".$CalibrationID ." Please double-check this URL.");
@@ -63,7 +63,7 @@ if ($addOrEdit == 'EDIT') {
       FROM Link_CalibrationFossil 
       JOIN fossils 
          ON fossils.FossilID = Link_CalibrationFossil.FossilID
-      WHERE Link_CalibrationFossil.CalibrationID = '".$CalibrationID."'
+      WHERE Link_CalibrationFossil.CalibrationID = '". mysql_real_escape_string($CalibrationID) ."'
       ORDER BY FCLinkID";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
@@ -147,7 +147,7 @@ print_r($all_fossils);
 	// retrieve node-definition hints for side A
 	$query="SELECT * 
 		FROM node_definitions
-		WHERE calibration_id = '". $CalibrationID ."' AND definition_side = 'A'
+		WHERE calibration_id = '". mysql_real_escape_string($CalibrationID) ."' AND definition_side = 'A'
 		ORDER BY display_order";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	$side_A_hint_data = array();
@@ -159,7 +159,7 @@ print_r($all_fossils);
 	// retrieve node-definition hints for side B
 	$query="SELECT * 
 		FROM node_definitions
-		WHERE calibration_id = '". $CalibrationID ."' AND definition_side = 'B'
+		WHERE calibration_id = '". mysql_real_escape_string($CalibrationID) ."' AND definition_side = 'B'
 		ORDER BY display_order";
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	$side_B_hint_data = array();

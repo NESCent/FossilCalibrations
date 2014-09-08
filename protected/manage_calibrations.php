@@ -16,7 +16,7 @@ $value=array_values($_GET);
 
 //retrieve calibrations
 if($_GET) {
-	$query="SELECT * FROM calibrations WHERE $key[0]=$value[0] ORDER BY NodeName";
+	$query="SELECT * FROM calibrations WHERE ". mysql_real_escape_string($key[0]) ."=". mysql_real_escape_string($value[0]) ." ORDER BY NodeName";
 	$calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 } else {
 	$query='SELECT * FROM calibrations ORDER BY NodeName';
