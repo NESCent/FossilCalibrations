@@ -10,7 +10,7 @@ $key=array_keys($_GET);
 $value=array_values($_GET);
 
 // Get details about calibration
-$query = 'SELECT * FROM View_Calibrations WHERE '.$key[0].'=\''.$value[0].'\'';
+$query = 'SELECT * FROM View_Calibrations WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\'';
 $calibration_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $calibration_info=mysql_fetch_assoc($calibration_results);
 

@@ -25,7 +25,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 // fetch any matching taxon names (need descriptions, too? REQUIRES changing view 'AC_names_taxa')
 $query='SELECT DISTINCT name AS value, name as label
 	FROM AC_names_taxa
-	WHERE name LIKE "'. $q .'%"'.
+	WHERE name LIKE "'. mysql_real_escape_string($q) .'%"'.
 	// non-admin users should only see *Published* names?
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 		''  // ' AND is_public_name = 1'

@@ -29,7 +29,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 // skipping description (currently unused in any case) to filter out duplicate names
 $query='SELECT DISTINCT name AS value, name as label
 	FROM AC_names_searchable
-	WHERE name LIKE "'. $q .'%"'.
+	WHERE name LIKE "'. mysql_real_escape_string($q) .'%"'.
 	// non-admin users should only see *Published* publication names
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 		' AND is_public_name = 1'

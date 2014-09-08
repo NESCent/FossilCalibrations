@@ -123,7 +123,7 @@ if (!empty($search['SimpleSearch'])) {
 		$possibleMatches++;
 		$termPosition++;
 
-		// bind paramter (several times?)
+		// bind paramter (several times)
 		mysqli_stmt_bind_param($stmt, "ssssssssss", $term, $term, $term, $term, $term, $term, $term, $term, $term, $term);
 
 		// execute query
@@ -264,11 +264,17 @@ if (filterIsActive('FilterByAge')) {
 		 */
 		$matching_calibration_ids = array();
 		$query="SELECT CalibrationID FROM calibrations WHERE 
-			       MinAge >= '". $search['FilterByAge']['MinAge'] ."' AND MaxAge >= '". $search['FilterByAge']['MinAge'] ."'
-			   AND MinAge <= '". $search['FilterByAge']['MaxAge'] ."' AND MaxAge <= '". $search['FilterByAge']['MaxAge'] ."'
+			       MinAge >= ? AND MaxAge >= ?
+			   AND MinAge <= ? AND MaxAge <= ?
 		";
+
 ?><div class="search-details"><?= $query ?></div><?
-		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+		$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
+
+		mysqli_stmt_bind_param($stmt, "iiii", $search['FilterByAge']['MinAge'], $search['FilterByAge']['MinAge'], $search['FilterByAge']['MaxAge'], $search['FilterByAge']['MaxAge']);
+		mysqli_stmt_execute($stmt);
+
+		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
 
 		// TODO: sort/sift from all the results lists above
 		while($row=mysqli_fetch_assoc($result)) {
@@ -291,12 +297,19 @@ if (filterIsActive('FilterByAge')) {
 		 */
 		$matching_calibration_ids = array();
 		if ($specifiedAge == 'MinAge') {
-			$query="SELECT CalibrationID FROM calibrations WHERE MinAge >= '". $search['FilterByAge']['MinAge'] ."' AND MaxAge >= '". $search['FilterByAge']['MinAge'] ."'";
+			$query="SELECT CalibrationID FROM calibrations WHERE MinAge >= ? AND MaxAge >= ?";
+			$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
+			mysqli_stmt_bind_param($stmt, "ii", $search['FilterByAge']['MinAge'], $search['FilterByAge']['MinAge']);
 		} else {
-			$query="SELECT CalibrationID FROM calibrations WHERE MinAge <= '". $search['FilterByAge']['MaxAge'] ."' AND MaxAge <= '". $search['FilterByAge']['MaxAge'] ."'";
+			$query="SELECT CalibrationID FROM calibrations WHERE MinAge <= ? AND MaxAge <= ?";
+			$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
+			mysqli_stmt_bind_param($stmt, "ii", $search['FilterByAge']['MaxAge'], $search['FilterByAge']['MaxAge']);
+
 		}
+		mysqli_stmt_execute($stmt);
+
 ?><div class="search-details"><?= $query ?></div><?
-		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
 
 		// TODO: sort/sift from all the results lists above
 		while($row=mysqli_fetch_assoc($result)) {
@@ -331,9 +344,14 @@ if (filterIsActive('FilterByGeologicalTime')) {
 		$query="SELECT CalibrationID FROM Link_CalibrationFossil WHERE FossilID IN 
 			    (SELECT FossilID FROM fossils WHERE LocalityID IN
 				(SELECT LocalityID FROM localities WHERE GeolTime IN 
-				    (SELECT GeolTimeID FROM geoltime WHERE CONCAT_WS(',', Period,Epoch,Age) LIKE '". $search['FilterByGeologicalTime'] ."%')));";
+				    (SELECT GeolTimeID FROM geoltime WHERE CONCAT_WS(',', Period,Epoch,Age) LIKE CONCAT(?, '%'))));";
 ?><div class="search-details"><?= $query ?></div><?
-		$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
+		$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
+
+		mysqli_stmt_bind_param($stmt, "s", $search['FilterByGeologicalTime']);
+		mysqli_stmt_execute($stmt);
+
+		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
 
 		// TODO: sort/sift from all the results lists above
 		while($row=mysqli_fetch_assoc($result)) {
