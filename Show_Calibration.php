@@ -150,13 +150,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
 	?>
 <tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
 
-<?php if($row['PBDBTaxonNum']>0) {?>
-	<a href="http://fossilworks.org/?a=taxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>" target="_new">
-		<b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
-	</a>
-<?php } else { ?>
-	<b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
-<?php } ?>
+<b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
 
 <br />
 
@@ -174,13 +168,14 @@ while ($row = mysql_fetch_array($fossil_results)) {
 
 	$result = mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	$matching_location = mysql_fetch_assoc($result);
-	mysql_free_result($result);
-   } ?>
-	<b><?= $matching_location['RelLocation'] ?></b>
-<br />
+	mysql_free_result($result); ?>
 
+	<b><?= $matching_location['RelLocation'] ?></b>
+<? } ?>
+<br />
+<br />
 <font class="small_blue">[<a href="#" onclick="toggleFossilDetails(this); return false;">show fossil details</a>]</font>
-<div class="fossil-details">
+<div class="fossil-details" style="margin-bottom: -1em;">
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b>
 				<?=$row['LocalityName']?><?php if ($row['LocalityName'] && $row['Country']) { ?>, <?php } ?> 
 				<?=$row['Country']?>
@@ -193,8 +188,27 @@ while ($row = mysql_fetch_array($fossil_results)) {
                            <?php if($row['PBDBCollectionNum']>0) { ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://fossilworks.org/?a=collectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
 			   <?php } ?>
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font></blockquote></td><td width="10%">&nbsp;</td></tr>
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font>
 </div>
+
+<?php if($row['PBDBTaxonNum']>0) {?>
+<br />
+<br />
+<font class="small_blue">
+	More information in 
+	<a href="http://fossilworks.org/?a=taxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>" target="_blank">
+		Fossilworks
+	</a>
+	&nbsp; 
+	<a href="http://paleobiodb.org/cgi-bin/bridge.pl?a=basicTaxonInfo&taxon_no=<?=$row['PBDBTaxonNum']?>" target="_blank">
+		PaleoBioDB
+	</a>
+</font>
+
+</blockquote></td><td width="10%">&nbsp;</td></tr>
+
+<?php } ?>
+
 	<?php
 	}
 ?>
