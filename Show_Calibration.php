@@ -10,9 +10,18 @@ $key=array_keys($_GET);
 $value=array_values($_GET);
 
 // Get details about calibration
-$query = 'SELECT * FROM View_Calibrations WHERE '. mysql_real_escape_string($key[0]) .'=\''. mysql_real_escape_string($value[0]) .'\'';
+$query = "SELECT * FROM View_Calibrations 
+            WHERE ". mysql_real_escape_string($key[0]) ."='". mysql_real_escape_string($value[0]) ."'".
+	// non-admin users should only see *Published* calibrations
+	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+	       "  AND CalibrationID IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
+	);
+
 $calibration_results= mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $calibration_info=mysql_fetch_assoc($calibration_results);
+if (!$calibration_info) {
+	die("The requested calibration was not found (or has not yet been published).");
+}
 
 // Get details about fossils associated with this calibration
 $query = 'SELECT * FROM Link_CalibrationFossil L, View_Fossils F, fossiltaxa t WHERE L.CalibrationID='.$calibration_info['CalibrationID'].' AND L.FossilID=F.FossilID AND L.Species=t.TaxonName';
@@ -82,7 +91,6 @@ function toggleFossilDetails(clicked) {
 	}
 }
 </script>
-
 
 <p>
 <? if (userIsAdmin()) { ?>
