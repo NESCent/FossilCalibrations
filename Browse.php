@@ -377,7 +377,12 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // else root will appear as its own child
 
 	// fetch additional node information from getFullNodeInfo
-	$query="SELECT * FROM TEMP_descendants_info WHERE source_tree = 'NCBI' AND multitree_node_id = ". mysql_real_escape_string($row['multitree_node_id']);
+	$query="SELECT * FROM TEMP_descendants_info 
+                  WHERE source_tree = 'NCBI' AND multitree_node_id = ". mysql_real_escape_string($row['multitree_node_id']).
+	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+	       "  -- AND calibration_id IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
+	);
+
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	$more_info = mysqli_fetch_array($result);
 
