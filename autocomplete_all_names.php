@@ -30,7 +30,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 $query='SELECT DISTINCT name AS value, name as label
 	FROM AC_names_searchable
 	WHERE name LIKE "'. mysql_real_escape_string($q) .'%"'.
-	// non-admin users should only see *Published* publication names
+	// non-admin users should only see *Published* names
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 		' AND is_public_name = 1'
 	)
