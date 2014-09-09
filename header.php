@@ -26,6 +26,16 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 
 <!-- support for jQuery-Tagit plugin -->
 <script src="/js/tagit.js"></script>
+<script type="text/javascript">
+	// prevent IE errors on console.log() calls
+	if(!window.console) {
+		window.console = {
+			log : function(str) {
+				// alert(str);
+			}
+		};
+	}
+</script>
 <link rel="stylesheet" type="text/css" href="/css/tagit-stylish-yellow.css">
 
 </head>
@@ -45,6 +55,15 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 	    <input id="header-search-input" name="SimpleSearch" type="text" class="search-field" style="" placeholder="Search by author, clade, publication, species, etc." value="" />
         </form>
 	<script type="text/javascript">
+		// prevent IE errors on console.log() calls
+		if(!window.console) {
+			window.console = {
+				log : function(str) {
+					// alert(str);
+				}
+			};
+		}
+
 		$(document).ready(function() {
 			// bind autocomplete behavior for simple-search field
 			$('#header-search-input').autocomplete({
