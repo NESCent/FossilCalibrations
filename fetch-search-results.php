@@ -101,7 +101,7 @@ if (!empty($search['SimpleSearch'])) {
 		LEFT OUTER JOIN publications AS p ON p.PublicationID = c.NodePub
 		LEFT OUTER JOIN Link_CalibrationFossil AS lcf ON lcf.CalibrationID = c.CalibrationID
 		LEFT OUTER JOIN fossils AS f ON f.FossilID = lcf.FossilID
-		WHERE
+		WHERE (
 			c.NodeName LIKE CONCAT('%', ?, '%') OR 
 			c.MinAgeExplanation LIKE CONCAT('%', ?, '%') OR 
 			c.MaxAgeExplanation LIKE CONCAT('%', ?, '%') OR 
@@ -112,7 +112,12 @@ if (!empty($search['SimpleSearch'])) {
 			lcf.PhyJustification LIKE CONCAT('%', ?, '%') OR 
 			f.CollectionAcro LIKE CONCAT('%', ?, '%') OR 
 			f.CollectionNumber LIKE CONCAT('%', ?, '%')
-	";
+		      )".
+	// non-admin users should only see *Published* calibrations
+	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+		" AND c.PublicationStatus = 4"
+	);
+
 ?><div class="search-details">SIMPLE-SEARCH TEMPLATE:<br/><? print_r($query) ?></div><?
 	// use mysqli prepared statement to prevent SQL injection
 	$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
@@ -266,7 +271,11 @@ if (filterIsActive('FilterByAge')) {
 		$query="SELECT CalibrationID FROM calibrations WHERE 
 			       MinAge >= ? AND MaxAge >= ?
 			   AND MinAge <= ? AND MaxAge <= ?
-		";
+		".
+		// non-admin users should only see *Published* calibrations
+		((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+			" AND PublicationStatus = 4"
+		);
 
 ?><div class="search-details"><?= $query ?></div><?
 		$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
@@ -297,11 +306,23 @@ if (filterIsActive('FilterByAge')) {
 		 */
 		$matching_calibration_ids = array();
 		if ($specifiedAge == 'MinAge') {
-			$query="SELECT CalibrationID FROM calibrations WHERE MinAge >= ? AND MaxAge >= ?";
+			$query="SELECT CalibrationID FROM calibrations".
+			       " WHERE MinAge >= ? AND MaxAge >= ?".
+			// non-admin users should only see *Published* calibrations
+			((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+			       " AND PublicationStatus = 4"
+			);
+
 			$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
 			mysqli_stmt_bind_param($stmt, "ii", $search['FilterByAge']['MinAge'], $search['FilterByAge']['MinAge']);
 		} else {
-			$query="SELECT CalibrationID FROM calibrations WHERE MinAge <= ? AND MaxAge <= ?";
+			$query="SELECT CalibrationID FROM calibrations".
+ 			       " WHERE MinAge <= ? AND MaxAge <= ?".
+			// non-admin users should only see *Published* calibrations
+			((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+			       " AND PublicationStatus = 4"
+			);
+
 			$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
 			mysqli_stmt_bind_param($stmt, "ii", $search['FilterByAge']['MaxAge'], $search['FilterByAge']['MaxAge']);
 
@@ -344,7 +365,11 @@ if (filterIsActive('FilterByGeologicalTime')) {
 		$query="SELECT CalibrationID FROM Link_CalibrationFossil WHERE FossilID IN 
 			    (SELECT FossilID FROM fossils WHERE LocalityID IN
 				(SELECT LocalityID FROM localities WHERE GeolTime IN 
-				    (SELECT GeolTimeID FROM geoltime WHERE CONCAT_WS(',', Period,Epoch,Age) LIKE CONCAT(?, '%'))));";
+				    (SELECT GeolTimeID FROM geoltime WHERE CONCAT_WS(',', Period,Epoch,Age) LIKE CONCAT(?, '%'))))".
+	// non-admin users should only see *Published* calibrations
+	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+	       "  AND CalibrationID IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
+	);
 ?><div class="search-details"><?= $query ?></div><?
 		$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
 
@@ -372,9 +397,14 @@ if (filterIsActive('FilterByGeologicalTime')) {
 if ($showDefaultSearch) {
 ?><div class="search-details">SHOWING DEFAULT SEARCH</div><?
 	$matching_calibration_ids = array();
-	$query="SELECT c.CalibrationID FROM calibrations AS c
-		ORDER BY DateCreated DESC
-		LIMIT 10";
+	$query="SELECT c.CalibrationID FROM calibrations AS c".
+	// non-admin users should only see *Published* calibrations
+	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+	       "  WHERE c.PublicationStatus = 4"
+	)
+	      ."  ORDER BY DateCreated DESC
+		  LIMIT 10";
+
 	$result=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	while($row=mysqli_fetch_assoc($result)) {
 		$matching_calibration_ids[] = $row['CalibrationID'];

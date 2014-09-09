@@ -171,7 +171,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 <!--<h2 class="results-heading" style="clear: both; border-top: none;">Recently added calibrations</h2>-->
 <h3 class="contentheading" style="margin-top: 8px; line-height: 1.25em;">
-<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="/search.php#TODO">Show more recent additions</a>
+<a style="float: right; Xtext-decoration: none; font-size: 0.8em; font-weight: normal;" href="/search.php?SortResultsBy=DATE_ADDED_DESC">Show more recent additions</a>
 Recently added calibrations
 </h3>
 <!--
@@ -200,10 +200,15 @@ $query='SELECT DISTINCT C . *, img.image, img.caption AS image_caption
 		SELECT CF.CalibrationID, V . *
 		FROM View_Fossils V
 		JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
-	) AS J
+	)
+        AS J
 	JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
-	LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-	ORDER BY DateCreated DESC
+	LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID'.
+	// non-admin users should only see *Published* calibrations
+	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
+         ' WHERE J.CalibrationID IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)'
+	)
+     .' ORDER BY DateCreated DESC
 	LIMIT 3';
 $calibration_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
