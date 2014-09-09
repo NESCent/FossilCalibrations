@@ -23,13 +23,12 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
 // fetch any matching publication names
 //$query='SELECT PublicationID AS value, ShortName as label, FullReference  // works with vanilla jQuery UI autocomplete
-$query='SELECT PublicationID AS value, ShortName as label, FullReference
+$query='SELECT PublicationID AS value, ShortName as label, PublicationStatus, FullReference
 	FROM publications 
-	WHERE FullReference LIKE "%'. mysql_real_escape_string($q) .'%" OR ShortName LIKE "%'. mysql_real_escape_string($q) .'%"'.
+	WHERE (FullReference LIKE "%'. mysql_real_escape_string($q) .'%" OR ShortName LIKE "%'. mysql_real_escape_string($q) .'%")'.
 	// non-admin users should only see *Published* publication names
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
-		// 'AND EXISTS(SELECT PublicationStatus FROM calibrations WHERE PublicationID = publications.PublicationID AND PublicationStatus = 4)'
-		'' //'AND PublicationStatus = 4'
+		'AND PublicationStatus = 4'
 	)
       .' ORDER BY label' // slows things down...
       .' LIMIT 10';
