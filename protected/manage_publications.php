@@ -63,7 +63,7 @@ while ($row = mysql_fetch_array($publication_list)) {
     <td align="center"><?=$row['PublicationID']?></td>
     <td><?=$row['ShortName']?></td>
     <td><?=$row['FullReference']?></td>
-    <td><a href="http://dx.doi.org/<?=$row['DOI']?>" target="_new"><?=$row['DOI']?></a></td>
+    <td><a href="<?= formatDOIForHyperlink($row['DOI']) ?>" target="_new"><?=$row['DOI']?></a></td>
     <td align="right"><? if (is_numeric($row['PublicationStatus'])) {
          echo '<i>'.$pubstatus_values[ $row['PublicationStatus'] ].'</i>';
 	   } else {

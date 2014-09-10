@@ -442,7 +442,7 @@ if(mysql_num_rows($geoltime_list)==0){
 		<td align="left" width="70%"><input type="text" name="FossFullCite-<?= $i ?>" id="FossFullCite-<?=$i?>" style="width: 95%;"></td>
 		</tr>
 		<tr>
-		<td align="right" valign="top" width="30%"><strong>doi</strong></td>
+		<td align="right" valign="top" width="30%"><strong>doi (or other url)</strong></td>
 		<td align="left" width="70%"><input type="text" name="FossDOI-<?= $i ?>" id="FossDOI-<?=$i?>" size="10"></td>
 		</tr>
 	</table>
@@ -738,7 +738,7 @@ if(mysql_num_rows($phyjusttype_list)==0){
                       <td align="left" width="70%"><input type="text" name="PhyloFullCite-<?= $i ?>" id="PhyloFullCite-<?=$i?>" style="width: 95%;"></td>
                     </tr>
                     <tr>
-                      <td align="right" valign="top" width="30%"><strong>doi</strong></td>
+                      <td align="right" valign="top" width="30%"><strong>doi (or other url)</strong></td>
                       <td align="left" width="70%"><input type="text" name="PhyloDOI-<?= $i ?>" id="PhyloDOI-<?=$i?>" size="10"></td>
                     </tr>
     </table>

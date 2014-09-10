@@ -425,4 +425,25 @@ function getCurrentScheme() {
 	}
 }
 
+function formatDOIForHyperlink( $doi ) {
+	// Return complete URLs unchanged; modify others as needed.
+
+	// strip all whitespace anywhere in the string
+	$doi = preg_replace('/\s+/', '', $doi);
+
+	// strip any leading "DOI:" or "doi:"
+	$doi = preg_replace('/doi:/i', '', $doi);
+
+	// if the string starts with a valid scheme, keep it
+	$valid_schemes = array('http://', 'https://');
+	foreach($valid_schemes as $scheme) {
+		if (substr($doi, 0, strlen($scheme)) === $scheme) {
+			return $doi;
+		}
+	}
+
+	// treat anything else as a "naked" DOI and wrap it
+	return "http://dx.doi.org/$doi";
+}
+
 ?>

@@ -123,7 +123,7 @@ $pubstatus_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysq
     <td>&nbsp; <textarea name="FullCite" id="FullCite" rows="3" style="width: 95%; height: 3.5em;" ><?= testForProp($publication_data, 'FullReference', '') ?></textarea></td>
   </tr>
   <tr>
-    <td align="right" valign="top"><b>doi</b></td>
+    <td align="right" valign="top"><b>doi (or other url)</b></td>
     <td>&nbsp; <input type="text" name="DOI" id="DOI" style="width: 200px;" value="<?= testForProp($publication_data, 'DOI', '') ?>" ></td>
   </tr>
   <tr>

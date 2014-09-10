@@ -1154,7 +1154,7 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
     <td><input type="text" name="FullCite" id="FullCite"  size="50" style="width: 95%;"></td>
   </tr>
   <tr>
-    <td width="21%" align="right" valign="top"><b>doi</b></td>
+    <td width="21%" align="right" valign="top"><b>doi (or other url)</b></td>
     <td width="79%"><input type="text" name="DOI" id="DOI">
 	<br/><i>You will be able to add a featured image and set its publication status <br/>later, from the <a href="/protected/manage_publications.php" target="_blank">Manage Publications</a> page.</i>
     </td>
