@@ -3,6 +3,9 @@
  * will return normally, while long-running tasks will be handled by invoking
  * mysql directly on the server. (In these cases, we're using flags and status
  * markers in the site_status table to communicate progress.)
+ * 
+ * NOTE that this page does not go to great lengths to protect user input,
+ * since the user is already a logged-in administrator.
  */
 // open and load site variables
 require('../Site.conf');

@@ -2,6 +2,9 @@
 /*
  * This is a faceless script that tries to add or update an publication record, including 
  * an (optional) accomponpanying image file.
+ * 
+ * NOTE that this page does not go to great lengths to protect user input,
+ * since the user is already a logged-in administrator.
  */
 
 // open and load site variables

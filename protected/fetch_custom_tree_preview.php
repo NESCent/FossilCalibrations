@@ -5,6 +5,9 @@
     * when searching for this calibration within the NCBI taxonomy.
     *
     * This is always an AJAX fetch from within the calibration editor page.
+    * 
+    * NOTE that this page does not go to great lengths to protect user input,
+    * since the user is already a logged-in administrator.
     */
    require_once('../FCD-helpers.php');
 

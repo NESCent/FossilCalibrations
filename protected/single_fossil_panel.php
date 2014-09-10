@@ -17,8 +17,8 @@
     *
     *   > Is this the initial (stub) display of a new fossil, or its full panel?
     *
-    *   > 
-    *
+    * NOTE that this page does not go to great lengths to protect user input,
+    * since the user is already a logged-in administrator.
     */
    require_once('../FCD-helpers.php');
 

@@ -2,6 +2,9 @@
 /*
  * This is a faceless script that tries to add or update calibration records. It expects to
  * find a number of dependent records (publications, fossils, etc) already in place.
+ * 
+ * NOTE that this page does not go to great lengths to protect user input,
+ * since the user is already a logged-in administrator.
  */
 
 // open and load site variables

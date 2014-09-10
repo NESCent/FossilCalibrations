@@ -6,6 +6,9 @@
  *
  * Also, wait til we're in a child process before establishing any DB
  * connections.
+ * 
+ * NOTE that this page does not go to great lengths to protect user input,
+ * since the user is already a logged-in administrator.
  */
 ini_set("max_execution_time", "0");
 ini_set("max_input_time", "0");
