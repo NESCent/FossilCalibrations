@@ -58,7 +58,9 @@ if (!isset($search) || ($search == null)) {
 	    $search['FilterByAge']['MinAge'] = trim($_GET['MinAge']);
 	}
 	if (isset($_GET['MaxAge'])) {
-	    $search['FilterByAge']['MaxAge'] = trim($_GET['MaxAge']);
+	    // clear zero in MaxAge (will disappear on page reload) 
+	    $search['FilterByAge']['MaxAge'] = trim($_GET['MaxAge']) == '0' ?
+		'' : trim($_GET['MaxAge']);
 	}
 	if (isset($_GET['FilterByGeologicalTime'])) {
 	    $search['FilterByGeologicalTime'] = trim($_GET['FilterByGeologicalTime']);

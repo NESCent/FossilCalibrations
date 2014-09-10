@@ -269,8 +269,8 @@ if (filterIsActive('FilterByAge')) {
 		 */
 		$matching_calibration_ids = array();
 		$query="SELECT CalibrationID FROM calibrations WHERE 
-			       MinAge >= ? AND MaxAge >= ?
-			   AND MinAge <= ? AND MaxAge <= ?
+			       (MinAge >= ? OR MinAge = 0) AND (MaxAge >= ? OR MaxAge = 0)
+			   AND (MinAge <= ? OR MinAge = 0) AND (MaxAge <= ? OR MaxAge = 0)
 		".
 		// non-admin users should only see *Published* calibrations
 		((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
@@ -307,7 +307,7 @@ if (filterIsActive('FilterByAge')) {
 		$matching_calibration_ids = array();
 		if ($specifiedAge == 'MinAge') {
 			$query="SELECT CalibrationID FROM calibrations".
-			       " WHERE MinAge >= ? AND MaxAge >= ?".
+			       " WHERE (MinAge >= ? OR MinAge = 0) AND (MaxAge >= ? OR MaxAge = 0)".
 			// non-admin users should only see *Published* calibrations
 			((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 			       " AND PublicationStatus = 4"
@@ -317,7 +317,7 @@ if (filterIsActive('FilterByAge')) {
 			mysqli_stmt_bind_param($stmt, "ii", $search['FilterByAge']['MinAge'], $search['FilterByAge']['MinAge']);
 		} else {
 			$query="SELECT CalibrationID FROM calibrations".
- 			       " WHERE MinAge <= ? AND MaxAge <= ?".
+			       " WHERE (MinAge <= ? OR MinAge = 0) AND (MaxAge <= ? OR MaxAge = 0)".
 			// non-admin users should only see *Published* calibrations
 			((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 			       " AND PublicationStatus = 4"
