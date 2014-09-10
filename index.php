@@ -161,7 +161,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			<!--<input type="submit" style="float: right;" value="Go" />-->
 			<input type="image" id="" class="search-button" value="Go" src="/images/search-button.png" title="Show search results" 
 			       style="float: right; background-color: #27292B; padding: 2px; border-radius: 6px;" />
-			<input id="simple-search-input" name="SimpleSearch" type="text" placeholder="Search by author, clade, publication, species,etc." value="" 
+			<input id="simple-search-input" name="SimpleSearch" type="text" placeholder="Search by author, publication, species, etc." value="" 
 			       style="width: 360px; font-size: 120%; padding: 2px;" />
 		</div>
 		<p>

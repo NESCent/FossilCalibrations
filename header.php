@@ -52,7 +52,7 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 	<form id="simple-search" action="/search.php">
 	    <!--<input type="submit" class="search-button" style="" value="Search" />-->
 	    <input type="image" class="search-button" style="" value="Search" src="/images/search-button.png" title="Show search results" />
-	    <input id="header-search-input" name="SimpleSearch" type="text" class="search-field" style="" placeholder="Search by author, clade, publication, species, etc." value="" />
+	    <input id="header-search-input" name="SimpleSearch" type="text" class="search-field" style="" placeholder="Search by author, publication, species, etc." value="" />
         </form>
 	<script type="text/javascript">
 		// prevent IE errors on console.log() calls
