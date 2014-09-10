@@ -28,7 +28,6 @@ if ($_SESSION['nonce'] != $_POST['nonce']) {
 
 $addOrEdit = $_POST['addOrEdit']; // should be 'ADD' or 'EDIT'
 
-
 /*
  * Update the calibration and all related records. NOTE that we start with
  * dependencies in mind, so any record whose ID is stored elsewhere must
@@ -58,7 +57,7 @@ if ($_POST['newOrExistingPublication'] == 'NEW') {
 /* gather all position-markers in the form as submitted (these are used to
  * bundle form values), and add or update each fossil..
  */
-$fossil_positions = $_POST['fossil_positions'];
+$fossil_positions = $_POST['fossil_positions'] || array();
 $preserveFossilLinkIDs = Array(-1);  // adding a bogus value to avoid empty-list error in MySQL!
 $newFossilsToLink = Array();
 // stash some ordered values so that we can store them in Link_CalibrationFossil later
@@ -66,7 +65,6 @@ $finalFossilIDs = Array();
 $finalFossilSpeciesNames = Array();
 $finalFossilPhyloPubIDs = Array();
 
-///print_r($fossil_positions);
 foreach($fossil_positions as $pos) {
 
    /* Add or update the fossil species record (in table fossiltaxa)
@@ -315,6 +313,35 @@ if ($calibrationID == 0) {
 	$calibrationID = $_POST['CalibrationID'];
 }
 
+// we'll use negative integers for tree images, to avoid ID conflicts
+$treeImageID = $calibrationID * -1;
+$removeExistingTreeImage = ($_POST['deleteExistingTreeImage'] == 'true');
+// remove any existing tree image on request
+if ($removeExistingTreeImage) {
+	$query="DELETE FROM publication_images WHERE
+		PublicationID = ". $treeImageID;
+	mysql_query($query) or die('Error, query failed');
+}
+// insert (or update) the tree image for this calibration
+if ($_FILES['TreeImage']['size'] > 0) {
+	$tmpName=$_FILES['TreeImage']['tmp_name']; // name of the temporary stored file name
+	// Read the file
+	$fp = fopen($tmpName, 'r');
+	$imgContent = fread($fp, filesize($tmpName));
+	$imgContent = addslashes($imgContent);
+	$imgContent1=base64_encode($imgContent);
+	fclose($fp); // close the file handle
+	 
+	$newValues = "
+		 PublicationID = ". $treeImageID ."
+		,image = '". $imgContent ."'
+	 	,caption = 'Tree for calibration ". $calibrationID ."'
+	";
+	$query="INSERT INTO publication_images
+		SET $newValues
+		ON DUPLICATE KEY UPDATE $newValues";
+	mysql_query($query) or die('Error, query failed');
+}
 
 /* Now that we have a known-good calibration ID, we might need to un-link some
  * (deleted) fossils and link some (added) ones for this calibration.

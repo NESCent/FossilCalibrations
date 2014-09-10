@@ -73,6 +73,12 @@ if ($calibration_info['PublicationID']) {
 	$image_info = mysql_fetch_assoc($image_info_results);
 }
 
+// Fetch any image for this calibration's tree (stuffed into the same table, using negative integers)
+$treeImageID = $calibration_info['CalibrationID'] * -1;
+$query = "SELECT * FROM publication_images WHERE PublicationID=". $treeImageID;
+$tree_image_info_results = mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+$tree_image_info = mysql_fetch_assoc($tree_image_info_results);
+
 $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 
 // open and print header template
@@ -268,7 +274,19 @@ while ($row = mysql_fetch_array($fossil_results)) {
 </td><td width="10%"></td></tr>
 */ ?>
   
-<tr><td width="10%"></td><td align="left" valign="top"><p></p></td><td width="10%"></td></tr>
+<? // if there's a tree image mapped to this calibration, show it
+   if (isset($tree_image_info) && $tree_image_info['image']) { ?>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">tree image</i></td><td width="10%">&nbsp;</td></tr>
+<tr>
+	<td width="10%"></td>
+	<td align="left" valign="top">
+		<img src="/publication_image.php?id=<?= $treeImageID ?>" 
+		     style="background-color: #eee; margin-top: 12px; height: 600px; width: 744px;"
+		     alt="tree image" />
+	</td>
+	<td width="10%"></td>
+</tr>
+<? } ?>
 </table>
 
 <?php 

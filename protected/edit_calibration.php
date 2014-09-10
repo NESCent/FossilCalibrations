@@ -35,6 +35,7 @@ if (isset($_GET['id']) && !empty($_GET['id']) && is_numeric($_GET['id'])) {
  * If we're editing an existing calibration, load all related records (publications, etc)
  */
 $calibration_data = null;
+$tree_image_data = null;
 $node_pub_data = null;
 $all_fossils = null;
 $fossil_data = null;
@@ -53,6 +54,13 @@ if ($addOrEdit == 'EDIT') {
 	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 	$calibration_data = mysql_fetch_assoc($result);
 	if ($calibration_data == false) die("ERROR: Sorry, there's no calibration with this ID: ".$CalibrationID ." Please double-check this URL.");
+	mysql_free_result($result);
+
+	// retrieve its tree image, if any
+	$treeImageID = $CalibrationID * -1;
+	$query="SELECT * FROM publication_images WHERE PublicationID = '".mysql_real_escape_string($treeImageID)."'";
+	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	$tree_image_data = mysql_fetch_assoc($result);
 	mysql_free_result($result);
 
 	// retrieve the main publication for this calibration, if any
@@ -1050,9 +1058,20 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 	    // Turn it off - remove the function entirely
 	    window.onbeforeunload = null;
 	}
+
+	function deleteTreeImage() {
+		// clear the file widget? and set a flag to delete any old image
+		$('input[name=TreeImage]').val('');
+		$('input[name=deleteExistingTreeImage]').val('true');
+		$('#tree-image-preview img:eq(0)').attr({'src': '', 'alt': "Image will be removed when saving changes."})
+	}
+	function selectNewTreeImage() {
+		$('input[name=deleteExistingTreeImage]').val('false');
+		$('#tree-image-preview img:eq(0)').attr({'src': '', 'alt': "Image will be added when saving changes."})
+	}
 </script>
 
-<form action="update_calibration.php" method="post" id="edit-calibration" autocomplete="off">
+<form action="update_calibration.php" method="post" id="edit-calibration" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="nonce" value="<?= $nonce; ?>" />
 <input type="hidden" name="addOrEdit" value="<?= $addOrEdit; ?>" />
 <input type="hidden" id="CalibrationID" name="CalibrationID" value="<?= $CalibrationID; ?>" />
@@ -1204,18 +1223,26 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
                   <td align="right" valign="top"><strong>maximum age explanation</strong></td>
                   <td><textarea name="MaxAgeJust" id="MaxAgeJust" cols="50" rows="5"><?= testForProp($calibration_data, 'MaxAgeExplanation', '') ?></textarea></td>
                 </tr>
-<!--
                 <tr>
-                  <td align="right" valign="top"><strong>number of Node <?= isset($_POST['NodeCount']) ? $_POST['NodeCount'] : '?' ?> tip taxa pairs to enter</strong></td>
-                  <td><input type="text" name="NumTipPairs" id="NumTipPairs" size=3></td>
-                </tr>
-              <tr>
-              <td>&nbsp;</td>
-              <td><label>
-                <input type="submit" name="CreateNode" id="CreateNode" value="+">
-                <b>continue to tip entry</b></label></td>
-            </tr>
--->
+                  <td align="right" valign="top"><strong>tree image</strong></td>
+                  <td>
+			<input style="float: right;" type="button" value="delete tree image" onclick="deleteTreeImage(); return false;" />
+			<input type="hidden" name="deleteExistingTreeImage" value="false" />
+			<input type="file" name="TreeImage" onchange="selectNewTreeImage(); return true;" />
+			<br/>
+			(width: 744px, height: 600px)
+			<div id="tree-image-preview" style="text-align: center; background-color: #eee; color: #999; margin: 8px 0 0; padding: 4px; height: 120px;">
+			    <? if ($tree_image_data == null) { ?>
+				<br/>
+				<br/>
+				<br/>
+				<b>no tree image</b>
+			    <? } else { ?>
+				<img src="/publication_image.php?id=-<?= $CalibrationID ?>" alt="tree image" style="height: 120px;" />
+			    <? } ?>
+			</div>
+		</td>
+              </tr>
 	</table>
 </div>
 
