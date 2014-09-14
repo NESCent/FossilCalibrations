@@ -57,7 +57,7 @@ if ($_POST['newOrExistingPublication'] == 'NEW') {
 /* gather all position-markers in the form as submitted (these are used to
  * bundle form values), and add or update each fossil..
  */
-$fossil_positions = $_POST['fossil_positions'] || array();
+$fossil_positions = $_POST['fossil_positions'];
 $preserveFossilLinkIDs = Array(-1);  // adding a bogus value to avoid empty-list error in MySQL!
 $newFossilsToLink = Array();
 // stash some ordered values so that we can store them in Link_CalibrationFossil later
