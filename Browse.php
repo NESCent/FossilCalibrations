@@ -7,7 +7,7 @@ $skipHeaderSearch = true;
 require('header.php');
 
 // read view options from query-string (or set to defaults)
-$lineage = isset($_GET['lineage']) ? $_GET['lineage'] : 'sparse';  // full | sparse
+$lineage = isset($_GET['lineage']) ? $_GET['lineage'] : 'full';  // full | sparse
 $members = isset($_GET['members']) ? $_GET['members'] : 'sparse';  // full | sparse 
 $levels = isset($_GET['levels']) ? $_GET['levels'] : '2';  // 1 | 2 | 3 | 4 | 5 | all
 
@@ -205,7 +205,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 		<strong>Browse the NCBI taxonomy</strong> &mdash; you can also <a id="adv-search-link" href="/search.php">search for calibrations in the database</a>
 	</div>
 	<input id="simple-search-input" name="SimpleSearch" type="text" style="width: 420px; padding: 2px;" placeholder="Enter a starting clade or taxon" value="<?= htmlspecialchars($incomingCladeName) ?>"/>
-	<input type="submit" style="" value="Browse nearest clade" />
+	<input type="submit" style="" value="Browse" />
     </form id="simple-search-form">
 </div>
 <div class="ancestor-path">
