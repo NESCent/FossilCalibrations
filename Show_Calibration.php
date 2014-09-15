@@ -131,12 +131,14 @@ function toggleFossilDetails(clicked) {
 <table width="100%">
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">node name</i><br><b><?=$calibration_info['NodeName']?></b> 
+<!--
 &nbsp; &nbsp; <font class="small_blue">Look for this name in 
 	<a href="http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=<?=$calibration_info['NodeName']?>" target="_blank">NCBI</a> 
 	&nbsp;
 	<a href="http://en.wikipedia.org/wiki/<?=$calibration_info['NodeName']?>" target="_blank">Wikipedia</a> 
 	&nbsp;
 	<a href="http://animaldiversity.ummz.umich.edu/site/accounts/information/<?=$calibration_info['NodeName']?>.html" target="_blank">Animal Diversity Web</a></font>
+-->
 </td><td width="10%">&nbsp;</td></tr>
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top">
