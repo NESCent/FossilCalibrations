@@ -18,7 +18,7 @@ $SITEINFO['password']='REPLACE_ME_TOO';
 // E-mail address for me
 $SITEINFO['AdministratorContact']='REPLACE_ME@EXAMPLE.COM';
 
-// Path to root directory
+// Path to root directory, must end with a slash
 $SITEINFO['docroot']='/var/www/REPLACE_ME/';
 
 // Standard public-facing domain name and port
