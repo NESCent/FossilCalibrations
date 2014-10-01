@@ -3,7 +3,7 @@
  */
 
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 $username = $_POST['fcd_username'];
 $password = $_POST['fcd_password'];

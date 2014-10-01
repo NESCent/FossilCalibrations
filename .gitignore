@@ -1,5 +1,6 @@
 # ignore sensitive config information
 Site.conf
+config.php
 .htaccess
 # ignore other junk (swap files, etc)
 *~

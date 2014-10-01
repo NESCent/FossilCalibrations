@@ -1,6 +1,6 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 $skipHeaderSearch = true;
 // open and print header template

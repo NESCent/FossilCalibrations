@@ -8,7 +8,7 @@
  */
 
 // open and load site variables
-require('../Site.conf');
+require('../../config.php');
 
 // connect to mySQL server and select the Fossil Calibration database
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');

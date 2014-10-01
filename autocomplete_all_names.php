@@ -1,6 +1,6 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 // check for a valid (non-empty) query
 if (!isset($_GET["term"])) {

@@ -15,7 +15,7 @@ ini_set("max_input_time", "0");
 set_time_limit(0);
 
 // open and load site variables
-require('../Site.conf');
+require('../../config.php');
 require('../FCD-helpers.php');
 
 // this page requires admin login

@@ -6,7 +6,7 @@
  */
 
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 // build search object from GET vars or other inputs (eg, a saved-query ID)
 include('build-search-query.php'); 

@@ -23,7 +23,7 @@
    require_once('../FCD-helpers.php');
 
    // open and load site variables
-   require_once('../Site.conf');
+   require_once('../../config.php');
 
    // provide sensible defaults for data, if not provided
    $newFossilForThisCalibration = false;

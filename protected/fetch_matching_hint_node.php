@@ -4,7 +4,7 @@
  * since the user is already a logged-in administrator.
  */
 // open and load site variables
-require('../Site.conf');
+require('../../config.php');
 
 // check for a valid (non-empty) query
 if (!isset($_POST["matched_name"])) {

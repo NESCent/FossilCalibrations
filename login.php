@@ -1,6 +1,6 @@
 <?php
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 // not logged in... force user to HTTPS for this page
 if($_SERVER["HTTPS"] != "on") {

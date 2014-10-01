@@ -1,6 +1,6 @@
 <?php 
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 // open and print header template
 require('header.php');

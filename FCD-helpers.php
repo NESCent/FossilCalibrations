@@ -1,5 +1,5 @@
 <?php
-//require('Site.conf');
+//require('../config.php');
 
 /* 
  * Role and permission checks, including role-specific convenience functions.

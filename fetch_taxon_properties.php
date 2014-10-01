@@ -10,7 +10,7 @@
  */
 
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 // Quick test for non-empty string
 function isNullOrEmptyString($str){

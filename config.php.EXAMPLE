@@ -1,4 +1,10 @@
 <?php
+/*
+ * NOTE that this file should be customized and moved into the 
+ * _parent_ directory as 'config.php' (above the web root) and 
+ * futher protected using .htaccess or similar.
+ */
+
 date_default_timezone_set('America/Indianapolis');
 
 // Configuration variables for the site

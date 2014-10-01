@@ -1,6 +1,6 @@
 <?php
 // open and load site variables
-require('Site.conf');
+require('../config.php');
 
 // clear session flags (user is now logged out, anonymous)
 $_SESSION['IS_ADMIN_USER'] = false;
