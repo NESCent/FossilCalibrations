@@ -69,7 +69,7 @@ if (!empty($search['SimpleSearch'])) {
 	$search_expression = $search['SimpleSearch'];  // eg,  "apple bear \"Tom Cruise\" or 'Mickey Mouse' another word";
 	$searchTerms = preg_split("/[\s,]*\\\"([^\\\"]+)\\\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/", $search_expression, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
 ?><div class="search-details">SIMPLE SEARCH TERMS:<br/>
-	<pre><? print_r( $searchTerms ); ?></pre></div><?
+	<pre><?= htmlentities(print_r($searchTerms, TRUE)); ?></pre></div><?
 
 	/* TODO: IF a term resolves as a geological period, copy it to that filter?
 		IF geological-time filter is not already being used
@@ -118,7 +118,7 @@ if (!empty($search['SimpleSearch'])) {
 		" AND c.PublicationStatus = 4"
 	);
 
-?><div class="search-details">SIMPLE-SEARCH TEMPLATE:<br/><? print_r($query) ?></div><?
+?><div class="search-details">SIMPLE-SEARCH TEMPLATE:<br/><?= htmlentities(print_r($query, TRUE)); ?></div><?
 	// use mysqli prepared statement to prevent SQL injection
 	$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
 
@@ -136,7 +136,7 @@ if (!empty($search['SimpleSearch'])) {
 
 		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
 
-?><div class="search-details">SIMPLE-SEARCH RESULT:<br/><? print_r($result) ?></div><?
+?><div class="search-details">SIMPLE-SEARCH RESULT:<br/><?= htmlentities(print_r($result, TRUE)); ?></div><?
 		// TODO: sort/sift from all the results lists above
 		while($row=mysqli_fetch_assoc($result)) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
@@ -425,7 +425,7 @@ if ($responseType == 'JSON') {
 
 function getRelationshipFromResult( $result, $relType ) {
 	foreach($result['qualifiers'] as $qual) {
- /*?><pre class="search-details" style="color: red;">getRelationshipFromResult: <?= print_r($qual) ?> results</pre><?*/
+ /*?><pre class="search-details" style="color: red;">getRelationshipFromResult: <?= htmlentities(print_r($qual, TRUE)); ?> results</pre><?*/
 		if ($qual['relationship'] == $relType) {
 			return $qual;
 		}
@@ -526,7 +526,7 @@ if (count($searchResults) == 0) {
 			}
 			$result['displayedRelevance'] = sortableNumber(array_sum($relevanceScores) / count ($relevanceScores));
  ?><pre class="search-details" style="color: red;"><b>'<?= $result['NodeName'] ?>'</b>:<br/> displayedRelevance: <?= array_sum($relevanceScores) ?> / <?= count ($relevanceScores) ?> = <?= $result['displayedRelevance'] ?></pre><?
-/* ?><pre class="search-details" style="color: red;">  scores: <?= print_r($relevanceScores) ?></pre><? */
+/* ?><pre class="search-details" style="color: red;">  scores: <?== htmlentities(print_r($relevanceScores, TRUE)); ?></pre><? */
 		}
 		
 
@@ -586,7 +586,7 @@ if (count($searchResults) == 0) {
 		// print hidden diagnostic info
 		?>
 		<pre class="search-details" style="color: green;">
-		<? print_r($result) ?>
+		<?= htmlentities(print_r($result, TRUE)); ?>
 		</pre>
 		<?
 

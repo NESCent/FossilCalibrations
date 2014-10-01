@@ -85,10 +85,10 @@ if (!isset($search) || ($search == null)) {
 
     <div class="search-details" style="">
 	<pre id="request-details" style="color: #c33; width: 48%; float: left;">======== GET (form) values ========
-<? print_r($_GET); ?>
+<?= htmlentities(print_r($_GET, TRUE)); ?>
 	</pre>
 	<pre id="search-object-details" style="color: #33c; width: 48%; float: left;">======== $search object ========
-<? print_r($search); ?>
+<?= htmlentities(print_r($search, TRUE)); ?>
 	</pre>
     </div>
     <?
