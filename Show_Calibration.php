@@ -168,7 +168,7 @@ $rowNumber = 0;
 while ($row = mysql_fetch_array($fossil_results)) {
 	$rowNumber++;
 	?>
-<tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
+<tr><td width="10%">&nbsp;</td><td style="border: 1px dashed red;"><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
 
 <b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
 
@@ -224,10 +224,19 @@ while ($row = mysql_fetch_array($fossil_results)) {
 		PaleoBioDB
 	</a>
 </font>
+<?php } ?>
+
+<br />
+<br />
+	<i>Phylogenetic justification:</i>
+<? if ($row['PhyJustification'] == null) { ?>
+	<b>???</b>
+<? } else { ?>
+	<b><?= $row['PhyJustification'] ?></b>
+<? } ?>
+
 
 </blockquote></td><td width="10%">&nbsp;</td></tr>
-
-<?php } ?>
 
 	<?php
 	}
