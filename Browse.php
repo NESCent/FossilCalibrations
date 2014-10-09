@@ -219,13 +219,17 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
     } else {
 	 $nthAncestor = 0;
 	 foreach ($ancestors as $row) {
-		if ($row['multitree_node_id'] == $nodeMultitreeID) continue; // don't include the target node!
 	 /* ?><br/><pre><? var_dump($row); ?></pre><? */
 		$nthAncestor++;
 		// show each ancestor as a breadcrumb/link in chain of ancestry ?>
-		
 		<? if ($nthAncestor > 1) { ?><span class="path-divider">&raquo;</span><? } ?>
-		<a title="Browse to ancestor clade" href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+		<? if ($row['multitree_node_id'] == $nodeMultitreeID) { 
+			// don't link to the target node (we're already there) ?>
+			<?= htmlspecialchars($row['uniquename']) ?>
+		<? } else { 
+			// all proper ancestors should be links ?>
+			<a title="Browse to ancestor clade" href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+		<? } ?>
 		<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
 
       <? }
