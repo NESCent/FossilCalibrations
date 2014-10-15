@@ -270,7 +270,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 // loop through and escape each value in $calibrationsInThisTaxon
 foreach ($calibrationsInThisTaxon as &$untrustedVal) {  
 	// NOTE that we grab each result by REFERENCE, so we can modify it in place
-	$untrustedVal = mysql_real_escape_string($untrustedVal);
+	$untrustedVal = mysqli_real_escape_string($mysqli, $untrustedVal);
 }
 
 // list all calibration in this taxon
@@ -335,7 +335,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	// loop through and escape each value
 	foreach ($calibrationsInCustomChildNodes as &$untrustedVal) {  
 		// NOTE that we grab each result by REFERENCE, so we can modify it in place
-		$untrustedVal = mysql_real_escape_string($untrustedVal);
+		$untrustedVal = mysqli_real_escape_string($mysqli, $untrustedVal);
 	}
 
 	// fetch details on these calibrations
@@ -382,7 +382,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 
 	// fetch additional node information from getFullNodeInfo
 	$query="SELECT * FROM TEMP_descendants_info 
-                  WHERE source_tree = 'NCBI' AND multitree_node_id = ". mysql_real_escape_string($row['multitree_node_id']).
+                  WHERE source_tree = 'NCBI' AND multitree_node_id = ". mysqli_real_escape_string($mysqli, $row['multitree_node_id']).
 	((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :  
 	       "  -- AND calibration_id IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
 	);
@@ -418,7 +418,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 		// loop through and escape each value
 		foreach ($calibrationsInThisClade as &$untrustedVal) {  
 			// NOTE that we grab each result by REFERENCE, so we can modify it in place
-			$untrustedVal = mysql_real_escape_string($untrustedVal);
+			$untrustedVal = mysqli_real_escape_string($mysqli, $untrustedVal);
 		}
 
 		// TODO: Simplify this query if all we need is node name and display URL!

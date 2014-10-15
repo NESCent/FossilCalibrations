@@ -80,11 +80,11 @@ if ($verbose) { ?>
 		   $rowValues[] = "('". 
 			   $calibrationID ."','". 
 			   $side ."','". 
-			   mysql_real_escape_string($hintNames[$i]) ."','". 
-			   mysql_real_escape_string($hintNodeSources[$i])."','". 
-			   mysql_real_escape_string($hintNodeIDs[$i]) ."','". 
-			   mysql_real_escape_string($hintOperators[$i]) ."','". 
-			   mysql_real_escape_string($hintDisplayOrders[$i]) ."')";
+			   mysqli_real_escape_string($mysqli, $hintNames[$i]) ."','". 
+			   mysqli_real_escape_string($mysqli, $hintNodeSources[$i])."','". 
+			   mysqli_real_escape_string($mysqli, $hintNodeIDs[$i]) ."','". 
+			   mysqli_real_escape_string($mysqli, $hintOperators[$i]) ."','". 
+			   mysqli_real_escape_string($mysqli, $hintDisplayOrders[$i]) ."')";
 	   }
    
 	   // make sure we have at least one valid row (hint) to save for this side

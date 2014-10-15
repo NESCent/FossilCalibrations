@@ -98,8 +98,8 @@ function nameToSourceNodeInfo( $taxonName ) {
 
 	$query="SELECT taxonid, 'NCBI' AS source
 		FROM NCBI_names
-		WHERE name LIKE '". mysql_real_escape_string($taxonName) ."'
-		OR uniquename LIKE '". mysql_real_escape_string($taxonName) ."'
+		WHERE name LIKE '". mysqli_real_escape_string($mysqli, $taxonName) ."'
+		OR uniquename LIKE '". mysqli_real_escape_string($mysqli, $taxonName) ."'
 	    LIMIT 1;";
 	$match_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysqli_error($mysqli));	
 	$node_data = mysqli_fetch_assoc($match_list);
@@ -109,7 +109,7 @@ function nameToSourceNodeInfo( $taxonName ) {
 	    $query="SELECT FCD_names.node_id, CONCAT('FCD-',FCD_nodes.tree_id) AS source
 		FROM FCD_names
 		JOIN FCD_nodes ON FCD_nodes.node_id = FCD_names.node_id
-		WHERE FCD_names.name LIKE '". mysql_real_escape_string($taxonName) ."'".
+		WHERE FCD_names.name LIKE '". mysqli_real_escape_string($mysqli, $taxonName) ."'".
 		// non-admin users should only see *Published* publication names
 		(userIsAdmin() ? "" :  
 		    " AND FCD_names.is_public_name = 1"
@@ -139,7 +139,7 @@ function nameToMultitreeID( $taxonName ) {
 	if (!$node_data) return null;
 
 	// call stored *function* to retrieve the multitree ID
-	$query="SELECT getMultitreeNodeID( '". mysql_real_escape_string($node_data['source']) ."', '". mysql_real_escape_string($node_data['taxonid']) ."' )";
+	$query="SELECT getMultitreeNodeID( '". mysqli_real_escape_string($mysqli, $node_data['source']) ."', '". mysqli_real_escape_string($mysqli, $node_data['taxonid']) ."' )";
 
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 
@@ -155,7 +155,7 @@ function nameToMultitreeID( $taxonName ) {
 function getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B ) {
 	global $mysqli;
 
-	$query="CALL getMostRecentCommonAncestor( '". mysql_real_escape_string($multitree_id_A) ."', '". mysql_real_escape_string($multitree_id_B) ."', 'temp_MRCA', 'ALL TREES' );";
+	$query="CALL getMostRecentCommonAncestor( '". mysqli_real_escape_string($mysqli, $multitree_id_A) ."', '". mysqli_real_escape_string($mysqli, $multitree_id_B) ."', 'temp_MRCA', 'ALL TREES' );";
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 	while(mysqli_more_results($mysqli)) {
 		mysqli_next_result($mysqli);
@@ -181,7 +181,7 @@ function getAllMultitreeAncestors( $multitree_node_id ) {
 	global $mysqli;
 	$ancestorIDs = Array();
 
-	$query="CALL getAllAncestors ( '". mysql_real_escape_string($multitree_node_id) ."', 'temp_ancestors', 'ALL TREES' );";
+	$query="CALL getAllAncestors ( '". mysqli_real_escape_string($mysqli, $multitree_node_id) ."', 'temp_ancestors', 'ALL TREES' );";
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 	while(mysqli_more_results($mysqli)) {
 		mysqli_next_result($mysqli);
@@ -224,7 +224,7 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 	// loop through and escape each value in $calibrationIDs
 	foreach ($calibrationIDs as &$untrustedVal) {  
 		// NOTE that we grab each result by REFERENCE, so we can modify it in place
-		$untrustedVal = mysql_real_escape_string($untrustedVal);
+		$untrustedVal = mysqli_real_escape_string($mysqli, $untrustedVal);
 	}
 
 	$query="SELECT DISTINCT C . *, img.image, img.caption AS image_caption
@@ -237,7 +237,7 @@ function addCalibrations( &$existingArray, $calibrationIDs, $qualifiers ) {
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 		WHERE C.CalibrationID IN (". implode(",", $calibrationIDs) .");
 	       ";
-	// NOTE that in this case, each value in $calibrationIDs was safely escaped using mysql_real_escape_string
+	// NOTE that in this case, each value in $calibrationIDs was safely escaped using mysqli_real_escape_string
 	$result=mysqli_query($mysqli, $query) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));
 	while (mysqli_more_results($mysqli)) {
 		mysqli_next_result($mysqli);
@@ -284,7 +284,7 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	// loop through and escape each value in $multitreeIDs
 	foreach ($multitreeIDs as &$untrustedVal) {  
 		// NOTE that we grab each result by REFERENCE, so we can modify it in place
-		$untrustedVal = mysql_real_escape_string($untrustedVal);
+		$untrustedVal = mysqli_real_escape_string($mysqli, $untrustedVal);
 	}
 
 	// TODO: GUARD against visitors seeing unpublished calibrations!
@@ -305,7 +305,7 @@ function addAssociatedCalibrations( &$existingArray, $multitreeIDs, $qualifiers 
 	// loop through and escape each value in $targetNodeIDs
 	foreach ($targetNodeIDs as &$untrustedVal) {  
 		// NOTE that we grab each result by REFERENCE, so we can modify it in place
-		$untrustedVal = mysql_real_escape_string($untrustedVal);
+		$untrustedVal = mysqli_real_escape_string($mysqli, $untrustedVal);
 	}
 
 	if (count($targetNodeIDs) > 0) {
@@ -332,7 +332,7 @@ function getAllCalibrationsInClade($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". mysql_real_escape_string($clade_root_source_id) ."'".
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE clade_root_multitree_id = '". mysqli_real_escape_string($mysqli, $clade_root_source_id) ."'".
 	// non-admin users should only see *Published* calibrations
 	(userIsAdmin() ? "" :  
 	    " AND calibration_id IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
@@ -351,7 +351,7 @@ function getDirectCalibrationsInCladeRoot($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE (clade_root_multitree_id = '". mysql_real_escape_string($clade_root_source_id) ."' AND is_direct_relationship = 1 AND is_custom_child_node != 1)".
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE (clade_root_multitree_id = '". mysqli_real_escape_string($mysqli, $clade_root_source_id) ."' AND is_direct_relationship = 1 AND is_custom_child_node != 1)".
 	// non-admin users should only see *Published* calibrations
 	(userIsAdmin() ? "" :  
 	    " AND calibration_id IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
@@ -370,7 +370,7 @@ function getCalibrationsInCustomChildNodes($clade_root_source_id) {
 	global $mysqli;
 	$calibrationIDs = array();
 
-	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE (clade_root_multitree_id = '". mysql_real_escape_string($clade_root_source_id) ."' AND is_custom_child_node = 1)";
+	$query="SELECT DISTINCT calibration_id FROM calibrations_by_NCBI_clade WHERE (clade_root_multitree_id = '". mysqli_real_escape_string($mysqli, $clade_root_source_id) ."' AND is_custom_child_node = 1)";
 	// non-admin users should only see *Published* calibrations
 	(userIsAdmin() ? "" :  
 	    " AND calibration_id IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
