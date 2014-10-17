@@ -1230,7 +1230,7 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 			<input type="hidden" name="deleteExistingTreeImage" value="false" />
 			<input type="file" name="TreeImage" onchange="selectNewTreeImage(); return true;" />
 			<br/>
-			(width: 744px, height: 600px)
+			initial display width is 744px (clicking image will show full-size)
 			<div id="tree-image-preview" style="text-align: center; background-color: #eee; color: #999; margin: 8px 0 0; padding: 4px; height: 120px;">
 			    <? if ($tree_image_data == null) { ?>
 				<br/>
@@ -1238,11 +1238,16 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 				<br/>
 				<b>no tree image</b>
 			    <? } else { ?>
-				<img src="/publication_image.php?id=-<?= $CalibrationID ?>" alt="tree image" style="height: 120px;" />
+				<img src="/publication_image.php?id=-<?= $CalibrationID ?>" alt="tree image" style="height: 120px; max-width: 744px;" />
 			    <? } ?>
 			</div>
 		</td>
               </tr>
+                <tr>
+                  <td align="right" valign="top"><strong>tree image caption</strong></td>
+                  <td>can include well-formed HTML markup, including text styles and paragraphs<br/>
+			<textarea name="TreeImageCaption" id="TreeImageCaption" cols="50" rows="5" style="margin-top: 5px;"><?= testForProp($tree_image_data, 'caption', '') ?></textarea></td>
+                </tr>
 	</table>
 </div>
 

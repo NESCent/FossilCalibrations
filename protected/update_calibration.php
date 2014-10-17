@@ -322,8 +322,9 @@ if ($removeExistingTreeImage) {
 		PublicationID = ". $treeImageID;
 	mysql_query($query) or die('Error, query failed');
 }
-// insert (or update) the tree image for this calibration
-if ($_FILES['TreeImage']['size'] > 0) {
+// insert (or update) the tree image and/or caption for this calibration
+$newImageFound = $_FILES['TreeImage']['size'] > 0;
+if ($newImageFound) {
 	$tmpName=$_FILES['TreeImage']['tmp_name']; // name of the temporary stored file name
 	// Read the file
 	$fp = fopen($tmpName, 'r');
@@ -331,17 +332,16 @@ if ($_FILES['TreeImage']['size'] > 0) {
 	$imgContent = addslashes($imgContent);
 	$imgContent1=base64_encode($imgContent);
 	fclose($fp); // close the file handle
-	 
-	$newValues = "
-		 PublicationID = ". $treeImageID ."
-		,image = '". $imgContent ."'
-	 	,caption = 'Tree for calibration ". $calibrationID ."'
-	";
-	$query="INSERT INTO publication_images
-		SET $newValues
-		ON DUPLICATE KEY UPDATE $newValues";
-	mysql_query($query) or die('Error, query failed');
 }
+$newValues = "
+	 PublicationID = ". $treeImageID .
+	($newImageFound ?  ",image = '". $imgContent ."' " :  "")
+	.",caption = '". $_POST['TreeImageCaption'] ."'
+";
+$query="INSERT INTO publication_images
+	SET $newValues
+	ON DUPLICATE KEY UPDATE $newValues";
+mysql_query($query) or die('Error, query failed');
 
 /* Now that we have a known-good calibration ID, we might need to un-link some
  * (deleted) fossils and link some (added) ones for this calibration.

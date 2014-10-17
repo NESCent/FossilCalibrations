@@ -725,5 +725,7 @@ dl.frequently-asked pre {
 	margin: 0.5em 1em;
 	padding: 0.75em 0.25em;
 }
-
+.image-caption {
+	font-style: italic;
+}
 

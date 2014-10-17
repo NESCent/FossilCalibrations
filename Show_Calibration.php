@@ -286,14 +286,23 @@ while ($row = mysql_fetch_array($fossil_results)) {
 */ ?>
   
 <? // if there's a tree image mapped to this calibration, show it
-   if (isset($tree_image_info) && $tree_image_info['image']) { ?>
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">tree image</i></td><td width="10%">&nbsp;</td></tr>
+   if (isset($tree_image_info) && $tree_image_info['image']) { 
+	$usingDefaultCaption = $tree_image_info['caption'] && strpos($tree_image_info['caption'], 'Tree for calibration ') === 0;
+	?>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">tree image (click image for full size)</i></td><td width="10%">&nbsp;</td></tr>
 <tr>
 	<td width="10%"></td>
 	<td align="left" valign="top">
+	    <a href="/publication_image.php?id=<?= $treeImageID ?>" target="_blank" title="Click to see full-size image in a new window">
 		<img src="/publication_image.php?id=<?= $treeImageID ?>" 
-		     style="background-color: #eee; margin-top: 12px; height: 600px; width: 744px;"
+		     style="background-color: #eee; margin-top: 12px; max-width: 744px;"
 		     alt="tree image" />
+	    </a>
+	<? if ($tree_image_info['caption'] && !($usingDefaultCaption)) { ?>
+		<div class="image-caption">
+			<?= $tree_image_info['caption'] ?>
+		</div>
+	<? } ?>
 	</td>
 	<td width="10%"></td>
 </tr>
