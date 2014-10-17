@@ -135,9 +135,9 @@ if (!empty($search['SimpleSearch'])) {
 	// use mysqli prepared statement to prevent SQL injection
 	$stmt=mysqli_prepare($mysqli, $query) or die ('Error in preparing template: '.$query.'|'. mysqli_error($mysqli));	
 
-	$matching_calibration_ids = array();
 	$termPosition = 0;
 	foreach($searchTerms as $term) {
+		$matching_calibration_ids = array();
 		$possibleMatches++;
 		$termPosition++;
 		$tempResults = array();
