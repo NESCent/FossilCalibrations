@@ -1254,12 +1254,42 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 
 <h3>3. Describe the fossils used to date this node</h3>
 <div>
-   <p style="position: relative; top: -6px;">
+   <p style="position: relative; top: -6px; margin-bottom: 0;">
       <input type="button" id="add-fossil-button" style="float: right; font-size: 0.8em;" value="add fossil" onclick="addFossil(); return false;"/>
       Add one or more fossils that were used in this node calibration.
    </p>
 <? // stash a client-side tally to generate unique, incrementing fossil positions (ordinal IDs for all related DOM elements)
    $totalFossils = count($all_fossils); 
+   $fossilNamesAndIDs = array();
+   if ($totalFossils > 0) { ?>
+
+	<table>
+                <tr>
+                  <td width="21%" align="right" valign="middle"><strong>primary linked fossil</strong></td>
+                  <td width="79%" colspan="2">
+			<select id="choose-primary-fossil" name="PrimaryLinkedFossilID">
+			<? for ($i = 0; $i < $totalFossils; $i++) {
+				$fossil_data = $all_fossils[$i]['fossil_data'];
+				$fossilIdentifier = testForProp($fossil_data, 'CollectionAcro', '') .' '. testForProp($fossil_data, 'CollectionNumber', '');
+				?>
+				<option value="<?= $fossil_data['FCLinkID'] ?>" 
+				  <? if (testForProp($calibration_data, 'PrimaryLinkedFossilID', null) == $fossil_data['FCLinkID']) { ?>
+					selected="selected"
+				  <? } ?>
+				><?= $fossilIdentifier ?></option>
+			<? } ?>
+			</select>
+		  </td>
+		</tr>
+                <tr>
+                  <td width="21%">&nbsp;</td>
+                  <td width="69%">The final calibration page will feature its phylogenetic justification. Additional fossils will only appear in an API data request.
+			<em>To update these choices after adding or removing a fossil, click <strong>Save Calibration</strong>.</em>
+		  </td>
+                  <td width="10%">&nbsp;</td>
+		</tr>
+	</table>
+<? }
 ?>
    <input type="hidden" id="next-available-fossil-position" name="IGNORE_ME" value="<?= $totalFossils ?>" />
    <div id="fossil-panels">

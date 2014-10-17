@@ -432,7 +432,8 @@ p.featured-information {
 	color: #999;
 }
 .small_orange {
-	font-size: 12px;
+	/* font-size: 12px; */
+	font-weight: bold;
 	color: #D19E69;
 
 	display: block;

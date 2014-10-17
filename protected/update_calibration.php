@@ -301,6 +301,7 @@ $newValues = "
 		,NodePub = '". mysql_real_escape_string($mainPubID) ."'
 		,PublicationStatus = '". $newPublicationStatus ."'
 		,CalibrationQuality = '". mysql_real_escape_string($_POST['CalibrationQuality']) ."'
+		,PrimaryLinkedFossilID = '". mysql_real_escape_string($_POST['PrimaryLinkedFossilID']) ."'
 		,AdminComments = '". mysql_real_escape_string($_POST['AdminComments']) ."'
 ";
 $query="INSERT INTO calibrations

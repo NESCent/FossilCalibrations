@@ -148,27 +148,28 @@ function toggleFossilDetails(clicked) {
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top">
 	<i class="small_orange">node minimum age </i><br><b><?=$calibration_info['MinAge']?> Ma</b> 
       <?php if ($calibration_info['MinAgeExplanation']) { ?>
-	<font style="font-size:10px"><br/><?=$calibration_info['MinAgeExplanation']?></font>
+	<font style="font-size: 90%;"><br/><?=$calibration_info['MinAgeExplanation']?></font>
       <?php } ?>
 </td><td width="10%">&nbsp;</td></tr>
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top">
 	<i class="small_orange">node maximum age </i><br>
       <?php if ($calibration_info['MaxAgeExplanation']) { ?>
 	<b><?=$calibration_info['MaxAge']?> Ma</b>
-	<font style="font-size:10px"><br/><?=$calibration_info['MaxAgeExplanation']?></font>
+	<font style="font-size: 90%;"><br/><?=$calibration_info['MaxAgeExplanation']?></font>
       <?php } else { ?>
 	<b>None specified</b>
       <?php } ?>
 </td><td width="10%">&nbsp;</td></tr>
 
 
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">fossils used to date this node</i></td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">primary fossil used to date this node</i></td><td width="10%">&nbsp;</td></tr>
 <?php
 $rowNumber = 0;
+$primaryPhyloJustification = null;
 while ($row = mysql_fetch_array($fossil_results)) {
 	$rowNumber++;
 	?>
-<tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size:10px;">
+<tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size: 90%;">
 
 <b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
 
@@ -225,20 +226,13 @@ while ($row = mysql_fetch_array($fossil_results)) {
 	</a>
 </font>
 <?php } ?>
-
-<br />
-<br />
-	<i>Phylogenetic justification:</i>
-<? if ($row['PhyJustification'] == null) { ?>
-	<b>???</b>
-<? } else { ?>
-	<b><?= $row['PhyJustification'] ?></b>
-<? } ?>
-
-
 </blockquote></td><td width="10%">&nbsp;</td></tr>
 
-	<?php
+<?php
+		// grab its phylogenetic justification? look for assigned primary, OR just grab the first one in the list
+		if ($primaryPhyloJustification == null || ($calibration_info['PrimaryLinkedFossilID'] == $row['FCLinkID'])) {
+			$primaryPhyloJustification = $row['PhyJustification']; 
+		}
 	}
 ?>
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
@@ -285,6 +279,19 @@ while ($row = mysql_fetch_array($fossil_results)) {
 </td><td width="10%"></td></tr>
 */ ?>
   
+<? // show the primary phylogenetic justification, if any
+   if ($primaryPhyloJustification) { ?>
+<tr>
+	<td width="10%">&nbsp;</td>
+	<td align="left" valign="top">
+	    <i class="small_orange">phylogenetic justification</i>
+	    <br/>
+	    <?= $primaryPhyloJustification ?>
+	</td>
+	<td width="10%">&nbsp;</td>
+</tr>
+<? } ?>
+
 <? // if there's a tree image mapped to this calibration, show it
    if (isset($tree_image_info) && $tree_image_info['image']) { 
 	$usingDefaultCaption = $tree_image_info['caption'] && strpos($tree_image_info['caption'], 'Tree for calibration ') === 0;
@@ -307,6 +314,7 @@ while ($row = mysql_fetch_array($fossil_results)) {
 	<td width="10%"></td>
 </tr>
 <? } ?>
+
 </table>
 
 <?php 
