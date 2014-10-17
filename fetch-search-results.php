@@ -36,7 +36,20 @@ $responseType = $search['ResponseType']; // HTML | JSON | ??
  *	$search['ResultsRange'] = "21-40"
  */
 
-$searchResults = array();
+// keep a master list of results
+$searchResults = null;
+// gather smaller result sets along the way, use to filter $searchResults
+$tempResults = null;
+// whip up a comparison function to use when getting the intersection of two arrays
+function compareCalibrationResults($cal_A, $cal_B) {
+	if ($cal_A['CalibrationID'] > $cal_B['CalibrationID']) {
+		return 1;
+	} 
+	if ($cal_A['CalibrationID'] == $cal_B['CalibrationID']) {
+		return 0;
+	} 
+	return -1;
+}
 
 // keep track of how many possible matches there are for each result (based on search tools used)
 $possibleMatches = 0;
@@ -127,6 +140,7 @@ if (!empty($search['SimpleSearch'])) {
 	foreach($searchTerms as $term) {
 		$possibleMatches++;
 		$termPosition++;
+		$tempResults = array();
 
 		// bind paramter (several times)
 		mysqli_stmt_bind_param($stmt, "ssssssssss", $term, $term, $term, $term, $term, $term, $term, $term, $term, $term);
@@ -143,9 +157,13 @@ if (!empty($search['SimpleSearch'])) {
 		}
 
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => "03-MATCHES-TERM-$termPosition", 'relevance' => 1.0) );
+			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => "03-MATCHES-TERM-$termPosition", 'relevance' => 1.0) );
 		}
-
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
+		}
 	}
 	// close statement (prepare for next time)
 	mysqli_stmt_close($stmt);
@@ -161,6 +179,7 @@ if (filterIsActive('FilterByTipTaxa')) {
 		// both taxa were specified... 
 		$showDefaultSearch = false;
 		$possibleMatches += 2;
+		$tempResults = array();
 
 ?><div class="search-details">Starting result count: <?= count($searchResults) ?></div><?
 
@@ -177,33 +196,41 @@ if (filterIsActive('FilterByTipTaxa')) {
 		$multitree_id_MRCA = getMultitreeIDForMRCA( $multitree_id_A, $multitree_id_B );
 ?><div class="search-details">MRCA: <?= $multitree_id_MRCA ?> <? if (empty($multitree_id_MRCA)) { ?>EMPTY<? } ?> <? if ($multitree_id_MRCA == null) { ?>NULL<? } ?></div><?
 		// NOTE that if no MRCA was found, we still pass a one-item array to addAssociatedCalibrations()
-		addAssociatedCalibrations( $searchResults, Array($multitree_id_MRCA), Array('relationship' => '10-COMMON-ANCESTOR', 'relevance' => 1.0) );
-?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
+		addAssociatedCalibrations( $tempResults, Array($multitree_id_MRCA), Array('relationship' => '10-COMMON-ANCESTOR', 'relevance' => 1.0) );
+?><div class="search-details">Temp result count: <?= count($tempResults) ?></div><?
 
 		// check director ancestors of A or B (includes the tip taxa)
 		$multitree_id_ancestors_A = getAllMultitreeAncestors( $multitree_id_A );
 ?><div class="search-details">ANCESTORS-A: <?= implode(", ", $multitree_id_ancestors_A) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_A, Array('relationship' => '09-ANCESTOR-A', 'relevance' => 1.0) );
-?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
+		addAssociatedCalibrations( $tempResults, $multitree_id_ancestors_A, Array('relationship' => '09-ANCESTOR-A', 'relevance' => 1.0) );
+?><div class="search-details">Temp result count: <?= count($tempResults) ?></div><?
 
 		$multitree_id_ancestors_B = getAllMultitreeAncestors( $multitree_id_B );
 ?><div class="search-details">ANCESTORS-B: <?= implode(", ", $multitree_id_ancestors_B) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors_B, Array('relationship' => '08-ANCESTOR-B', 'relevance' => 1.0) );
-?><div class="search-details">Result count: <?= count($searchResults) ?></div><?
+		addAssociatedCalibrations( $tempResults, $multitree_id_ancestors_B, Array('relationship' => '08-ANCESTOR-B', 'relevance' => 1.0) );
+?><div class="search-details">Temp result count: <?= count($tempResults) ?></div><?
 
 		// TODO: check all within clade of MRCA
-		// addAssociatedCalibrations( $searchResults, $multitree_id_clade_members, Array('relationship' => '04-MRCA-CLADE', 'relevance' => 0.25) );
+		// addAssociatedCalibrations( $tempResults, $multitree_id_clade_members, Array('relationship' => '04-MRCA-CLADE', 'relevance' => 0.25) );
 
 		// TODO: check all neighbors of MRCA
-		// addAssociatedCalibrations( $searchResults, $multitree_id_mrca_neighbors, Array('relationship' => '06-MRCA-NEIGHBOR', 'relevance' => 0.1) );
+		// addAssociatedCalibrations( $tempResults, $multitree_id_mrca_neighbors, Array('relationship' => '06-MRCA-NEIGHBOR', 'relevance' => 0.1) );
 
 		// TODO: check all neighbors of direct ancestors of A or B
-		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => '05-ANCESTOR-NEIGHBOR', 'relevance' => 0.1) );
+		// addAssociatedCalibrations( $tempResults, $multitree_id_ancestor_neighbors, Array('relationship' => '05-ANCESTOR-NEIGHBOR', 'relevance' => 0.1) );
+
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
+		}
+
 	} else {
 ?><div class="search-details">1 TAXON SUBMITTED</div><?
 		// just one taxon was specified
 		$showDefaultSearch = false;
 		$possibleMatches++;
+		$tempResults = array();
 		$specifiedTaxon = empty($search['FilterByTipTaxa']['TaxonA']) ? 'B' : 'A'; 
 
 		/* 
@@ -216,10 +243,16 @@ if (filterIsActive('FilterByTipTaxa')) {
 		// check its direct ancestors (includes the tip taxon)
 		$multitree_id_ancestors = getAllMultitreeAncestors( $multitree_id );
 ?><div class="search-details">ANCESTORS-<?= $specifiedTaxon ?>: <?= implode(", ", $multitree_id_ancestors) ?></div><?
-		addAssociatedCalibrations( $searchResults, $multitree_id_ancestors, Array('relationship' => ($specifiedTaxon == 'A' ? '09-ANCESTOR-A' : '08-ANCESTOR-B'), 'relevance' => 1.0) );
+		addAssociatedCalibrations( $tempResults, $multitree_id_ancestors, Array('relationship' => ($specifiedTaxon == 'A' ? '09-ANCESTOR-A' : '08-ANCESTOR-B'), 'relevance' => 1.0) );
 
 		// TODO: check all neighbors of direct ancestors
-		// addAssociatedCalibrations( $searchResults, $multitree_id_ancestor_neighbors, Array('relationship' => '05-ANCESTOR-NEIGHBOR', 'relevance' => 0.2) );
+		// addAssociatedCalibrations( $tempResults, $multitree_id_ancestor_neighbors, Array('relationship' => '05-ANCESTOR-NEIGHBOR', 'relevance' => 0.2) );
+
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
+		}
 	}
 }
 
@@ -232,6 +265,7 @@ if (filterIsActive('FilterByClade')) {
 		// search within this clade
 		$showDefaultSearch = false;
 		$possibleMatches++;
+		$tempResults = array();
 
 		/* 
 		 * Check for associated calibrations ("direct hits" and "near misses") based on related multitree IDs
@@ -246,8 +280,13 @@ if (filterIsActive('FilterByClade')) {
  
 		// grab calibrations using our pre-built fast index
 		$matching_calibration_ids = getAllCalibrationsInClade($clade_root_multitree_id);
-		addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '07-CLADE-MEMBER', 'relevance' => 1.0) );
+		addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '07-CLADE-MEMBER', 'relevance' => 1.0) );
 
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
+		}
 	}
 }
 
@@ -262,6 +301,7 @@ if (filterIsActive('FilterByAge')) {
 		// search within this clade
 		$showDefaultSearch = false;
 		$possibleMatches++;
+		$tempResults = array();
 
 		/* 
 		 * Check for calibrations within the specified age ranage. NOTE that we should check
@@ -290,13 +330,19 @@ if (filterIsActive('FilterByAge')) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
 		}
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
+			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
 		}
 
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
+		}
 	} else {
 		// just one age was specified
 		$showDefaultSearch = false;
 		$possibleMatches++;
+		$tempResults = array();
 		$specifiedAge = empty($search['FilterByAge']['MinAge']) ? 'MaxAge' : 'MinAge'; 
 ?><div class="search-details">1 AGE SUBMITTED (<?= $specifiedAge ?>)</div><?
 
@@ -337,7 +383,13 @@ if (filterIsActive('FilterByAge')) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
 		}
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
+			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
+		}
+
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
 		}
 	}
 }
@@ -352,6 +404,7 @@ if (filterIsActive('FilterByGeologicalTime')) {
 		// search within this period
 		$showDefaultSearch = false;
 		$possibleMatches++;
+		$tempResults = array();
 
 		/* 
 		 * Check for calibrations from the specified time period (or a more specific time)
@@ -383,12 +436,18 @@ if (filterIsActive('FilterByGeologicalTime')) {
 			$matching_calibration_ids[] = $row['CalibrationID'];
 		}
 		if (count($matching_calibration_ids) > 0) {
-			addCalibrations( $searchResults, $matching_calibration_ids, Array('relationship' => '01-MATCHES-GEOTIME', 'relevance' => 1.0) );
+			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '01-MATCHES-GEOTIME', 'relevance' => 1.0) );
 		}
 
 		/*
   		 * TODO: Give "partial credit" (0.5 relevance) for calibrations that match using a more broad geo-time (eg, Quaternary or Holocene, vs. Modern)?
 		 */
+
+		if (is_array($searchResults)) {
+			$searchResults = array_uintersect( $searchResults, $tempResults, 'compareCalibrationResults' );
+		} else {
+			$searchResults = $tempResults;
+		}
 	}
 }
 
@@ -396,6 +455,7 @@ if (filterIsActive('FilterByGeologicalTime')) {
 // IF no search tools were active and loaded, return the n results most recently added
 if ($showDefaultSearch) {
 ?><div class="search-details">SHOWING DEFAULT SEARCH</div><?
+	$searchResults = array();
 	$matching_calibration_ids = array();
 	$query="SELECT c.CalibrationID FROM calibrations AS c".
 	// non-admin users should only see *Published* calibrations
