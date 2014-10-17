@@ -237,7 +237,7 @@ while ($row = mysqli_fetch_array($descendants_info_results)) {
 </div><!-- end of .ancestor-path -->
 
 <? if ($shiftedToInterestingAncestor) { ?>
-	<p style="color: #c44; font-style: italic;">There were no calibrations found in your requested clade '<strong><?= $_GET['SimpleSearch'] ?></strong>'. This is the nearest enclosing clade with calibrations.</p>
+	<p style="color: #c44; font-style: italic;">There were no calibrations found in your requested clade<?= isset($_GET[ 'SimpleSearch' ]) ? ' <strong>'.$_GET['SimpleSearch'].'</strong>' : '' ?>. This is the nearest enclosing clade with calibrations.</p>
 <? } ?>
 
 <p>
@@ -357,10 +357,6 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	    <li class="has-calibrations immediate-child">	
 		<span title="This calibrated node is not part of the NCBI taxonomy" style="font-style: italic;"><?= htmlspecialchars($row['NodeName']) ?></span>
 		<span class="discreet" style="font-weight: normal;">&mdash; (<span class="calibration-count" style="color: #333;">1</span>)</span> 
-		<a target="_blank" style="font-weight: normal;"
-			  href="/search.php?SortResultsBy=DATE_ADDED_DESC&SimpleSearch=&HiddenFilters[]=FilterByTipTaxa&BlockedFilters[]=FilterByTipTaxa&TaxonA=&TaxonB=&FilterByClade=<?= htmlspecialchars($row['NodeName']) ?>&HiddenFilters[]=FilterByAge&MinAge=&MaxAge=&HiddenFilters[]=FilterByGeologicalTime&FilterByGeologicalTime=">
-			show as search result
-		</a>
 
 		<div class="listed-calibrations">
 		     <? // just one calibration in each custom node (for now)
