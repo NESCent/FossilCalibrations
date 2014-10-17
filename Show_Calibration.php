@@ -165,9 +165,29 @@ function toggleFossilDetails(clicked) {
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">primary fossil used to date this node</i></td><td width="10%">&nbsp;</td></tr>
 <?php
 $rowNumber = 0;
+
+// peek ahead to first linked fossil and grab its ID, then reset pointer
+$row = mysql_fetch_array($fossil_results);
+if ($row && isset($row['FCLinkID'])) {
+	$firstLinkedFossilID = $row['FCLinkID'];
+} else {
+	$firstLinkedFossilID = null;
+}
+mysql_data_seek($fossil_results, 0);
+
+$primaryLinkedFossilID = testForProp($calibration_info, 'PrimaryLinkedFossilID', $firstLinkedFossilID);
+$primaryLinkedFossil = null;
 $primaryPhyloJustification = null;
 while ($row = mysql_fetch_array($fossil_results)) {
 	$rowNumber++;
+	// grab its phylogenetic justification? look for assigned primary, OR just grab the first one in the list
+	if ($primaryPhyloJustification == null || ($calibration_info['PrimaryLinkedFossilID'] == $row['FCLinkID'])) {
+		$primaryPhyloJustification = $row['PhyJustification']; 
+	}
+	if ($row['FCLinkID'] !== $primaryLinkedFossilID) {
+		// ignore this supporting fossil
+		continue;
+	}
 	?>
 <tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size: 90%;">
 
@@ -229,10 +249,6 @@ while ($row = mysql_fetch_array($fossil_results)) {
 </blockquote></td><td width="10%">&nbsp;</td></tr>
 
 <?php
-		// grab its phylogenetic justification? look for assigned primary, OR just grab the first one in the list
-		if ($primaryPhyloJustification == null || ($calibration_info['PrimaryLinkedFossilID'] == $row['FCLinkID'])) {
-			$primaryPhyloJustification = $row['PhyJustification']; 
-		}
 	}
 ?>
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
