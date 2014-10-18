@@ -78,7 +78,7 @@ foreach($fossil_positions as $pos) {
 
    switch( $_POST["newOrExistingFossilSpecies-$pos"] ) {
       case 'ASSIGNED':
-         $fossilLocalityID = $_POST["PreviouslyAssignedSpeciesName-$pos"];
+         $fossilSpeciesName = $_POST["PreviouslyAssignedSpeciesName-$pos"];
          break;
 
       case 'EXISTING':
