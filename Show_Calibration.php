@@ -175,7 +175,8 @@ if ($row && isset($row['FCLinkID'])) {
 }
 mysql_data_seek($fossil_results, 0);
 
-$primaryLinkedFossilID = testForProp($calibration_info, 'PrimaryLinkedFossilID', $firstLinkedFossilID);
+// if the explicit primary-fossil marker is NULL or empty, use the first (probably only) fossil
+$primaryLinkedFossilID = empty($calibration_info['PrimaryLinkedFossilID']) ? $firstLinkedFossilID : $calibration_info['PrimaryLinkedFossilID'];
 $primaryLinkedFossil = null;
 $primaryPhyloJustification = null;
 while ($row = mysql_fetch_array($fossil_results)) {
