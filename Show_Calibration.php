@@ -164,8 +164,6 @@ function toggleFossilDetails(clicked) {
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><i class="small_orange">primary fossil used to date this node</i></td><td width="10%">&nbsp;</td></tr>
 <?php
-$rowNumber = 0;
-
 // peek ahead to first linked fossil and grab its ID, then reset pointer
 $row = mysql_fetch_array($fossil_results);
 if ($row && isset($row['FCLinkID'])) {
@@ -175,22 +173,24 @@ if ($row && isset($row['FCLinkID'])) {
 }
 mysql_data_seek($fossil_results, 0);
 
-// if the explicit primary-fossil marker is NULL or empty, use the first (probably only) fossil
-$primaryLinkedFossilID = empty($calibration_info['PrimaryLinkedFossilID']) ? $firstLinkedFossilID : $calibration_info['PrimaryLinkedFossilID'];
+/* Show the explicitly marked primary fossil and its phylogenetic justification. 
+ * IF marker is NULL or empty, use the first (probably only) fossil.
+ * IF marker is no longer valid (ID of a fossil since un-linked), use the first fossil.
+ */
 $primaryLinkedFossil = null;
-$primaryPhyloJustification = null;
+$primaryLinkedFossilID = empty($calibration_info['PrimaryLinkedFossilID']) ? 
+	$firstLinkedFossilID : 
+	$calibration_info['PrimaryLinkedFossilID'];
+
 while ($row = mysql_fetch_array($fossil_results)) {
-	$rowNumber++;
-	// grab its phylogenetic justification? look for assigned primary, OR just grab the first one in the list
-	if ($primaryPhyloJustification == null || ($calibration_info['PrimaryLinkedFossilID'] == $row['FCLinkID'])) {
-		$primaryPhyloJustification = $row['PhyJustification']; 
+	// treat this as the primary fossil? grab the first one by default, and override if we get a match
+	if ($primaryLinkedFossil == null || ($calibration_info['PrimaryLinkedFossilID'] == $row['FCLinkID'])) {
+		$primaryLinkedFossil = $row; 
 	}
-	if ($row['FCLinkID'] !== $primaryLinkedFossilID) {
-		// ignore this supporting fossil
-		continue;
-	}
-	?>
-<tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil <?= ($rowNumber % 2)  ? 'odd' : 'even' ?>" style="font-size: 90%;">
+} 
+if ($primaryLinkedFossil !== null) { 
+	$row = $primaryLinkedFossil; ?>
+<tr><td width="10%">&nbsp;</td><td><blockquote class="single-fossil odd" style="font-size: 90%;">
 
 <b><?=$row['CollectionAcro']?> <?=$row['CollectionNumber']?></b>
 
@@ -249,61 +249,18 @@ while ($row = mysql_fetch_array($fossil_results)) {
 <?php } ?>
 </blockquote></td><td width="10%">&nbsp;</td></tr>
 
-<?php
-	}
-?>
+<? } ?>
+
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top"><p></p></td><td width="10%">&nbsp;</td></tr>
-	
-<? /*
-<tr><td width="10%"></td><td align="left" valign="top"><i class="small_orange">calibrated-node definition (used to place this calibration in the NBCI taxonomy)</i></td><td width="10%"></td></tr>
-<tr><td width="10%"></td><td>
-<blockquote style="overflow: hidden;">
-	<table width="30%" style="float: left;">
-	<tr align="left"><td colspan="2"><b class="small_text">Taxon A</b></td></tr>
-	<?php // list any A-side taxa found (if none, just prompt with +/- buttons)
-	if ($side_A_hint_data) {
-		foreach ($side_A_hint_data as $hint)
-		{ ?>
-		<tr class="definition-hint">
-		  <td align="right" valign="top">
-		    <?= $hint['operator']?>
-		  </td>
-		  <td>
-		    <?= $hint['matching_name'] ?>
-		  </td>
-		</tr>
-	     <? } 
-	}?>
-	</table>
-	<table width="30%" style="float: left;">
-	<tr align="left"><td colspan="2"><b class="small_text">Taxon B</b></td></tr>
-	<?php // list any A-side taxa found (if none, just prompt with +/- buttons)
-	if ($side_B_hint_data) {
-		foreach ($side_B_hint_data as $hint)
-		{ ?>
-		<tr class="definition-hint">
-		  <td align="right" valign="top">
-		    <?= $hint['operator']?>
-		  </td>
-		  <td>
-		    <?= $hint['matching_name'] ?>
-		  </td>
-		</tr>
-	     <? } 
-	}?>
-	</table>
-</blockquote>
-</td><td width="10%"></td></tr>
-*/ ?>
   
 <? // show the primary phylogenetic justification, if any
-   if ($primaryPhyloJustification) { ?>
+   if ($primaryLinkedFossil) { ?>
 <tr>
 	<td width="10%">&nbsp;</td>
 	<td align="left" valign="top">
 	    <i class="small_orange">phylogenetic justification</i>
 	    <br/>
-	    <?= $primaryPhyloJustification ?>
+	    <?= $primaryLinkedFossil['PhyJustification'] ?>
 	</td>
 	<td width="10%">&nbsp;</td>
 </tr>

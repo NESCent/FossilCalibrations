@@ -312,7 +312,11 @@ $NCBIStatus = $site_status['NCBI_status'];
 		<!-- <a class="selected">Admin Dashboard</a> -->
 		<a href="/protected/manage_calibrations.php">Manage Calibrations</a>
 		<a href="/protected/manage_publications.php">Manage Publications</a>
-		<!-- <a Xhref="#">Manage Fossils</a> -->
+		<a href="/protected/manage_fossils.php">Manage Fossils</a>
+		<a href="/protected/manage_collections.php" 
+		   onclick="alert('Coming soon!'); return false;" style="color: #999;">Manage Collections</a>
+		<a href="/protected/manage_localities.php" 
+		   onclick="alert('Coming soon!'); return false;" style="color: #999;">Manage Localities</a>
 		<a href="/protected/edit_site_announcement.php">Edit Site Announcement</a>
 	</div>
 </div>
