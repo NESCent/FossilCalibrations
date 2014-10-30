@@ -171,7 +171,9 @@ if ($row && isset($row['FCLinkID'])) {
 } else {
 	$firstLinkedFossilID = null;
 }
-mysql_data_seek($fossil_results, 0);
+if (mysql_num_rows($fossil_results) > 0) {
+	mysql_data_seek($fossil_results, 0);
+}
 
 /* Show the explicitly marked primary fossil and its phylogenetic justification. 
  * IF marker is NULL or empty, use the first (probably only) fossil.
@@ -196,7 +198,10 @@ if ($primaryLinkedFossil !== null) {
 
 <br />
 
-	<b><i><?=$row['Species']?></i>, <?=$row['TaxonAuthor']?></b>
+	<b>
+		<i><?=empty($row['Species']) ? 'NO SPECIES' : $row['Species'] ?></i>, 
+		<?=empty($row['TaxonAuthor']) ? 'NO REFERENCE' : $row['TaxonAuthor'] ?>
+	</b>
 <br />
 
 	<i>Location relative to the calibrated node:</i>
@@ -219,18 +224,25 @@ if ($primaryLinkedFossil !== null) {
 <font class="small_blue">[<a href="#" onclick="toggleFossilDetails(this); return false;">show fossil details</a>]</font>
 <div class="fossil-details" style="margin-bottom: -1em;">
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Locality:</i> <b>
-				<?=$row['LocalityName']?><?php if ($row['LocalityName'] && $row['Country']) { ?>, <?php } ?> 
-				<?=$row['Country']?>
+				<?=empty($row['LocalityName']) ? 'NO NAME' : $row['LocalityName'] ?>
 			     </b> <br />
-                           <?php if($row['Stratum']>0) { ?>
+                           <?php if (!empty($row['Stratum'])) { ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Stratum:</i> <b><?=$row['Stratum']?></b><br />
 			   <?php } ?>
-                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Geological age:</i> <b><?=$row['Age']?>, <?=$row['Epoch']?>, <?=$row['Period']?>, <?=$row['System']?></b><br />
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Geological age:</i> <b>
+				<? $ageLabel = empty($row['Age']) ? '' : $row['Age'].', ';
+				   $ageLabel .= empty($row['Epoch']) ? '' : $row['Epoch'].', ';
+				   $ageLabel .= empty($row['Period']) ? '' : $row['Period'].', ';
+				   $ageLabel .= empty($row['System']) ? '' : $row['System'];
+				?>
+				<?= $ageLabel ?></b><br />
                              <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Minimum age:</i> <b><?=$row['MinAge']?> Ma</b> <i>Maximum age:</i> <b><?=$row['MaxAge']?> Ma</b><br /> -->
                            <?php if($row['PBDBCollectionNum']>0) { ?>
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[<a href="http://fossilworks.org/?a=collectionSearch&collection_no=<?=$row['PBDBCollectionNum']?>" target="_new">View locality in Paleobiology Database</a>]</font>
 			   <?php } ?>
+			<!-- TODO: show all calibrated nodes that link to this fossil?
                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font class="small_blue">[all nodes with this fossil]</font>
+			-->
 </div>
 
 <?php if($row['PBDBTaxonNum']>0) {?>
