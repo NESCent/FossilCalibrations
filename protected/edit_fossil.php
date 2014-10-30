@@ -123,10 +123,14 @@ mysql_free_result($result);
 			$currentLocality = testForProp($fossil_data, 'LocalityID', '');
 			while($row=mysql_fetch_assoc($locality_list)) {
 				$thisLocality = $row['LocalityID'];
+				$thisLabel = empty($row['LocalityName']) ? 'NO NAME' : $row['LocalityName'];
+				if (!empty($row['Stratum'])) {
+					$thisLabel = $thisLabel .' ['. $row['Stratum'] .']';
+				}
 				if ($currentLocality == $thisLocality) {
-					echo '<option value="'.$row['LocalityID'].'" selected="selected">'.$row['LocalityName'].', '.$row['Age'].'</option>';
+					echo '<option value="'.$row['LocalityID'].'" selected="selected">'.$thisLabel.'</option>';
 				} else {
-					echo '<option value="'.$row['LocalityID'].'">'.$row['LocalityName'].', '.$row['Age'].'</option>';
+					echo '<option value="'.$row['LocalityID'].'">'.$thisLabel.'</option>';
 				}			
 			}
 			//echo "<option value=\"New\">Add new locality on next page</option>";
