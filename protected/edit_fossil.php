@@ -61,7 +61,7 @@ mysql_free_result($result);
 // Build a complete edit form in one page
 ?>
 
-<form action="update_fossil.php" method="post" id="edit-fossil" enctype="multipart/form-data">
+<form id="edit-fossil-form" action="update_fossil.php" method="post" id="edit-fossil" enctype="multipart/form-data">
 <input type="hidden" name="nonce" value="<?= $nonce; ?>" />
 <input type="hidden" name="addOrEdit" value="<?= $addOrEdit; ?>" />
 <input type="hidden" id="FossilID" name="FossilID" value="<?= $FossilID; ?>" />
@@ -251,6 +251,13 @@ mysql_free_result($result);
 
    $(document).ready(function() {
 	initFossilAutocompleteWidgets();
+	$('#edit-fossil-form').submit(function() {
+		if ($('#CollectionNumber').val().trim() === '') {
+			alert("Collection number field cannot be empty!");
+			return false; // block form submission
+		}
+		return true; // allow normal submission
+	});
    });
 
    function initFossilAutocompleteWidgets() {
