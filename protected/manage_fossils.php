@@ -25,10 +25,10 @@ $value=array_values($_GET);
 //retrieve fossils
 if($_GET) {
    $query="SELECT * FROM fossils WHERE ". mysql_real_escape_string($key[0]) ."=". mysql_real_escape_string($value[0]) ." ORDER BY CollectionAcro, CAST(CollectionNumber AS DECIMAL)";
-   $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+   $fossil_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 } else {
    $query='SELECT * FROM `fossils` ORDER BY CollectionAcro, CAST(CollectionNumber AS DECIMAL)';
-   $publication_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+   $fossil_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 }
 
 ?>
@@ -51,7 +51,7 @@ if($_GET) {
 
 <?php
 $nthRow = 0;
-while ($row = mysql_fetch_array($publication_list)) {
+while ($row = mysql_fetch_array($fossil_list)) {
 	$nthRow++;
 	$oddOrEven = ($nthRow % 2) ? 'odd' : 'even';
 
