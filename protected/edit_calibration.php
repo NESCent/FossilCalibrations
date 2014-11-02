@@ -939,23 +939,25 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
       }
       var itsCollectionNumber = $.trim( $('#CollectionNum-'+pos).val() );
 
-      // Validate and warn if they're re-using an existing collection acronym
-      // (case-insensitive test against raw *and* trimmed string)
-      var $collectionOptions = $('#CollectionAcro-'+pos+' option');
-      var testNewAcro = $.trim(itsCollectionAcro).toLowerCase();
-      var matchingAcronymFound = false;
-      $collectionOptions.each(function(i,option) {
-		var rawValue = option.getAttribute('value');
-		var testValue = $.trim(rawValue).toLowerCase();
-		if (testValue == testNewAcro) {
-			matchingAcronymFound = true;
-			return false;
-		}
-      });
-      if (matchingAcronymFound) {
-		 alert("There's already a collection with this acronym! Please modify it or choose the existing collection.");
-		 return false;
-      }
+	if (newOrExistingCollection === 'NEW') {
+	      // Validate and warn if they're re-using an existing collection acronym
+	      // (case-insensitive test against raw *and* trimmed string)
+	      var $collectionOptions = $('#CollectionAcro-'+pos+' option');
+	      var testNewAcro = $.trim(itsCollectionAcro).toLowerCase();
+	      var matchingAcronymFound = false;
+	      $collectionOptions.each(function(i,option) {
+			var rawValue = option.getAttribute('value');
+			var testValue = $.trim(rawValue).toLowerCase();
+			if (testValue == testNewAcro) {
+				matchingAcronymFound = true;
+				return false;
+			}
+	      });
+	      if (matchingAcronymFound) {
+			 alert("There's already a collection with this acronym! Please modify it or choose the existing collection.");
+			 return false;
+	      }
+	}
 
       // validate and warn if missing/invalid fossil IDs
       if ((itsCollectionAcro === '') || (itsCollectionNumber === '')) {
