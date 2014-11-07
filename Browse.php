@@ -60,11 +60,22 @@ if (empty($nodeValues) || !strpos($nodeValues, ':')) {
 	$nodeValues = $defaultNodeSpec;
 }
 list($nodeSource, $nodeSourceID) = explode(':', $nodeValues);
+
+// check that nodeSourceID is an integer.
+if(!preg_match('/^\d+$/', $nodeSourceID)) {
+  // Invalid input in nodeSourceID
+  $nodeSourceID = '';
+}
+
 if (empty($nodeSource) || empty($nodeSourceID)) {
 	// once again, use default if fields are missing
 	$nodeValues = $defaultNodeSpec;
 	list($nodeSource, $nodeSourceID) = explode(':', $nodeValues);
 }
+
+// escape values
+$nodeSource = mysqli_real_escape_string($mysqli, $nodeSource);
+$nodeSourceID = mysqli_real_escape_string($mysqli, $nodeSourceID);
 
 // convert this to a multitree node
 $sql = 'SELECT getMultitreeNodeID( "'. $nodeSource .'", '. $nodeSourceID .') AS mID';
