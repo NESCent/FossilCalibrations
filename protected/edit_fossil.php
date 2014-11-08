@@ -211,8 +211,8 @@ mysql_free_result($result);
     <td align="right" valign="top"><b>maximum age</b></td>
 <!--
     <td>&nbsp; <input type="text" name="MaxAge" id="MaxAge" style="width: 200px;" value="<?= testForProp($fossil_data, 'MaxAge', '') ?>" ></td>
-  </tr>
 -->
+  </tr>
   <tr>
     <td align="right" valign="top"><b>maximum age type</b></td>
 <!--
@@ -230,6 +230,7 @@ mysql_free_result($result);
 <!--
     <td>&nbsp; <input type="text" name="PhyJustificationType" id="PhyJustificationType" style="width: 200px;" value="<?= testForProp($fossil_data, 'PhyJustificationType', '') ?>" ></td>
 -->
+  </tr>
   <tr>
     <td align="right" valign="top"><b>phylo. publication</b></td>
 <!--
