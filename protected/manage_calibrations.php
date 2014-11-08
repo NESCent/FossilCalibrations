@@ -37,18 +37,22 @@ while ($row = mysql_fetch_array($pubstatus_list)) {
 
 ?>
 
-<div style="margin: 12px 0;">
-	<button style="float: right;" onclick="window.location = '/protected/edit_calibration.php';">Add a new calibration</button>
+<div style="float: right; margin: 12px 0; text-align: right;">
+	<button onclick="window.location = '/protected/edit_calibration.php';">Add a new calibration</button>
+	&nbsp;
+	&nbsp;
+	&nbsp;
 	<a href="/protected/index.php">&laquo; Back to admin dashboard</a>
 </div>
+<h1 style="margin: 0.5em 0;">Manage Calibrations</h1>
 
 <table width="100%" border="0">
-  <tr>
-    <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>id</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>node name</strong></td>
-    <td width="55%" align="center" valign="middle" bgcolor="#999999"><strong>comments</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>status</strong></td>
-    <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>actions</strong></td>
+  <tr class="manage-headers">
+    <td width="5%"  align="center" valign="middle"><strong>id</strong></td>
+    <td width="15%" align="center" valign="middle"><strong>node name</strong></td>
+    <td width="55%" align="center" valign="middle"><strong>comments</strong></td>
+    <td width="15%" align="center" valign="middle"><strong>status</strong></td>
+    <td width="10%" align="center" valign="middle"><strong>actions</strong></td>
   </tr>
 
 <?php

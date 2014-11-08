@@ -41,19 +41,23 @@ while ($row = mysql_fetch_array($pubstatus_list)) {
 
 ?>
 
-<div style="margin: 12px 0;">
-	<button style="float: right;" onclick="window.location = '/protected/edit_publication.php';">Add a new publication</button>
+<div style="float: right; margin: 12px 0;">
+	<button onclick="window.location = '/protected/edit_publication.php';">Add a new publication</button>
+	&nbsp;
+	&nbsp;
+	&nbsp;
 	<a href="/protected/index.php">&laquo; Back to admin dashboard</a>
 </div>
+<h1 style="margin: 0.5em 0;">Manage Publications</h1>
 
 <table width="100%" border="0">
-  <tr>
-    <td width="5%" align="center" valign="middle" bgcolor="#999999"><strong>id</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>short form</strong></td>
-    <td width="37%" align="center" valign="middle" bgcolor="#999999"><strong>full citation</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#999999"><strong>doi/url</strong></td>
-    <td width="18%" align="center" valign="middle" bgcolor="#999999"><strong>status</strong></td>
-    <td width="10%" align="center" valign="middle" bgcolor="#999999"><strong>actions</strong></td>
+  <tr class="manage-headers">
+    <td width="5%"  align="center" valign="middle"><strong>id</strong></td>
+    <td width="15%" align="center" valign="middle"><strong>short form</strong></td>
+    <td width="37%" align="center" valign="middle"><strong>full citation</strong></td>
+    <td width="15%" align="center" valign="middle"><strong>doi/url</strong></td>
+    <td width="18%" align="center" valign="middle"><strong>status</strong></td>
+    <td width="10%" align="center" valign="middle"><strong>actions</strong></td>
   </tr>
 
 <?php

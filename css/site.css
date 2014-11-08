@@ -729,4 +729,8 @@ dl.frequently-asked pre {
 .image-caption {
 	font-style: italic;
 }
+tr.manage-headers td {
+	background-color: #ddd;
+	color: #333;
+}
 

@@ -33,20 +33,21 @@ if($_GET) {
 
 ?>
 
-<div style="margin: 12px 0;">
+<div style="float: right; margin: 12px 0;">
 <!-- TODO: Should we allow adding a locality here? or only through Edit Calibration page? 
 	<button style="float: right;" onclick="window.location = '/protected/edit_locality.php';">Add a new locality</button>
 -->
 	<a href="/protected/index.php">&laquo; Back to admin dashboard</a>
 </div>
+<h1 style="margin: 0.5em 0;">Manage Localities</h1>
 
 <table width="100%" border="0">
-  <tr>
-    <td width="5%"  align="center" valign="middle" bgcolor="#ccc"><strong>id</strong></td>
-    <td width="15%" align="center" valign="middle" bgcolor="#ccc"><strong>locality name</strong></td>
-    <td width="37%" align="center" valign="middle" bgcolor="#ccc"><strong>stratum</strong></td>
-    <td width="37%" align="center" valign="middle" bgcolor="#ccc"><strong>linked fossils</strong></td>
-    <td width="10%" align="center" valign="middle" bgcolor="#ccc"><strong>actions</strong></td>
+  <tr class="manage-headers">
+    <td width="5%"  align="center" valign="middle"><strong>id</strong></td>
+    <td width="15%" align="center" valign="middle"><strong>locality name</strong></td>
+    <td width="37%" align="center" valign="middle"><strong>stratum</strong></td>
+    <td width="37%" align="center" valign="middle"><strong>linked fossils</strong></td>
+    <td width="10%" align="center" valign="middle"><strong>actions</strong></td>
   </tr>
 
 <?php
