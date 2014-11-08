@@ -79,6 +79,30 @@ $query = "SELECT * FROM publication_images WHERE PublicationID=". $treeImageID;
 $tree_image_info_results = mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 $tree_image_info = mysql_fetch_assoc($tree_image_info_results);
 
+// Fetch lineage from the most closely related NCBI node
+$query = 'SELECT clade_root_multitree_id FROM calibrations_by_NCBI_clade WHERE calibration_id='.$calibration_info['CalibrationID'];
+$results = mysql_query($query) or die ('Error in sql: '.$query.'|'. mysql_error());
+$row = mysql_fetch_array($results);
+$nearestNCBINodeMultitreeID = $row['clade_root_multitree_id'];
+mysql_free_result($results);
+// fetch information on the current node's ancestor path (NCBI only)
+$query = 'CALL getAllAncestors('. $nearestNCBINodeMultitreeID .', "TEMP_ancestors", "NCBI" )';
+$results = mysql_query($query) or die ('Error in sql: '.$query.'|'. mysql_error());
+// more info about ancestors
+$query = 'CALL getFullNodeInfo("TEMP_ancestors", "TEMP_ancestors_info" )';
+$results = mysql_query($query) or die ('Error in sql: '.$query.'|'. mysql_error());
+// filter results further
+$query = 'SELECT * FROM TEMP_ancestors_info 
+	WHERE source_tree = "NCBI"
+	  AND multitree_node_id IN (SELECT multitree_node_id FROM calibration_browsing_tree)';
+$result = mysql_query($query) or die ('Error in sql: '.$query.'|'. mysql_error());
+// gather all results into an array 
+$ancestors = array();
+while($row=mysql_fetch_assoc($result)) {
+	$ancestors[]=$row;
+}
+mysql_free_result($result);
+
 $PageTitle = 'View fossil calibration for '.$calibration_info['NodeName'];
 
 // open and print header template
@@ -108,6 +132,31 @@ function toggleFossilDetails(clicked) {
 <? } ?>
    <h1><?=$calibration_info['NodeName']?><!-- (ID: <?=$calibration_info['CalibrationID']?>) --></h1>
 </p>
+
+<? /*
+<pre><?= var_dump($ancestors) ?></pre>
+*/ ?>
+
+<div class="ancestor-path">
+	<strong>Lineage (NCBI)</strong>: 
+<?
+    if (count($ancestors) == 0) { 
+	// NOTE: This should never happen, but perhaps if tables are stale...
+?>
+	<i>This node has no ancestors.</i>
+<?
+    } else {
+	 $nthAncestor = 0;
+	 foreach ($ancestors as $row) {
+	 /* ?><br/><pre><? var_dump($row); ?></pre><? */
+		$nthAncestor++;
+		// show each ancestor as a breadcrumb/link in chain of ancestry ?>
+		<? if ($nthAncestor > 1) { ?><span class="path-divider">&raquo;</span><? } ?>
+		<a title="Browse to ancestor clade" href="/Browse.php?node=<?= $row['source_tree'] ?>:<?= $row['source_node_id'] ?>"><?= htmlspecialchars($row['uniquename']) ?><!-- [<?= $row['source_tree'] ?>] --></a>
+		<!-- TODO: provide a default identifier (eg, FCD-42:987) for unnamed nodes in submitted trees -->
+      <? }
+    } ?>
+</div><!-- end of .ancestor-path -->
 
 <p class="featured-information" style="overflow: hidden;">
 
