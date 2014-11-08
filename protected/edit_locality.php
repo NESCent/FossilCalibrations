@@ -156,51 +156,20 @@ $country_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_
 <script type="text/javascript">
 
    $(document).ready(function() {
-	initFossilAutocompleteWidgets();
+	// some basic form validation
 	$('#edit-locality-form').submit(function() {
-		if ($('#CollectionNumber').val().trim() === '') {
-			alert("Collection number field cannot be empty!");
+		if ($('#LocalityName').val().trim() === '') {
+			alert("Locality name cannot be empty!");
 			return false; // block form submission
 		}
+		if ($('#Stratum').val().trim() === '') {
+			alert("Stratum name cannot be empty!");
+			return false; // block form submission
+		}
+		// TODO: Block on empty PBDB collection number?
 		return true; // allow normal submission
 	});
    });
-
-   function initFossilAutocompleteWidgets() {
-	$('#AC_FossilPubID-display').not('.ui-autocomplete-input').autocomplete({
-		source: '/autocomplete_publications.php',
-		autoSelect: true,  // recognizes typed-in values if they match an item
-		autoFocus: true,
-		delay: 20,
-		minLength: 3,
-		focus: function(event, ui) {
-			///console.log("FOCUSED > "+ ui.item.FullReference);
-			// clobber any existing hidden value!?
-			$('#AC_FossilPubID').val('');
-			// override normal display (would show numeric ID!)
-			return false;
-		},
-		change: function(event, ui) {
-			///console.log("CHANGED TO ITEM > "+ ui.item);
-			if (!ui.item) {
-				// widget blurred with invalid value; clear any 
-				// stale values from the UI
-				$('#AC_FossilPubID-display').val('');
-				$('#AC_FossilPubID').val('');
-				$('#AC_FossilPubID-more-info').html('&nbsp;');
-			}
-		},
-		select: function(event, ui) {
-			///console.log("CHOSEN > "+ ui.item.FullReference);
-			$('#AC_FossilPubID-display').val(ui.item.label);
-			$('#AC_FossilPubID').val(ui.item.value);
-			$('#AC_FossilPubID-more-info').html(ui.item.FullReference);
-			// override normal display (would show numeric ID!)
-			return false;
-		},
-		minChars: 3
-	});
-   }
 
 </script>
 
