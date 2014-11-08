@@ -194,7 +194,7 @@ $query='SELECT * FROM L_CalibrationQuality';
 $calibrationquality_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 // list of all higher taxa
-$query='SELECT * FROM L_HigherTaxa';
+$query='SELECT * FROM L_HigherTaxa ORDER BY DisplayOrder';
 $highertaxa_list=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
 
 // list of all collection acronyms
@@ -1212,8 +1212,9 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
                     </td>
                 </tr>
                 <tr>
-                  <td width="21%" align="right" valign="middle"><strong>nearest parent clade:</strong></td>
-                  <td width="79%"><select name="HigherTaxon">
+                  <td width="21%" align="right" valign="top"><strong>"landmark" ancestor</strong></td>
+                  <td width="79%"> &nbsp;choose nearest;  used to order descendants in Browse results<br/>
+		    <select name="HigherTaxon">
                   <?php
 			$currentTaxon = testForProp($calibration_data, 'HigherTaxon', '');
 			while ($row = mysql_fetch_array($highertaxa_list)) {
@@ -1225,7 +1226,8 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 				}			
 			}
 		  ?>
-                  </select> &nbsp;(choose the most specific applicable group)</td>
+		    </select>
+		  </td>
                 </tr>
                 <tr>
                   <td width="21%" align="right" valign="middle"><strong>minimum age (Ma)</strong></td>

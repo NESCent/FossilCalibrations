@@ -278,7 +278,7 @@ $featuredPos = 0;
 
 // fetch all related calibrations
 // TODO: Simplify this query if all we need is node name and display URL!
-$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
+$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption, ht.DisplayOrder AS ht_display_order
 	FROM (
 		SELECT CF.CalibrationID, V . *
 		FROM View_Fossils V
@@ -287,7 +287,8 @@ $query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS Short
 	JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 				 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisTaxon) .')
 	LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-	ORDER BY HigherTaxon, NodeName, ShortName';
+	LEFT JOIN L_HigherTaxa ht ON ht.HigherTaxon = C.HigherTaxon
+	ORDER BY ht_display_order, NodeName, ShortName';
 $calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 
@@ -339,7 +340,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 	}
 
 	// fetch details on these calibrations
-	$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
+	$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption, ht.DisplayOrder AS ht_display_order
 		FROM (
 			SELECT CF.CalibrationID, V . *
 			FROM View_Fossils V
@@ -348,7 +349,8 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInCustomChildNodes) .')
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
-		ORDER BY HigherTaxon, NodeName, ShortName';
+		LEFT JOIN L_HigherTaxa ht ON ht.HigherTaxon = C.HigherTaxon
+		ORDER BY ht_display_order, NodeName, ShortName';
 	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 
 	// "wrap" each of these calibrations in a custom node of the same name
@@ -418,7 +420,7 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 		}
 
 		// TODO: Simplify this query if all we need is node name and display URL!
-		$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption
+		$query='SELECT DISTINCT TRIM(C.NodeName) AS NodeName, TRIM(C.ShortName) AS ShortName, C.*, img.image, img.caption AS image_caption, ht.DisplayOrder AS ht_display_order
 			FROM (
 				SELECT CF.CalibrationID, V . *
 				FROM View_Fossils V
@@ -427,8 +429,9 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 			RIGHT JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
 						 AND C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
 			LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
+			LEFT JOIN L_HigherTaxa ht ON ht.HigherTaxon = C.HigherTaxon
 			WHERE C.CalibrationID IN ('. implode(", ", $calibrationsInThisClade) .')
-			ORDER BY HigherTaxon, NodeName, ShortName';
+			ORDER BY ht_display_order, NodeName, ShortName';
 		$calibration_list2=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
 	}
 
