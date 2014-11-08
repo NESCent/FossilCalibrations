@@ -86,7 +86,7 @@ $row = mysql_fetch_array($results);
 $nearestNCBINodeMultitreeID = $row['clade_root_multitree_id'];
 mysql_free_result($results);
 // fetch information on the current node's ancestor path (NCBI only)
-$query = 'CALL getAllAncestors('. $nearestNCBINodeMultitreeID .', "TEMP_ancestors", "NCBI" )';
+$query = 'CALL getAllAncestors("'. $nearestNCBINodeMultitreeID .'", "TEMP_ancestors", "NCBI" )';
 $results = mysql_query($query) or die ('Error in sql: '.$query.'|'. mysql_error());
 // more info about ancestors
 $query = 'CALL getFullNodeInfo("TEMP_ancestors", "TEMP_ancestors_info" )';
@@ -134,7 +134,7 @@ function toggleFossilDetails(clicked) {
 </p>
 
 <? /*
-<pre><?= var_dump($ancestors) ?></pre>
+<pre><?= var_dump($calibration_info) ?></pre>
 */ ?>
 
 <div class="ancestor-path">
@@ -190,9 +190,18 @@ function toggleFossilDetails(clicked) {
 -->
 </td><td width="10%">&nbsp;</td></tr>
 
-<tr><td width="10%">&nbsp;</td><td align="left" valign="top">
-	<i class="small_orange">recommended citations</i><br><b><?=$calibration_info['ShortName']?></b>
-</td><td width="10%">&nbsp;</td></tr>
+<tr><td width="10%">&nbsp;</td>
+    <td align="left" valign="top">
+	<i class="small_orange">recommended citations</i><br>
+      <? if ($calibration_info['DOI']) { ?>
+	<a style="float: right;" target="_blank" href="<?= formatDOIForHyperlink($calibration_info['DOI']) ?>">
+		<b><?=$calibration_info['DOI']?></b>
+	</a>
+      <? } ?>
+	<b><?=$calibration_info['ShortName']?></b>
+    </td>
+    <td width="10%">&nbsp;</td>
+</tr>
 
 <tr><td width="10%">&nbsp;</td><td align="left" valign="top">
 	<i class="small_orange">node minimum age </i><br><b><?=$calibration_info['MinAge']?> Ma</b> 
