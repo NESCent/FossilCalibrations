@@ -146,23 +146,10 @@ print_r($query);
       $all_fossils[$i]['phylo_pub_data'] = $phylo_pubs;
    }
 
+/*
 ?><pre><?
 print_r($all_fossils);
 ?></pre><?
-
-/*
-	// retrieve explicit (directly entered) tip pairs
-	$query="SELECT * 
-		FROM Link_CalibrationPair 
-		JOIN Link_Tips ON Link_CalibrationPair.TipPairsID = Link_Tips.PairID 
-		WHERE CalibrationID = '". $CalibrationID ."'
-		ORDER BY PairID";
-	$result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-	$tip_pair_data = array();
-	while($row=mysql_fetch_assoc($result)) {
-		$tip_pair_data[] = $row;
-	}
-	mysql_free_result($result);
 */
 
 	// retrieve node-definition hints for side A
