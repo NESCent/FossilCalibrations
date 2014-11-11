@@ -14,6 +14,11 @@ require('../../config.php');
 $connection=mysql_connect($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password']) or die ('Unable to connect!');
 mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 
+/* show raw POSTed vars and stop
+echo '<pre>'.print_r($_POST, true).'</pre>';
+return;
+*/
+
 // check nonce (one-time key) to make sure this is not an accidental re-submit
 if ($_SESSION['nonce'] != $_POST['nonce']) {
     echo 'This form has already been submitted!';  
@@ -23,8 +28,6 @@ if ($_SESSION['nonce'] != $_POST['nonce']) {
     // clear the session nonce and keep going
     $_SESSION['nonce'] = null;
 }
-
-///echo '<pre>'.print_r($_POST, true).'</pre>';
 
 $addOrEdit = $_POST['addOrEdit']; // should be 'ADD' or 'EDIT'
 
@@ -63,7 +66,7 @@ $newFossilsToLink = Array();
 // stash some ordered values so that we can store them in Link_CalibrationFossil later
 $finalFossilIDs = Array();
 $finalFossilSpeciesNames = Array();
-$finalFossilPhyloPubIDs = Array();
+$finalFossilPubIDs = Array();
 
 foreach($fossil_positions as $pos) {
 
@@ -181,33 +184,6 @@ foreach($fossil_positions as $pos) {
          break;
    }
 
-   /* Add or update the phylogeny publication record
-    */
-   switch( $_POST["newOrExistingPhylogenyPublication-$pos"] ) {
-      case 'ASSIGNED':
-         $phyloPubID = $_POST["PreviouslyAssignedPhyloPub-$pos"]; // TODO
-         break;
-
-      case 'REUSE_FOSSIL_PUB':
-         // special case! allow re-use of the fossil publication here
-         $phyloPubID = $fossilPubID;
-         break;
-
-      case 'EXISTING':
-         $phyloPubID = $_POST["PhyPub-$pos"];
-         break;
-
-      case 'NEW':
-         // add phylogeny publication record
-         $query="INSERT INTO publications SET
-                ShortName = '". mysql_real_escape_string($_POST["PhyloShortForm-$pos"]) ."'
-               ,FullReference = '". mysql_real_escape_string($_POST["PhyloFullCite-$pos"]) ."'
-               ,DOI = '". mysql_real_escape_string($_POST["PhyloDOI-$pos"]) ."'";
-         $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-         $phyloPubID = mysql_insert_id();
-         break;
-   }
-
    /* Add or update the fossil record (in table fossils). NOTE that this will alter
     * values that may be shared with other calibrations. Perhaps it needs a warning?
     */ 
@@ -269,7 +245,7 @@ foreach($fossil_positions as $pos) {
    // stash final values for later
    $finalFossilIDs[$pos] = $fossilID;
    $finalFossilSpeciesNames[$pos] = $fossilSpeciesName;
-   $finalFossilPhyloPubIDs[$pos] = $phyloPubID;
+   $finalFossilPubIDs[$pos] = $fossilPubID;
 }
 
 /* Add or update the main calibration record
@@ -369,6 +345,7 @@ foreach($newFossilsToLink as $addFossilID) {
 foreach($fossil_positions as $pos) {
    // fetch its "subjective" values and store in the link record
    $fossilID = $finalFossilIDs[$pos];
+   $fossilPubID = $finalFossilPubIDs[$pos];
    $newValues = "
           Species = '". mysql_real_escape_string($finalFossilSpeciesNames[$pos]) ."'
          ,FossilLocationRelativeToNode = '". mysql_real_escape_string($_POST["RelativeLocation-$pos"]) ."'
@@ -381,7 +358,6 @@ foreach($fossil_positions as $pos) {
          ,TieDatesToGeoTimeScaleBoundary = '". isset($_POST["TieDatesToGeoTimeScaleBoundary-$pos"]) ."'
          ,PhyJustificationType = '". mysql_real_escape_string($_POST["PhyJustType-$pos"]) ."'
          ,PhyJustification = '". mysql_real_escape_string($_POST["PhyJustification-$pos"]) ."'
-         ,PhyloPub = '". mysql_real_escape_string($finalFossilPhyloPubIDs[$pos]) ."'
    ";
    $query="UPDATE Link_CalibrationFossil 
       SET $newValues
@@ -391,8 +367,70 @@ foreach($fossil_positions as $pos) {
       FossilID = '". mysql_real_escape_string($fossilID) ."'
    ";
    $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-}
 
+   /* Clear and reset phylogeny publications for this linked fossil. (These
+    * links are dumb as a box of rocks, so there's no harm in doing this.)
+    */
+
+   // first we need to get the actual FCLinkID for this linked fossil
+   $query="SELECT FCLinkID FROM Link_CalibrationFossil 
+   WHERE
+      CalibrationID = '". mysql_real_escape_string($calibrationID) ."'
+   AND 
+      FossilID = '". mysql_real_escape_string($fossilID) ."'
+   ";
+   $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+   $row=mysql_fetch_assoc($result);
+   $fcLinkID=$row['FCLinkID'];
+
+   // clear any previously defined phylo-publications for this linked fossil
+   $query="DELETE FROM Link_PhyloPublication_LinkedFossil
+             WHERE LinkedFossilID = '". mysql_real_escape_string($fcLinkID) ."'";
+   $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+
+   // round up all new phylo-pub IDs here, including for NEW and FOSSIL pubs
+   $pubValues = Array();
+   $phyloPubPositions = $_POST[ 'fossil_'.$pos.'_phylopub_positions' ];
+   foreach($phyloPubPositions as $ppPos) {
+      // check for valid PublicationID information before saving
+      $ppPubID = $_POST[ 'PhyPub-PubID-'.$pos.'-'.$ppPos ];
+      $ppShortName = $_POST[ 'PhyPub-ShortName-'.$pos.'-'.$ppPos ];
+      $ppFullReference = $_POST[ 'PhyPub-FullReference-'.$pos.'-'.$ppPos ];
+      $ppDOI = $_POST[ 'PhyPub-DOI-'.$pos.'-'.$ppPos ];
+      switch($ppPubID) {
+         case 'NEW':
+            // create a new publication record and use its ID
+            $query="INSERT INTO publications SET
+                     ShortName = '". mysql_real_escape_string( $ppShortName ) ."'
+                    ,FullReference = '". mysql_real_escape_string( $ppFullReference ) ."'
+                    ,DOI = '". mysql_real_escape_string( $ppDOI ) ."'";
+            $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+            $ppPubID = mysql_insert_id();
+            break;
+         case 'FOSSIL':
+            // interpret the fossil publication record above, and use its ID
+            $ppPubID = $fossilPubID;  // set above
+            break;
+         default:
+            // assume it's valid and numeric
+      }
+      if (empty($ppPubID)) {
+         // SKIP this publication, it's incomplete (or an undefined fossil publication)
+         continue;
+      }
+        
+      $pubValues[] = "('". 
+         mysql_real_escape_string($ppPubID) ."','".     // PhyloPublicationID
+         mysql_real_escape_string($fcLinkID) ."')";     // LinkedFossilID 
+   }
+
+   // make sure we have at least one valid row (phylo-publication) to save for this linked fossil
+   if (count($pubValues) > 0) {
+           $query="INSERT INTO Link_PhyloPublication_LinkedFossil 
+                (PhyloPublicationID, LinkedFossilID) VALUES ". implode(",", $pubValues);
+           $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+   }
+}
 
 /*
  * Add or update node definition for this calibration

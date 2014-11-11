@@ -734,3 +734,22 @@ tr.manage-headers td {
 	color: #333;
 }
 
+div.phylo-pub-info {
+    overflow: hidden; 
+    padding: 4px 0 8px;
+}
+div.phylo-pub-info input[type=button] {
+    float: right;
+    font-size: 0.8em;
+}
+div.phylo-pub-info .phylo-pub-badge {
+    display: none;
+    /* background-color: #bbdff8; */
+    /* background-color: #ffa; */
+    background-color: #ffd;
+    margin: 0 8px;
+    color: #555;
+    padding: 4px 5px;
+    line-height: 
+    font-family: Helvetica,Verdana,Arial,sans-serif;
+}

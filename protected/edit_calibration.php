@@ -129,17 +129,26 @@ echo "</pre>";
       mysql_free_result($result);
 
       // retrieve phylogeny pub
-      $query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['PhyloPub']."'";
+      //$query="SELECT * FROM publications WHERE PublicationID = '".$fossil_data['PhyloPub']."'";
+      $query="SELECT * FROM publications WHERE PublicationID IN (SELECT PhyloPublicationID FROM Link_PhyloPublication_LinkedFossil WHERE LinkedFossilID='".$fossil_data['FCLinkID']."')";
+/*
+?><pre><?
+print_r($fossil_data);
+print_r($query);
+?></pre><?
+*/
       $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
-      $all_fossils[$i]['phylo_pub_data'] = mysql_fetch_assoc($result);
+      $phylo_pubs = array();
+      while($pprow = mysql_fetch_assoc($result)){
+	$phylo_pubs[] = $pprow;
+      }
       mysql_free_result($result);
+      $all_fossils[$i]['phylo_pub_data'] = $phylo_pubs;
    }
 
-/*
 ?><pre><?
 print_r($all_fossils);
 ?></pre><?
-*/
 
 /*
 	// retrieve explicit (directly entered) tip pairs
@@ -499,7 +508,9 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 			minChars: 3
 		});
 
-		$('[id^=AC_PhyloPubID-display-]').not('.ui-autocomplete-input').autocomplete({
+		/* REMINDER: We allow multiple phylo-publications per fossil, so identifiers will
+		 * include both fossil-number and phylo-publication-numbers! */
+		$('[id^=AC_PhyloPubID-display-]').not('#AC_PhyloPubID-display-_FOSSIL_NUMBER_-_PHYLO_PUB_NUMBER_, .ui-autocomplete-input').autocomplete({
 			source: '/autocomplete_publications.php',
 			autoSelect: true,  // recognizes typed-in values if they match an item
 			autoFocus: true,
@@ -507,29 +518,42 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 			minLength: 3,
 			focus: function(event, ui) {
 				///console.log("FOCUSED > "+ ui.item.FullReference);
-            var pos = getFossilPosition( event.target );
+				//var pos = getFossilPosition( event.target );
+				var fieldIDParts = $( event.target ).attr('id').split('-');
+				var phyloPubPos = fieldIDParts.pop();
+				var fossilPos = fieldIDParts.pop();
 				// clobber any existing hidden value!?
-				$('#AC_PhyloPubID-'+pos).val('');
+				$('#AC_PhyloPubID-'+fossilPos+'-'+phyloPubPos).val('');
+				$('#PhyloPubDOI-'+fossilPos+'-'+phyloPubPos).val('');
 				// override normal display (would show numeric ID!)
 				return false;
 			},
 			change: function(event, ui) {
 				///console.log("CHANGED TO ITEM > "+ ui.item);
-            var pos = getFossilPosition( event.target );
+				//var pos = getFossilPosition( event.target );
+				var fieldIDParts = $( event.target ).attr('id').split('-');
+				var phyloPubPos = fieldIDParts.pop();
+				var fossilPos = fieldIDParts.pop();
 				if (!ui.item) {
 					// widget blurred with invalid value; clear any 
 					// stale values from the UI
-					$('#AC_PhyloPubID-display-'+pos).val('');
-					$('#AC_PhyloPubID-'+pos).val('');
-					$('#AC_PhyloPubID-more-info-'+pos).html('&nbsp;');
+					$('#AC_PhyloPubID-display-'+fossilPos+'-'+phyloPubPos).val('');
+					$('#AC_PhyloPubID-'+fossilPos+'-'+phyloPubPos).val('');
+					$('#AC_PhyloPubID-more-info-'+fossilPos+'-'+phyloPubPos).html('&nbsp;');
+					$('#PhyloPubDOI-'+fossilPos+'-'+phyloPubPos).val('');
 				}
 			},
 			select: function(event, ui) {
 				///console.log("CHOSEN > "+ ui.item.FullReference);
-            var pos = getFossilPosition( event.target );
-				$('#AC_PhyloPubID-display-'+pos).val(ui.item.label);
-				$('#AC_PhyloPubID-'+pos).val(ui.item.value);
-				$('#AC_PhyloPubID-more-info-'+pos).html(ui.item.FullReference);
+				//var pos = getFossilPosition( event.target );
+				var fieldIDParts = $( event.target ).attr('id').split('-');
+				var phyloPubPos = fieldIDParts.pop();
+				var fossilPos = fieldIDParts.pop();
+				$('#AC_PhyloPubID-display-'+fossilPos+'-'+phyloPubPos).val(ui.item.label);
+				$('#AC_PhyloPubID-'+fossilPos+'-'+phyloPubPos).val(ui.item.value);
+				$('#AC_PhyloPubID-more-info-'+fossilPos+'-'+phyloPubPos).html(ui.item.FullReference);
+				// clear DOI (any non-empty value is from entering a new/abandoned pub)
+				$('#PhyloPubDOI-'+fossilPos+'-'+phyloPubPos).val('');
 				// override normal display (would show numeric ID!)
 				return false;
 			},
@@ -756,23 +780,11 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
       });
 	}
 	function updatePhylogenyPublicationWidgets() {
-      var $panels = getRelatedFossilPanels(this);
-      $panels.each(function() {
-         var $panel = $(this);
-         if ($panel.find('[id^=assignedPhylogenyPublication-]').is(':checked')) {
-            $panel.find('[id^=pick-existing-phylo-pub-]').hide();
-            $panel.find('[id^=enter-new-phylo-pub-]').hide();
-         } else if ($panel.find('[id^=existingPhylogenyPublication-]').is(':checked')) {
-            $panel.find('[id^=pick-existing-phylo-pub-]').show();
-            $panel.find('[id^=enter-new-phylo-pub-]').hide();
-         } else if ($panel.find('[id^=repeatFossilPublication-]').is(':checked')) {
-            $panel.find('[id^=pick-existing-phylo-pub-]').hide();
-            $panel.find('[id^=enter-new-phylo-pub-]').hide();
-         } else {
-            $panel.find('[id^=pick-existing-phylo-pub-]').hide();
-            $panel.find('[id^=enter-new-phylo-pub-]').show();
-         }		
-      });
+		var $panels = getRelatedFossilPanels(this);
+		return;  // nothing to do here now
+		$panels.each(function() {
+			var $panel = $(this);
+		});
 	}
 	function updateFossilSpeciesWidgets() {
       var $panels = getRelatedFossilPanels(this);
@@ -1089,6 +1101,102 @@ $relative_location_list=mysql_query($query) or die ('Error  in query: '.$query.'
 		$('input[name=deleteExistingTreeImage]').val('false');
 		$('#tree-image-preview img:eq(0)').attr({'src': '', 'alt': "Image will be added when saving changes."})
 	}
+
+	function addPhyloPublicationBlock( $fossilBlock, publicationID, shortName, fullReference, doi ) {
+		var $phyloPubList = $fossilBlock.find('.phylo-pub-info-list');  // N.B. for *this* linked fossil only!
+		var $fossilPanel = $fossilBlock.closest('.single-fossil-panel');
+		var fossilNumber = $fossilPanel.attr('id').split('-').pop();  // EXAMPLE: id="fossil-panel-3"
+		var highestPubNumber = 0;
+		$phyloPubList.find('.phylo-pub-info').each(function() {
+			var itsPubNum = $(this).find('input[name^=PhyPub-PubID-]').attr('name').split('-').pop();
+			highestPubNumber = Math.max(highestPubNumber, itsPubNum);
+		});
+		var newPhyloPubNumber = highestPubNumber + 1;
+		// clone the template and make substitutions
+		var newBlockHTML = $('#phylo_pub_info_template').html()
+		   .replace(/_FOSSIL_NUMBER_/g, fossilNumber)
+		   .replace(/_PHYLO_PUB_NUMBER_/g, newPhyloPubNumber)
+		   .replace(/_PUBLICATION_ID_/g, publicationID)
+		   .replace(/_SHORT_NAME_/g, shortName)
+		   .replace(/_FULL_REFERENCE_/g, fullReference )
+		   .replace(/_DOI_/g, doi );
+		var $newBlock = $(newBlockHTML);
+		$phyloPubList.append($newBlock);
+		// rebind all fossil widgets
+		initFossilAutocompleteWidgets();
+	}
+	function pickExistingPublicationAsPhyloPublication( clicked ) {
+		// add a new block with autocomplete behavior
+		var $fossilBlock = $(clicked).closest('div[id^=fossil-properties-]');
+		addPhyloPublicationBlock( $fossilBlock, '', '', '<i>Use the autocomplete field above (enter primary author) to find an existing publication.</i>', '' );
+	}
+	function reuseFossilPublicationAsPhyloPublication( clicked ) {
+		// remove any prior phylo-pub with FOSSIL id, replace with latest fossil pub above
+		var phyloPubID, shortName, fullReference;
+		var $fossilBlock = $(clicked).closest('div[id^=fossil-properties-]');
+		if ($fossilBlock.find('[id^=assignedFossilPublication-]').is(':checked')) {
+			phyloPubID = $fossilBlock.find('input[name^=PreviouslyAssignedFossilPub-]').val();
+			shortName = $fossilBlock.find('.PreviouslyAssignedFossilPubShortName').val();
+			fullReference = $fossilBlock.find('.PreviouslyAssignedFossilPubFullReference').html();
+		} else if ($fossilBlock.find('[id^=existingFossilPublication-]').is(':checked')) {
+			phyloPubID = $fossilBlock.find('input[name^=FossilPub-]').val();
+			shortName = $fossilBlock.find('input[id^=AC_FossilPubID-display-]').val();
+			fullReference = $fossilBlock.find('div[id^=AC_FossilPubID-more-info-]').html();
+		} else {  // entering a new publication for this
+			phyloPubID = 'FOSSIL';
+			shortName = $fossilBlock.find('input[id^=FossShortForm-]').val();
+			fullReference = $fossilBlock.find('input[id^=FossFullCite-]').val();
+			if (($.trim(shortName) === '') || ($.trim(fullReference) === '')) {
+				alert('For best results, please finish entering the full publication data above');	
+				return false;
+			}
+		}		
+		// remove any phylo-pub with the same ID (to reflect updates to fossil calibration above)
+		var $phyloPubList = $fossilBlock.find('.phylo-pub-info-list');  // N.B. for *this* linked fossil only!
+		$phyloPubList.find('.phylo-pub-info').each(function() {
+			var itsPubID = $(this).find('input[name^=PhyPub-PubID-]').val();
+			if (itsPubID === phyloPubID) {
+				alert("This will replace an existing phylogeny publication with the same ID '"+ itsPubID +"'");
+				$(this).remove();
+			}
+		});
+		addPhyloPublicationBlock( $fossilBlock, phyloPubID, shortName, fullReference, '' );
+	}
+	function addNewPhyloPublicationToDatabase( clicked ) {
+		var $fossilBlock = $(clicked).closest('div[id^=fossil-properties-]');
+		var $addPubForm = $fossilBlock.find('table[id^=enter-new-phylo-pub-]');
+		$addPubForm.find('[name=ShortName]').val('');
+		$addPubForm.find('[name=FullReference]').val('');
+		$addPubForm.find('[name=DOI]').val('');
+		$addPubForm.show();
+	}
+	function deletePhyloPublication( clicked ) {
+		if (!(confirm('Are you sure you want to remove this publication?'))) { return; }
+		var $chosenPubBlock = $(clicked).closest('div.phylo-pub-info');
+		$chosenPubBlock.remove();
+	}
+	function cancelNewPhyloPub( clicked ) {
+		var $fossilBlock = $(clicked).closest('div[id^=fossil-properties-]');
+		var $addPubForm = $fossilBlock.find('.add-form');
+		$addPubForm.find('[name=ShortName]').val('');
+		$addPubForm.find('[name=FullReference]').val('');
+		$addPubForm.find('[name=DOI]').val('');
+		$addPubForm.hide();
+	};
+	function acceptNewPhyloPub( clicked ) {
+		var $fossilBlock = $(clicked).closest('div[id^=fossil-properties-]');
+		var $addPubForm = $fossilBlock.find('.add-form');
+		var shortName = $addPubForm.find('[name=ShortName]').val();
+		var fullReference = $addPubForm.find('[name=FullReference]').val();
+		var doi = $addPubForm.find('[name=DOI]').val();
+		// clear and hide the form 
+		$addPubForm.find('[name=ShortName]').val('');
+		$addPubForm.find('[name=FullReference]').val('');
+		$addPubForm.find('[name=DOI]').val('');
+		$addPubForm.hide();
+		// add a block for the new phylo-publication
+		addPhyloPublicationBlock( $fossilBlock, 'NEW', shortName, fullReference, doi );
+	};
 </script>
 
 <form action="update_calibration.php" method="post" id="edit-calibration" enctype="multipart/form-data" autocomplete="off">
@@ -1518,6 +1626,45 @@ function node_definition_hint_row( $side, $hint, $hintPos ) {
 ?>
 </table>
 <?
+
+function phylo_publication_info_block( $fossilNumber, $phyloPubNumber, $publicationID, $shortName, $fullReference, $doi ) {
+    // generate markup for a single hint (taxon)
+    ?>
+        <div class="phylo-pub-info">
+	  <input type="text" name="fossil_<?= $fossilNumber ?>_phylopub_positions[]" value="<?= $phyloPubNumber ?>" 
+		readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
+          <input type="button" class="delete-phylo-pub" value="delete" onclick="deletePhyloPublication(this); return false;"/>
+	  <input type="text" id="AC_PhyloPubID-display-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" name="PhyPub-ShortName-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>"
+	 	 value="<?= $shortName ?>" />&nbsp;
+	  <input type="text" name="PhyPub-PubID-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" id="AC_PhyloPubID-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" 
+                 value="<?= $publicationID ?>" readonly="readonly" style="width: 65px; color: #999; text-align: center;"/>
+          <span class="phylo-pub-badge phylo-pub-matching-fossil-pub" style="display: none;">same as fossil calibration above]</span>
+          <span class="phylo-pub-badge phylo-pub-existing-publication" style="display: none;">existing publication</span>
+          <span class="phylo-pub-badge phylo-pub-new-publication" style="display: none;">new publication</span>
+	<!-- NOTE that we have both visible and hidden copies for the full reference text -->
+	  <div id="AC_PhyloPubID-more-info-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" class="text-excerpt"><?= $fullReference ?></div>
+	  <input type="hidden" name="PhyPub-FullReference-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" value="<?= $fullReference ?>" />
+	  <input type="hidden" name="PhyPub-DOI-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" id="PhyloPubDOI-<?= $fossilNumber ?>-<?= $phyloPubNumber ?>" 
+                 value="<?= $doi ?>" />
+        </div>
+    <?
+}
+
+// add a template for new phylo publications (added from client-side UI)
+?>
+<div id="phylo_pub_info_template" style="display: none; border: 1px dashed red;">
+<?= phylo_publication_info_block( 
+    '_FOSSIL_NUMBER_', 
+    '_PHYLO_PUB_NUMBER_', 
+    '_PUBLICATION_ID_', 
+    '_SHORT_NAME_', 
+    '_FULL_REFERENCE_',
+    '_DOI_');
+?>
+</div>
+<?
+
+
 
 //open and print page footer template
 require('../footer.php');

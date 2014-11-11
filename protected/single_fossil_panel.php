@@ -415,8 +415,9 @@ if(mysql_num_rows($geoltime_list)==0){
 	<table width="100%">
 		<tr>
 		<td>
-		<div class="text-excerpt" style="margin-top: -8px; margin-left: 20px;"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></div>
-	        <input type="hidden" name="PreviouslyAssignedFossilPub-<?=$i?>" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" />
+		<div class="text-excerpt PreviouslyAssignedFossilPubFullReference" style="margin-top: -8px; margin-left: 20px;"><?= testForProp($fossil_pub_data, 'FullReference', '&nbsp;') ?></div>
+	    <input type="hidden" name="PreviouslyAssignedFossilPub-<?=$i?>" value="<?= testForProp($fossil_pub_data, 'PublicationID', '') ?>" />
+	    <input type="hidden" class="PreviouslyAssignedFossilPubShortName" value="<?= testForProp($fossil_pub_data, 'ShortName', '') ?>" />
 		</td>
 		</tr>
 	</table>
@@ -702,50 +703,61 @@ if(mysql_num_rows($phyjusttype_list)==0){
                     
     <hr/>
 
-<? if ($showPreviouslyAssignedValues) { ?>
-    <p>
-	<input type="radio" name="newOrExistingPhylogenyPublication-<?= $i ?>" value="ASSIGNED" id="assignedPhylogenyPublication-<?=$i?>" checked="checked" /> 
-	<label for="assignedPhylogenyPublication-<?=$i?>">Re-use a <b>previously assigned phylogeny publication</b></label>
+    <!-- for n phylogeny publications, let's use a list with checkboxes, and a widget to add more -->
+    <p style="overflow: hidden;">
+        <label>Choose one or more <b>phylogeny publications</b></label>
+        <a href="/protected/manage_publications.php" target="_new" style="float: right; font-size: 80%;">Show all publications in a new window</a>
     </p>
-    <table width="100%">
-      <tr>
-	<td>
-		<div class="text-excerpt" style="margin-top: -8px; margin-left: 20px;"><?= testForProp($phylo_pub_data, 'FullReference', '&nbsp;') ?></div>
-	        <input type="hidden" name="PreviouslyAssignedPhyloPub-<?=$i?>" value="<?= testForProp($phylo_pub_data, 'PublicationID', '') ?>" />
-	</td>
-      </tr>
-    </table>
-<? } ?>
+    <table width="100%"><tr><td class="phylo-pub-info-list">
+<? if (is_array($phylo_pub_data)) { 
+        $fossilNum = $i;
+        $phylopubNum = 0;
+        foreach ($phylo_pub_data as $ppub) { 
+                $phylopubNum++;
+                // generate inline HTML block with its values
+                phylo_publication_info_block(
+                    $fossilNum, 
+                    $phylopubNum, 
+                    testForProp($ppub, 'PublicationID', ''), 
+                    testForProp($ppub, 'ShortName', ''), 
+                    testForProp($ppub, 'FullReference', '&nbsp;'),
+                    testForProp($ppub, 'DOI', '&nbsp;')
+                );
+        }
+  } ?>
+    </td></tr></table>
 
-    <p><input type="radio" name="newOrExistingPhylogenyPublication-<?= $i ?>" value="EXISTING" id="existingPhylogenyPublication-<?=$i?>" <?= $showPreviouslyAssignedValues ? '' : 'checked="checked"' ?>> 
-       <label for="existingPhylogenyPublication-<?=$i?>">Choose an existing <b>phylogeny publication</b></label></input></p>
-    <table id="pick-existing-phylo-pub-<?=$i?>" width="100%" border="0">
-      <tr>
-        <td width="25%" align="right" valign="top"><b>enter partial name</b></td>
-        <td width="75%">
-	      <input type="text" name="AC_PhyloPubID-display-<?= $i ?>" id="AC_PhyloPubID-display-<?=$i?>" value="<?= testForProp($phylo_pub_data, 'ShortName', '') ?>" />
-	      <input type="text" name="PhyPub-<?= $i ?>" id="AC_PhyloPubID-<?=$i?>" value="<?= testForProp($phylo_pub_data, 'PublicationID', '') ?>" readonly="readonly" style="width: 30px; color: #999; text-align: center;"/>
-                        <a href="/protected/manage_publications.php" target="_new" style="float: right;">Show all publications in a new window</a>
-	      <div id="AC_PhyloPubID-more-info-<?=$i?>" class="text-excerpt"><?= testForProp($phylo_pub_data, 'FullReference', '&nbsp;') ?></p>
-        </td>
-      </tr>
+    <table id="enter-new-phylo-pub-<?=$i?>" class="add-form" width="100%" border="0" style="display: none;">
+            <tr>
+              <td align="right" valign="top" width="30%"><strong>short form (author, date)</strong></td>
+              <td align="left" width="70%"><input type="text" name="ShortName" size="10" style="width: 50%;"></td>
+            </tr>
+            <tr>
+              <td align="right" valign="top" width="30%"><strong>full citation</strong></td>
+              <td align="left" width="70%"><input type="text" name="FullReference" style="width: 95%;"></td>
+            </tr>
+            <tr>
+              <td align="right" valign="top" width="30%"><strong>doi (or other url)</strong></td>
+              <td align="left" width="70%"><input type="text" name="DOI" size="10" style="width: 50%;"></td>
+            </tr>
+            <tr>
+              <td width="30%">&nbsp;</td>
+              <td align="left" width="70%">
+                <input type="button" style="font-size: 0.8em;" value="cancel" 
+                       onclick="cancelNewPhyloPub(this); return false;"/>
+                <input type="button" style="font-size: 0.8em;" value="OK" 
+                       onclick="acceptNewPhyloPub(this); return false;"/>
+              </td>
+            </tr>
     </table>
-    <p><input type="radio" name="newOrExistingPhylogenyPublication-<?= $i ?>" value="REUSE_FOSSIL_PUB" id="repeatFossilPublication-<?=$i?>"> <label for="repeatFossilPublication-<?=$i?>">... <b>or</b> re-use the fossil publication above</label></input></p>
-    <p><input type="radio" name="newOrExistingPhylogenyPublication-<?= $i ?>" value="NEW" id="newPhylogenyPublication-<?=$i?>"> <label for="newPhylogenyPublication-<?=$i?>">... <b>or</b> enter a new publication into the database</label></input></p>
-    <table id="enter-new-phylo-pub-<?=$i?>" class="add-form" width="100%" border="0">
-                    <tr>
-                      <td align="right" valign="top" width="30%"><strong>short form (author, date)</strong></td>
-                      <td align="left" width="70%"><input type="text" name="PhyloShortForm-<?= $i ?>" id="PhyloShortForm-<?=$i?>" size="10"></td>
-                    </tr>
-                    <tr>
-                      <td align="right" valign="top" width="30%"><strong>full citation</strong></td>
-                      <td align="left" width="70%"><input type="text" name="PhyloFullCite-<?= $i ?>" id="PhyloFullCite-<?=$i?>" style="width: 95%;"></td>
-                    </tr>
-                    <tr>
-                      <td align="right" valign="top" width="30%"><strong>doi (or other url)</strong></td>
-                      <td align="left" width="70%"><input type="text" name="PhyloDOI-<?= $i ?>" id="PhyloDOI-<?=$i?>" size="10"></td>
-                    </tr>
-    </table>
+    <div style="float: right; text-align: right; padding: 6px 0;">
+        <input type="button" id="add-previous-phylo-pub" style="font-size: 0.8em;" value="add an existing publication" 
+               onclick="pickExistingPublicationAsPhyloPublication(this); return false;"/>
+        <input type="button" id="add-fossil-pub-as-phylo-pub" style="font-size: 0.8em; margin-left: 12px;" value="copy fossil publication above"
+               onclick="reuseFossilPublicationAsPhyloPublication(this); return false;"/>
+        <input type="button" id="add-existing-phylo-pub" style="font-size: 0.8em; margin-left: 12px;" value="add a new publication to the database" 
+               onclick="addNewPhyloPublicationToDatabase(this); return false;"/>
+    </div>
 </div><!-- END of #fossil-properties-{#} -->
   </div><!-- END of individual fossil panel -->
 
