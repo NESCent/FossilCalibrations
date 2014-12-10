@@ -334,6 +334,38 @@ if ($primaryLinkedFossil !== null) {
 	</td>
 	<td width="10%">&nbsp;</td>
 </tr>
+<tr>
+	<td width="10%">&nbsp;</td>
+	<td align="left" valign="top">
+	    <i class="small_orange">phylogenetic reference(s)</i>
+	    <br/>
+	   <?  // retrieve phylogeny pub(s)
+	      $query="SELECT * FROM publications WHERE PublicationID IN (SELECT PhyloPublicationID FROM Link_PhyloPublication_LinkedFossil WHERE LinkedFossilID='".$primaryLinkedFossil['FCLinkID']."')";
+	      $result=mysql_query($query) or die ('Error  in query: '.$query.'|'. mysql_error());
+	      $phylo_pubs = array();
+	      while($pprow = mysql_fetch_assoc($result)){
+		$phylo_pubs[] = $pprow;
+	      }
+	      mysql_free_result($result);
+
+	      if (count($phylo_pubs) == 0) {
+		?><i>The linked fossil has no phylogentic references.</i><?
+	      } else {
+		      foreach ($phylo_pubs as $pubref) { ?>
+			<div class="reference-block">
+				<?= $pubref['FullReference'] ?>
+				<?php if(!empty($pubref['DOI'])) { 
+					echo '<br><font class="small_text"><a href="'. 
+					formatDOIForHyperlink($pubref['DOI']) 
+					.'" target="_blank">[View electronic resource]</font></a>'; 
+				} ?>
+			</div>
+		   <? } 
+	      }
+?>
+	</td>
+	<td width="10%">&nbsp;</td>
+</tr>
 <? } ?>
 
 <? // if there's a tree image mapped to this calibration, show it
