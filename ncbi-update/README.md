@@ -81,17 +81,81 @@ _The instructions below should be followed **every time** you update to the late
 5. Refresh FCDB tables and check for errors. Begin by using the FCDB website
    Admin Dashboard to drive some of the usual rebuilding tasks:
 
-    - **SKIP** SKIP Rebuild all calibration trees
+    - **SKIP** Rebuild all calibration trees
     - **DO** Update searchable multitree
     - **DO** Update auto-complete lists
     - **DO** Update calibrations-by-clade table
 
    This last step may complete successfully within a few minutes. If so,
-   congratulations! Most likely it will fail to complete, which means that a
-   calibrated node was pinned to a node in the NCBI taxonomy that has been
-   deleted in the latest version.
- 
-   _TODO: manual test for pinned + deleted nodes._
+   congratulations! You can skip to the next numbered step below. **If the
+   'Update calibrations-by-clade table' feature fails**, run this procedure
+   again from a MySQL console to see why. Typically this is due to pinned NCBI
+   nodes that no longer exists in the latest taxonomy, as shown here:
+   ```sql
+   mysql> CALL refreshCalibrationsByClade('FINAL');
+   PLEASE REFRESH THE NODE LOCATION for calibration 123
+   PLEASE REFRESH THE NODE LOCATION for calibration 98
+   ```
+   This can be resolved by resetting the node location in the affected
+   calibrations, using the normal web editor for calibrations. Simply retype
+   the taxon names in the auto-complete widgets on Side A and Side B, and note
+   when the IDs change in each case. Typically one or more of these will move
+   to a new node in NCBI (as a synonum), or you might need to choose a new
+   taxon name to locate the calibrated node.
 
-6. Review altered calibrations for correct placement in NCBI
+   Do this for each calibration shown in the MySQL console message above, then
+   re-try the call to refreshCalibrationsByClade until it completes normally.
+
+   **If this test fails even after revising the calibrated node location,**
+   return to the Admin Dashboard and rebuild the multitree and autocomplete
+   lists.  This may reveal new choices in the node-location UI that will solve
+   the problem.
+
+6. Check the Admin Dashboard to see if all indicators are green (up to date).
+   If not, re-run these tasks (generally from top to bottom) until everything
+   is green. Now we should have data integrity and normal behavior in the
+   Search and Browse tools.
+   
+7. Compare the old and new NCBI lineages to find which calibrations are in changing areas 
+   of the NCBI taxonomy. This is done by from the command line:
+   ```sh
+   cd ncbi-update
+   mysql -uroot -p < compare-after-NCBI-update.sql
+   ```
+   Watch the output of this script, which will end with a list of affected
+   calibration IDs. If there are changes close to the root of the NCBI
+   taxonomy, this might well include most of the calibrations in the system!
+   ```sh
+    +-----------------------------------------------------------------+
+    |                                                                 |
+    +-----------------------------------------------------------------+
+    | REVIEW THE CALIBRATIONS BELOW based on changes to NCBI lineage: |
+    +-----------------------------------------------------------------+
+    1 row in set (15.40 sec)
+
+    +----------------+
+    | calibration_id |
+    +----------------+
+    |             99 |
+    |            103 |
+    |            104 |
+   ..... ET CETERA .....
+    |            282 |
+    |            122 |
+    +----------------+
+    74 rows in set (15.40 sec)
+   ```
+
+   _NOTE that this list may include IDs from calibrations that have been
+   deleted from the system. In this case, please disregard the extra IDs._
+
+8. Review the altered calibrations for correct placement in the NCBI taxonomy.
+   This is probably best done in the Browse view of FCDB, but you might also
+   see changes in the Search tool when filtering by clade or tip taxa.
+
+   Most of the calibrations should be in sensible places. If you find problems
+   with the placement of a calibrated node, modify its location in the
+   calibration editor as described above. Then **remember to rebuild FCDB
+   tables** in the Admin Dashboard before proofing the results!
+
 
