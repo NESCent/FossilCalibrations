@@ -18,8 +18,8 @@ and 'root' credentials (or equivalent) in MySQL.
    ```
    ... or from the command shell:
    ```sh
-   # cd ncbi-update
-   # mysql -uroot -p < refreshCalibrationsByClade.sql
+   cd ncbi-update
+   mysql -uroot -p < refreshCalibrationsByClade.sql
    ```
    These commands are equivalent. Most examples below will use the command-shell
    form.
@@ -27,7 +27,7 @@ and 'root' credentials (or equivalent) in MySQL.
 2. Install new MySQL stored procedure **stashPinnedLineages** that records the
    NCBI lineage of all calibration trees in the system.
    ```sh
-   # mysql -uroot -p < stashPinnedLineages.sql
+   mysql -uroot -p < stashPinnedLineages.sql
    ```
 
 ### Update NCBI taxonomy and adjust calibrations
@@ -36,12 +36,13 @@ _The instructions below should be followed **every time** you update to the late
 
 1. Stash current NCBI lineages for later comparison
    ```sh
-   # cd ncbi-update
-   # mysql -uroot -p < stash-before-NCBI-update.sql
+   cd ncbi-update
+   mysql -uroot -p < stash-before-NCBI-update.sql
    ```
 
-2. Dump (back up) the current FCDB database, using the current date for the
-   filename.
+2. Dump (backup) the current FCDB database, using the current date for the
+   filename. This is strictly a precaution, so that you can revert the entire
+   database if the upgrade goes wrong somehow.
    ```sh
    cd db-dump
    mysqldump --user=root --password   \
@@ -66,8 +67,31 @@ _The instructions below should be followed **every time** you update to the late
    gunzip < gi_taxid_nucl.dmp.gz > gi_taxid_nucl.dmp 
    ```
 
-4. Refresh FCDB tables and check for errors
+4. Pull these dump files into MySQL, replacing the current `NCBI_nodes` and
+   `NCBI_names` tables. **NOTE that you should first modify this script to
+   match the absolute filesystem paths used above!**
+   ```sh
+   cd ncbi-update
+   mysql -uroot -p < update-NCBI-from-dump.sql
+   ```
+   If the script reports errors finding the files, please check the paths in
+   `update-NCBI-from-dump.sql`. Otherwise, wait several minuts for the script
+   to finish.
 
+5. Refresh FCDB tables and check for errors. Begin by using the FCDB website
+   Admin Dashboard to drive some of the usual rebuilding tasks:
 
-5. Review altered calibrations for correct placement in NCBI
+    - **SKIP** SKIP Rebuild all calibration trees
+    - **DO** Update searchable multitree
+    - **DO** Update auto-complete lists
+    - **DO** Update calibrations-by-clade table
+
+   This last step may complete successfully within a few minutes. If so,
+   congratulations! Most likely it will fail to complete, which means that a
+   calibrated node was pinned to a node in the NCBI taxonomy that has been
+   deleted in the latest version.
+ 
+   _TODO: manual test for pinned + deleted nodes._
+
+6. Review altered calibrations for correct placement in NCBI
 
