@@ -133,7 +133,7 @@ $NCBIStatus = $site_status['NCBI_status'];
       });
       $('#update-NCBI').unbind('click').click(function() {
          if (confirm('This feature is not currently available through the web. Its documentation will now open in a new window.')) {
-		window.open('https://github.com/NESCent/FossilCalibrations/tree/master/ncbi-update/README.md', '_blank');
+		window.open('https://github.com/NESCent/FossilCalibrations/tree/master/ncbi-update', '_blank');
 	 }
       });
 
