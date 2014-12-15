@@ -555,6 +555,6 @@ while(mysqli_more_results($mysqli)) {
 ///echo '<a href="/protected/edit_calibration.php?id='. $calibrationID .'">return to editor</a><br/><br/>';
 
 // bounce back to the edit page? or a simple result page
-header('Location: https://'. $_SERVER['HTTP_HOST'] .'/protected/edit_calibration.php?id='. $calibrationID .'&result=success');
 exit();
+header('Location: https://'. $SITEINFO['secure_hostname_and_port'] .'/protected/edit_calibration.php?id='. $calibrationID .'&result=success');
 ?>
