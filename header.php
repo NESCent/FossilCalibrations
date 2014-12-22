@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <?php 
    require_once('FCD-helpers.php');
-	if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database (The Dating Site)'; 
+	if (!isset($PageTitle)) $PageTitle = 'Fossil Calibration Database'; 
 ?>
 <title><?= $PageTitle ?></title>
 
