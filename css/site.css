@@ -405,7 +405,7 @@ dl.filter-list dd.blocked-filter {
 	width: auto;
 }
 .search-result .details {
-	font-size: 0.8em;
+	font-size: 0.9em;
 }
 .search-result a.more {
 	font-size: 0.9em;
@@ -490,6 +490,18 @@ td.small_orange {
 	margin: 0 auto;
 	padding-left: 20px;
 	padding-right: 20px;
+}
+#inner-footer {
+	color: #fff;
+	padding: 0.5em 0;
+	line-height: 1.4em;
+	font-size: 0.9em;
+}
+#inner-footer a {
+	color: #fff !important;
+}
+#inner-footer a:hover {
+	background-color: #000 !important;
 }
 #main {
 	background-color: #fff;
