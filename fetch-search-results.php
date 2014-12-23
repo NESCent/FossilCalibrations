@@ -62,7 +62,8 @@ $forcedSort = null;
 // connect to mySQL server and select the Fossil Calibration database (using newer 'msqli' interface)
 $mysqli = new mysqli($SITEINFO['servername'],$SITEINFO['UserName'], $SITEINFO['password'], 'FossilCalibration');
 
-
+// if search is a total bust (no results), we'll clear all search widgets using Javascript
+$clearFailedSearch = false;
 
 /*
  * Building top-level search logic here for now, possibly move this into stored procedure later..?
@@ -495,13 +496,18 @@ function getRelationshipFromResult( $result, $relType ) {
 
 // still here? then build HTML markup for the results
 if (count($searchResults) == 0) { 
+	// clear all search text and filters in the new page
+	$clearFailedSearch = true;
 ?>
-	<p style="font-style: italic;">No matching calibrations found. To see more results, simplify your search by removing text above or hiding filters.</p>
+	<p style="color: #c44; font-style: italic;">No matching calibrations found. Please try another search.</p>
+	<p style="color: #c44; font-style: italic;">
+		<b>Note: We've cleared any search text above and reset all the search filters at left.</b>
+	</p>
 	<? $usingCladisticFilters = (filterIsActive('FilterByTipTaxa') && !(empty($search['FilterByTipTaxa']['TaxonA']) && empty($search['FilterByTipTaxa']['TaxonB'])))
 				 || (filterIsActive('FilterByClade') && !(empty($search['FilterByClade'])));
 
 	   if (!$usingCladisticFilters) { // ie, the only search was on "simple text" ?>
-	<p style="color: #c44; font-style: italic;">IMPORTANT: To search by <b>clade</b> or <b>taxa</b>, use the filters at left.</p>
+	<p style="color: #c44; font-style: italic;">REMINDER: To search by <b>clade</b> or <b>taxa</b>, use the filters at left.</p>
 	<? }
 } else {
 

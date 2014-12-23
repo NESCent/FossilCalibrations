@@ -268,6 +268,17 @@ function activateFilter(filterName) {
 	$('input:hidden[name^=BlockedFilters][value=FilterBy'+ filterName +']').attr('disabled', 'disabled');
 }
 
+function clearAllSearchValues() {
+	// clear search text and all filters
+	$('#SimpleSearch').val('');
+	var filterNames = ['TipTaxa', 'Clade', 'Age', 'GeologicalTime'];
+	$.each(filterNames, function(i, fname) {
+		unblockFilter(fname);
+		hideFilter(fname);
+	});
+}
+
+
 function updateFilterList(option) {
 	var $filterArea = $('.filter-list');
 
@@ -329,6 +340,9 @@ function updateFilterList(option) {
 }
 
 $(document).ready(function() {
+      <? if ($clearFailedSearch) { ?>
+	clearAllSearchValues();
+      <? } ?>
 	updateFilterList();
 
 	// bind expanding/collapsing advanced search filters
