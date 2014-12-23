@@ -62,7 +62,7 @@ if (empty($nodeValues) || !strpos($nodeValues, ':')) {
 list($nodeSource, $nodeSourceID) = explode(':', $nodeValues);
 
 // check that nodeSourceID is an integer.
-if(!preg_match('/^\d+$/', $nodeSourceID)) {
+if(!preg_match('/^-?\d+$/', $nodeSourceID)) {
   // Invalid input in nodeSourceID
   $nodeSourceID = '';
 }
