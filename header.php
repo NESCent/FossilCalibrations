@@ -113,7 +113,7 @@ TODO: <script type="text/javascript" src="/js/jquery-ui-1.9.2.custom.min.js"></s
 -->
 <? } else { ?>
 	    <li>
-		<a href="mailto:contact@calibrations.palaeo-electronica.org?subject=FCD%20feedback">Contact Us</a>
+		<a href="mailto:calibrations@palaeo-electronica.org?subject=FCD%20feedback">Contact Us</a>
 	    </li>
 <? } ?>
 	</ul>

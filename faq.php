@@ -102,7 +102,7 @@ Advanced Search filters also permit searching for calibrations within a range of
 What if I can't find a calibration for my clade of interest?
 </dt>
 <dd>
-If no results are found, no calibration meeting the best practices standards has been submitted and reviewed. New contributions are welcome! See <a href="#how-can-i-contribute">“How can I contribute?”</a> for more information. If you are looking for a particular calibration, but aren’t in a position to contribute, please leave us feedback so that we can try and solicit a publication in that area. (Just click the <em>Contact Us</em> link in the site header, or send an email to <a href="mailto:contact@calibrations.palaeo-electronica.org?subject=FCD%20feedback">contact@calibrations.palaeo-electronica.org</a>)
+If no results are found, no calibration meeting the best practices standards has been submitted and reviewed. New contributions are welcome! See <a href="#how-can-i-contribute">“How can I contribute?”</a> for more information. If you are looking for a particular calibration, but aren’t in a position to contribute, please leave us feedback so that we can try and solicit a publication in that area. (Just click the <em>Contact Us</em> link in the site header, or send an email to <a href="mailto:calibrations@palaeo-electronica.org?subject=FCD%20feedback">calibrations@palaeo-electronica.org</a>)
 </dd>
 
 <dt>
@@ -130,7 +130,7 @@ If you would like to provide calibration for a clade not already present in the 
 How do I contact the Database Administration?
 </dt>
 <dd>
-Just click the <em>Contact Us</em> link in the site header, or send an email to <a href="mailto:contact@calibrations.palaeo-electronica.org?subject=FCD%20feedback">contact@calibrations.palaeo-electronica.org</a>
+Just click the <em>Contact Us</em> link in the site header, or send an email to <a href="mailto:calibrations@palaeo-electronica.org?subject=FCD%20feedback">calibrations@palaeo-electronica.org</a>
 </dd>
 
 <dt>

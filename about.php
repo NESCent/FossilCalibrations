@@ -11,7 +11,7 @@ require('header.php');
 		<a href="#fcd-purpose">Purpose</a>
 		<a href="#fcd-support">Support</a>
 		<a href="#fcd-people">People</a>
-		<a href="mailto:contact@calibrations.palaeo-electronica.org?subject=FCD%20feedback">Contact Us</a>
+		<a href="mailto:calibrations@palaeo-electronica.org?subject=FCD%20feedback">Contact Us</a>
 	</div>
 </div>
 
