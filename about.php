@@ -39,19 +39,19 @@ the National Evolutionary Synthesis Center (NSF EF-0905606).
 <h3 id="fcd-people" class="contentheading" style="margin-top: 8px; line-height: 1.25em;">People</h3>
 <img src="/images/meeting-0.jpg"/>
 <p class="caption">
-The initial "Fossil Calibrations Meeting," A Biodiversity Synthesis Meeting funded by John D. and Catherine T. MacArthur Foundation funding of the Biodiversity Synthesis Group of the Encyclopedia of Life. The meeting was held at the University of Bristol on September 22nd, 2009. Members include (Front row, left to right) Jason Head, Michael Benton, Tyler Calway, Philip Donoghue, Ken Angielczyk, James Tarver, Jenny Greenwood, Nathan Smith, Peter Makovicky, James Parham (leader). Chris Bell, Jun Inoue; (Back row, left to right): Randall Irmis, Marcel van Tuinen, Christy Hipsley, Ziheng Yang, Daniel Ksepka, Walter Joyce, Patricia Holroyd, Jessica Theodor, Rachel Warnock, Louis Jacobs.
+The initial "Fossil Calibrations Meeting," A Biodiversity Synthesis Meeting funded by John D. and Catherine T. MacArthur Foundation funding of the Biodiversity Synthesis Group of the Encyclopedia of Life. The meeting was held at the University of Bristol on September 22nd, 2009. Members include (Front row, left to right) Jason Head, Michael Benton, Tyler Calway, Philip Donoghue, Ken Angielczyk, Krister Smith, James Tarver, Jenny Greenwood, Nathan Smith, Peter Makovicky, James Parham (leader). Chris Bell, Jun Inoue; (Back row, left to right): Randall Irmis, Marcel van Tuinen, Christy Hipsley, Johannes Müller, Ziheng Yang, Daniel Ksepka, Walter Joyce, Patricia Holroyd, Jessica Theodor, Rachel Warnock, Louis Jacobs.
 </p>
 <br/>
 <br/>
 <img src="/images/meeting-1.jpg"/>
 <p class="caption">
-The first Working Group Meeting for the Fossil Calibration Database was held at NESCent March 3rd-6th, 2011. Members include (Left to right): José Patané, James Parham (co-leader), Marcel van Tuinen, Jessica Ware, Elizabeth Hermsen (barely visible), Kristin Lamm, Matthew Carrano, Maria Gandolfo,  Jason Head, Matthew Phillips, Daniel Ksepka (co-leader), Rachel Warnock, Walter Joyce, Michael Benton.
+The first Working Group Meeting for the Fossil Calibration Database was held at NESCent March 3rd-6th, 2011. Members include (Left to right): José Patané, James Parham (co-leader), Marcel van Tuinen, Jessica Ware, Elizabeth Hermsen (barely visible), Kristin Lamm, Matthew Carrano, Maria Gandolfo Nixon,  Jason Head, Matthew Phillips, Daniel Ksepka (co-leader), Rachel Warnock, Walter Joyce, Michael Benton.
 </p>
 <br/>
 <br/>
 <img src="/images/meeting-2.jpg"/>
 <p class="caption">
-The second Working Group Meeting for the Fossil Calibration Database was held at NESCent March 28th-April 1st, 2012. Members include (Left to right): Kristin Lamm, Rachel Warnock, Daniel Ksepka (co-leader),  Nathan Smith, Randall Irmis, David Polly, Rachel Ware, Elizabeth Hermsen, James Parham (co-leader), José Patané.
+The second Working Group Meeting for the Fossil Calibration Database was held at NESCent March 28th-April 1st, 2012. Members include (Left to right): Kristin Lamm, Rachel Warnock, Daniel Ksepka (co-leader),  Nathan Smith, Randall Irmis, David Polly, Jessica Ware, Elizabeth Hermsen, James Parham (co-leader), José Patané. Not shown: Adam Smith, Marcel van Tuinen.
 </p>
 <br/>
 <br/>
