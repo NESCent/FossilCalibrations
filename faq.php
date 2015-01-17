@@ -116,7 +116,10 @@ Browse to the calibration page, then click <em>Comment on this calibration</em> 
 How do I download data?
 </dt>
 <dd>
-From any page of search results, click the <em>Download</em> button to download a list of results as JSON or text. From any calibration page, click <em>Download</em> to download the entire calibration as JSON or text. An API is coming!
+<? /*
+From any page of search results, click the <em>Download</em> button to download a list of results as JSON or text. From any calibration page, click <em>Download</em> to download the entire calibration as JSON or text.
+*/ ?>
+Data download features and a <a href="https://github.com/NESCent/fcdb-api">comprehensive data API</a> are coming soon.
 </dd>
 
 <dt id="how-can-i-contribute">
@@ -161,12 +164,14 @@ How should I cite calibrations from the database?
 <p>
 If you use a calibration, please cite the original paper listed at the top of the results page. You can download a PDF of Fossil Calibration Series papers by clicking “view electronic resource”.  
 </p>
+<? /* TODO: Restore this once the SysBio paper has been published
 <p>
 The preferred citation for the database itself is listed below, but should not be used in place of citing the original papers when using specific calibrations. 
 </p>
 <pre>
 [Title of Systematic Biology Paper]
 </pre>
+*/ ?>
 <p>
 In cases where originally reported results have been updated in the database, please cite the original paper and also cite the database as follows:
 </p>
