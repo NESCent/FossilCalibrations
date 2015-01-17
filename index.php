@@ -132,7 +132,7 @@ mysql_select_db('FossilCalibration') or die ('Unable to select database!');
 			The Fossil Calibration Database is a curated
 			collection of well-justified calibrations, including many published in the
 			journal <a href="http://palaeo-electronica.org/" target="_blank">Palaeontologia Electronica</a>. We also promote best practices for
-			<a href="#">justifying fossil calibrations</a> and <a href="#">citing calibrations</a> 
+			<a href="http://sysbio.oxfordjournals.org/content/61/2/346.short">justifying fossil calibrations</a> and citing calibrations 
 			properly.
 		</p>
 
