@@ -119,7 +119,7 @@ How do I download data?
 <? /*
 From any page of search results, click the <em>Download</em> button to download a list of results as JSON or text. From any calibration page, click <em>Download</em> to download the entire calibration as JSON or text.
 */ ?>
-Data download features and a <a href="https://github.com/NESCent/fcdb-api">comprehensive data API</a> are coming soon.
+Data download features and a <a href="https://github.com/NESCent/FossilCalibrations/wiki/Application-Programming-Interface-(API)">comprehensive data API</a> are coming soon.
 </dd>
 
 <dt id="how-can-i-contribute">
