@@ -149,12 +149,11 @@ if (!empty($search['SimpleSearch'])) {
 		// execute query
 		mysqli_stmt_execute($stmt);
 
-		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
+		mysqli_stmt_bind_result($stmt, $stmtCalibrationID);
 
-?><div class="search-details">SIMPLE-SEARCH RESULT:<br/><?= htmlentities(print_r($result, TRUE)); ?></div><?
 		// TODO: sort/sift from all the results lists above
-		while($row=mysqli_fetch_assoc($result)) {
-			$matching_calibration_ids[] = $row['CalibrationID'];
+		while(mysqli_stmt_fetch($stmt)) {
+			$matching_calibration_ids[] = $stmtCalibrationID;
 		}
 
 		if (count($matching_calibration_ids) > 0) {
@@ -324,12 +323,13 @@ if (filterIsActive('FilterByAge')) {
 		mysqli_stmt_bind_param($stmt, "iiii", $search['FilterByAge']['MinAge'], $search['FilterByAge']['MinAge'], $search['FilterByAge']['MaxAge'], $search['FilterByAge']['MaxAge']);
 		mysqli_stmt_execute($stmt);
 
-		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
+		mysqli_stmt_bind_result($stmt, $stmtCalibrationID);
 
-		// TODO: sort/sift from all the results lists above
-		while($row=mysqli_fetch_assoc($result)) {
-			$matching_calibration_ids[] = $row['CalibrationID'];
+		// sort/sift from all the results lists above
+		while(mysqli_stmt_fetch($stmt)) {
+			$matching_calibration_ids[] = $stmtCalibrationID;
 		}
+
 		if (count($matching_calibration_ids) > 0) {
 			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
 		}
@@ -377,12 +377,13 @@ if (filterIsActive('FilterByAge')) {
 		mysqli_stmt_execute($stmt);
 
 ?><div class="search-details"><?= $query ?></div><?
-		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
+		mysqli_stmt_bind_result($stmt, $stmtCalibrationID);
 
-		// TODO: sort/sift from all the results lists above
-		while($row=mysqli_fetch_assoc($result)) {
-			$matching_calibration_ids[] = $row['CalibrationID'];
+		// sort/sift from all the results lists above
+		while(mysqli_stmt_fetch($stmt)) {
+			$matching_calibration_ids[] = $stmtCalibrationID;
 		}
+
 		if (count($matching_calibration_ids) > 0) {
 			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '02-MATCHES-AGE', 'relevance' => 1.0) );
 		}
@@ -430,12 +431,13 @@ if (filterIsActive('FilterByGeologicalTime')) {
 		mysqli_stmt_bind_param($stmt, "s", $search['FilterByGeologicalTime']);
 		mysqli_stmt_execute($stmt);
 
-		$result=mysqli_stmt_get_result($stmt) or die ('Error in query: '.$query.'|'. mysqli_error($mysqli));	
+		mysqli_stmt_bind_result($stmt, $stmtCalibrationID);
 
-		// TODO: sort/sift from all the results lists above
-		while($row=mysqli_fetch_assoc($result)) {
-			$matching_calibration_ids[] = $row['CalibrationID'];
+		// sort/sift from all the results lists above
+		while(mysqli_stmt_fetch($stmt)) {
+			$matching_calibration_ids[] = $stmtCalibrationID;
 		}
+
 		if (count($matching_calibration_ids) > 0) {
 			addCalibrations( $tempResults, $matching_calibration_ids, Array('relationship' => '01-MATCHES-GEOTIME', 'relevance' => 1.0) );
 		}
