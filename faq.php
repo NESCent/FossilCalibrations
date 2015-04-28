@@ -164,14 +164,15 @@ How should I cite calibrations from the database?
 <p>
 If you use a calibration, please cite the original paper listed at the top of the results page. You can download a PDF of Fossil Calibration Series papers by clicking “view electronic resource”.  
 </p>
-<? /* TODO: Restore this once the SysBio paper has been published
 <p>
-The preferred citation for the database itself is listed below, but should not be used in place of citing the original papers when using specific calibrations. 
-</p>
-<pre>
-[Title of Systematic Biology Paper]
-</pre>
-*/ ?>
+The preferred reference for the database itself is:<br /><br />
+
+<pre>Ksepka, D.T., J.F. Parham, J.F. Allman, M.J. Benton, M.T. Carrano, K.A. Cranston, P.C. J. Donoghue, 
+J.J. Head, E.J. Hermsen, R.B. Irmis, W.G. Joyce, M. Kohli, K.S. Lamm, D. Leehr, J.S.L. Patan&eacute;,
+P.D. Polly, M.J. Phillips, N.A. Smith, N.D. Smith, M. van Tuinen, J.L. Ware, R.C.M. Warnock. 2015.
+The Fossil Calibration Database, A New Resource for Divergence Dating.
+<i>Systematic Biology</i>: doi: 10.1093/sysbio/syv025.
+</pre></p>
 <p>
 In cases where originally reported results have been updated in the database, please cite the original paper and also cite the database as follows:
 </p>
