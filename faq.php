@@ -171,7 +171,7 @@ The preferred reference for the database itself is:<br /><br />
 J.J. Head, E.J. Hermsen, R.B. Irmis, W.G. Joyce, M. Kohli, K.S. Lamm, D. Leehr, J.S.L. Patan&eacute;,
 P.D. Polly, M.J. Phillips, N.A. Smith, N.D. Smith, M. van Tuinen, J.L. Ware, R.C.M. Warnock. 2015.
 The Fossil Calibration Database, A New Resource for Divergence Dating.
-<i>Systematic Biology</i>: doi: 10.1093/sysbio/syv025.
+<i>Systematic Biology</i>: doi:<a href="http://dx.doi.org/10.1093/sysbio/syv025" target="_blank">10.1093/sysbio/syv025</a>.
 </pre></p>
 <p>
 In cases where originally reported results have been updated in the database, please cite the original paper and also cite the database as follows:
