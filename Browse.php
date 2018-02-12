@@ -486,7 +486,9 @@ END ghosted calibration IDs -->
 		 ?>
 <!--
 <pre>$row:
-<? print_r($row) ?>
+<?  // N.B. This is very expensive, and can show binary gibberish! Use sparingly!
+    /* print_r($row) */
+?>
 </pre>
 -->
 		<a href="<?= $calibrationDisplayURL ?>" class="matches-<?= $row['CalibrationID'] ?> <?= ($counter > $maxCalibrationsToShow) ? "hidden-clutter" : "" ?>">
