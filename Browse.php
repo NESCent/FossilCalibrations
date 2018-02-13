@@ -357,12 +357,18 @@ while ($row = mysqli_fetch_array($calibration_list)) {
 			FROM View_Fossils V
 			JOIN Link_CalibrationFossil CF ON CF.FossilID = V.FossilID
 		) AS J
-		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID 
-					 AND C.CalibrationID IN ('. implode(", ", $calibrationsInCustomChildNodes) .')
+		JOIN View_Calibrations C ON J.CalibrationID = C.CalibrationID
+								AND C.CalibrationID IN ('. implode(", ", $calibrationsInCustomChildNodes) .') '.
+    ((isset($_SESSION['IS_ADMIN_USER']) && ($_SESSION['IS_ADMIN_USER'] == true)) ? '' :
+                                " AND C.CalibrationID IN (SELECT CalibrationID FROM calibrations WHERE PublicationStatus = 4)"
+    )
+            .'
 		LEFT JOIN publication_images img ON img.PublicationID = C.PublicationID
 		LEFT JOIN L_HigherTaxa ht ON ht.HigherTaxon = C.HigherTaxon
 		ORDER BY ht_display_order, NodeName, ShortName';
 	$calibration_list=mysqli_query($mysqli, $query) or die ('Error  in query: '.$query.'|'. mysql_error());	
+
+?><div class="search-details">QUERY:<br/><?= $query ?></div><?
 
 	// "wrap" each of these calibrations in a custom node of the same name
 	while ($row = mysqli_fetch_array($calibration_list)) {
