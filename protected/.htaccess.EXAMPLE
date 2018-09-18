@@ -10,7 +10,4 @@ RewriteCond %{REQUEST_URI} protected
 RewriteRule ^(.*)$ https://%{ENV:FCD_DOMAIN}:%{ENV:FCD_SECURE_PORT}/protected/$1 [R,L]
 
 # Force login before granting access to this folder
-AuthType Basic
-AuthUserFile "/full/path/to/.htpasswd"
-AuthName "Enter valid username and password!"
-require valid-user
+# REMOVED in favor of role-based, per-page protection using PHP
